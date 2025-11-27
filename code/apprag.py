@@ -76,6 +76,8 @@ st.markdown("""
 @st.cache_resource
 def initialize_rag():
     try:
+        if "OPENAI_API_KEY" in st.secrets:
+            os.environ["OPENAI_API_KEY"] = st.secrets["OPENAI_API_KEY"]
         root = Path(__file__).resolve().parents[1]
         env_path = root / ".env"
         load_dotenv(env_path)
