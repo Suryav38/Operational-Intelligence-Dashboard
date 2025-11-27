@@ -1,0 +1,15 @@
+Ticket ID: 1005
+Machine: M09
+Opened: 2024-01-03
+Issue: Sensor Errors
+
+Summary:
+Operator and maintenance team observed recurring issues on M09 over multiple shifts.
+Root cause was identified as calibration drift based on inspection and downtime patterns.
+
+Action Taken:
+Escalated material quality issue to supplier.
+
+Recommendation:
+Monitor M09 closely for the next two weeks and log any minor symptoms early.
+Schedule a follow-up inspection if abnormal noise, vibration, or performance is observed again.

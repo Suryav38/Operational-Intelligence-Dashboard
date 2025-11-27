@@ -1,0 +1,15 @@
+Ticket ID: 1004
+Machine: M12
+Opened: 2024-02-10
+Issue: Sensor Errors
+
+Summary:
+Operator and maintenance team observed recurring issues on M12 over multiple shifts.
+Root cause was identified as calibration drift based on inspection and downtime patterns.
+
+Action Taken:
+Replaced worn components and recalibrated.
+
+Recommendation:
+Monitor M12 closely for the next two weeks and log any minor symptoms early.
+Schedule a follow-up inspection if abnormal noise, vibration, or performance is observed again.

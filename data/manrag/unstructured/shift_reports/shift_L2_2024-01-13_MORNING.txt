@@ -1,0 +1,14 @@
+Line: L2
+Date: 2024-01-13
+Shift: MORNING
+
+Summary:
+Observed elevated scrap rate of 5.16% on SKU007 during this shift.
+Material was sourced from SUP_B, and operators reported more frequent jams and quality checks.
+
+Actions:
+Cleared jams and performed additional visual inspections on incoming material.
+Logged a potential quality concern for supplier SUP_B.
+
+Notes:
+Recommend sampling a small batch from SUP_B before full changeover and monitoring scrap closely.

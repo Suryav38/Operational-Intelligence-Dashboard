@@ -1,0 +1,42 @@
+Document Title: SOP - Handling Material Quality Issues
+Document ID: SOP-MAT-QUAL-002
+Revision: 1.3
+Owner: Quality Assurance
+Effective Date: 2023-06-15
+
+1. Purpose
+To define the standard response when material quality issues are suspected or confirmed,
+in order to protect product quality and prevent excessive scrap.
+
+2. Scope
+Applies to all incoming raw materials used on Lines L1, L2, and L3.
+
+3. Responsibilities
+- Operators: Identify and report visible defects, jams, or abnormal behavior linked to material.
+- Quality Technicians: Inspect suspect material, perform checks, and make disposition decisions.
+- Purchasing: Coordinate with suppliers on quality concerns and corrective actions.
+
+4. Triggers for Material Quality Review
+- Sudden increase in scrap rate associated with a specific supplier or batch.
+- Repeated jams or feeding issues with the same material lot.
+- Visual defects (surface damage, incorrect dimensions, contamination).
+
+5. Procedure
+5.1 Immediate Actions
+    a. Stop production on the affected line if safety or severe quality risk is present.
+    b. Isolate the suspect material batch and label it as "ON HOLD".
+    c. Record batch ID, supplier, and time of issue in the shift report.
+
+5.2 Inspection
+    a. Perform visual inspection and basic measurements on suspect material.
+    b. Compare against approved specifications and reference samples.
+    c. Document findings and, if required, collect photo evidence.
+
+5.3 Disposition
+    a. If material is within spec, release for controlled trial run with close monitoring.
+    b. If material is out of spec, hold the batch and escalate to Quality and Purchasing.
+    c. Consider switching to an alternate approved supplier or batch if available.
+
+6. Documentation
+- All material issues must be logged in the quality system with batch ID and supplier.
+- Supplier performance metrics are updated monthly based on number and severity of issues.

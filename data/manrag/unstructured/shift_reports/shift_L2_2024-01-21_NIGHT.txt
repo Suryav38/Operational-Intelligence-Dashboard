@@ -1,0 +1,17 @@
+Line: L2
+Date: 2024-01-21
+Shift: NIGHT
+
+Summary:
+Elevated scrap rate of 6.01% was observed on SKU SKU003 during this shift.
+Material was sourced from SUP_B, and operators reported more frequent jams and additional quality checks at the inspection station.
+
+Actions Taken:
+- Cleared accumulated material from feeders and guides.
+- Performed additional visual inspections on incoming material from SUP_B.
+- Logged a potential quality concern for supplier SUP_B for follow-up with the purchasing and quality teams.
+
+Recommendations:
+- Pre-screen a small sample lot from SUP_B before full changeover.
+- Increase inspection frequency for SUP_B deliveries until scrap levels return to baseline.
+- If high scrap persists across multiple shifts, consider temporary switch to an alternate supplier or material spec.

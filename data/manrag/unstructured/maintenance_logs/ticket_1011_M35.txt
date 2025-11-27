@@ -1,0 +1,15 @@
+Ticket ID: 1011
+Machine: M35
+Opened: 2024-02-24
+Issue: Sensor Errors
+
+Summary:
+Operator and maintenance team observed recurring issues on M35 over multiple shifts.
+Root cause was identified as bearing wear based on inspection and downtime patterns.
+
+Action Taken:
+Replaced worn components and recalibrated.
+
+Recommendation:
+Monitor M35 closely for the next two weeks and log any minor symptoms early.
+Schedule a follow-up inspection if abnormal noise, vibration, or performance is observed again.

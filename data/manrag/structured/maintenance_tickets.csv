@@ -1,0 +1,46 @@
+ticket_id,machine_id,opened_at,closed_at,issue_type,root_cause,action_taken,status
+1001,M01,2024-01-07T00:11:00,2024-12-31T15:12:00,Vibration,Calibration Drift,"Adjusted sensor thresholds, replaced faulty sensor, and verified readings.",CLOSED
+1002,M02,2024-01-16T08:04:00,2024-12-23T00:54:00,Frequent Jams,Material Quality,Escalated recurring material quality issue to supplier and updated incoming inspection plan.,CLOSED
+1003,M03,2024-01-03T14:27:00,2024-12-30T17:21:00,Overheating,Calibration Drift,Replaced worn components and recalibrated line.,CLOSED
+1004,M04,2024-01-08T14:32:00,2024-12-30T07:47:00,Overheating,Calibration Drift,"Adjusted sensor thresholds, replaced faulty sensor, and verified readings.",CLOSED
+1005,M05,2024-01-08T22:25:00,2024-12-30T22:28:00,Sensor Errors,Misalignment,Escalated recurring material quality issue to supplier and updated incoming inspection plan.,CLOSED
+1006,M06,2024-01-01T08:11:00,2024-12-10T17:31:00,Overheating,Material Quality,Replaced worn components and recalibrated line.,CLOSED
+1007,M07,2024-01-19T14:13:00,2024-12-30T01:48:00,Vibration,Bearing Wear,"Adjusted sensor thresholds, replaced faulty sensor, and verified readings.",CLOSED
+1008,M08,2024-01-01T22:34:00,2024-12-30T23:15:00,Overheating,Calibration Drift,Replaced worn components and recalibrated line.,CLOSED
+1009,M09,2024-01-03T22:14:00,2024-12-09T16:11:00,Sensor Errors,Calibration Drift,"Adjusted sensor thresholds, replaced faulty sensor, and verified readings.",CLOSED
+1010,M10,2024-01-05T07:56:00,2024-12-26T02:34:00,Overheating,Bearing Wear,Replaced worn components and recalibrated line.,CLOSED
+1011,M11,2024-01-05T09:21:00,2025-01-01T01:17:00,Vibration,Misalignment,"Adjusted sensor thresholds, replaced faulty sensor, and verified readings.",CLOSED
+1012,M12,2024-01-08T16:32:00,2024-12-30T10:33:00,Vibration,Calibration Drift,Replaced worn components and recalibrated line.,CLOSED
+1013,M13,2024-01-04T16:15:00,2024-12-27T10:25:00,Sensor Errors,Calibration Drift,Replaced worn components and recalibrated line.,CLOSED
+1014,M14,2024-01-07T17:32:00,2025-01-01T00:24:00,Sensor Errors,Misalignment,Realigned mechanical assembly and tightened fixtures.,CLOSED
+1015,M15,2024-01-06T07:20:00,2024-12-29T09:22:00,Sensor Errors,Misalignment,Realigned mechanical assembly and tightened fixtures.,CLOSED
+1016,M16,2024-01-04T00:03:00,2024-12-29T15:26:00,Overheating,Bearing Wear,Realigned mechanical assembly and tightened fixtures.,CLOSED
+1017,M17,2024-01-22T07:16:00,2024-12-25T07:36:00,Vibration,Material Quality,Replaced worn components and recalibrated line.,CLOSED
+1018,M18,2024-01-02T17:13:00,2024-12-30T07:53:00,Overheating,Bearing Wear,Realigned mechanical assembly and tightened fixtures.,CLOSED
+1019,M19,2024-01-02T22:09:00,2024-12-28T07:25:00,Vibration,Misalignment,Escalated recurring material quality issue to supplier and updated incoming inspection plan.,CLOSED
+1020,M20,2024-01-03T14:34:00,2024-12-21T23:27:00,Sensor Errors,Material Quality,Replaced worn components and recalibrated line.,CLOSED
+1021,M21,2024-01-03T15:25:00,2024-12-25T18:25:00,Sensor Errors,Calibration Drift,Realigned mechanical assembly and tightened fixtures.,CLOSED
+1022,M22,2024-01-15T17:22:00,2024-12-22T23:54:00,Vibration,Calibration Drift,Escalated recurring material quality issue to supplier and updated incoming inspection plan.,CLOSED
+1023,M23,2024-01-19T07:03:00,2024-12-24T16:40:00,Overheating,Bearing Wear,Realigned mechanical assembly and tightened fixtures.,CLOSED
+1024,M24,2024-01-04T08:50:00,2024-12-27T10:04:00,Frequent Jams,Material Quality,"Adjusted sensor thresholds, replaced faulty sensor, and verified readings.",CLOSED
+1025,M25,2024-01-03T01:18:00,2024-12-31T07:57:00,Frequent Jams,Material Quality,Realigned mechanical assembly and tightened fixtures.,CLOSED
+1026,M26,2024-01-02T17:39:00,2024-12-30T18:02:00,Frequent Jams,Misalignment,Realigned mechanical assembly and tightened fixtures.,CLOSED
+1027,M27,2024-01-03T15:36:00,2024-12-29T23:16:00,Vibration,Bearing Wear,Realigned mechanical assembly and tightened fixtures.,CLOSED
+1028,M28,2024-01-14T17:54:00,2024-12-24T10:11:00,Vibration,Misalignment,Escalated recurring material quality issue to supplier and updated incoming inspection plan.,CLOSED
+1029,M29,2024-01-03T06:03:00,2024-12-29T16:16:00,Frequent Jams,Material Quality,Realigned mechanical assembly and tightened fixtures.,CLOSED
+1030,M30,2024-01-02T00:59:00,2024-12-13T17:43:00,Vibration,Material Quality,Realigned mechanical assembly and tightened fixtures.,CLOSED
+1031,M31,2024-01-02T09:09:00,2024-12-16T15:12:00,Overheating,Misalignment,Replaced worn components and recalibrated line.,CLOSED
+1032,M32,2024-01-06T08:05:00,2025-01-01T02:41:00,Frequent Jams,Bearing Wear,"Adjusted sensor thresholds, replaced faulty sensor, and verified readings.",CLOSED
+1033,M33,2024-01-03T16:26:00,2024-12-31T14:59:00,Frequent Jams,Material Quality,"Adjusted sensor thresholds, replaced faulty sensor, and verified readings.",CLOSED
+1034,M34,2024-01-02T07:30:00,2024-12-20T16:39:00,Overheating,Bearing Wear,"Adjusted sensor thresholds, replaced faulty sensor, and verified readings.",CLOSED
+1035,M35,2024-01-03T22:09:00,2024-12-31T18:40:00,Overheating,Bearing Wear,"Adjusted sensor thresholds, replaced faulty sensor, and verified readings.",CLOSED
+1036,M36,2024-01-03T01:51:00,2024-12-29T07:47:00,Sensor Errors,Material Quality,"Adjusted sensor thresholds, replaced faulty sensor, and verified readings.",CLOSED
+1037,M37,2024-01-02T08:55:00,2024-12-11T01:54:00,Frequent Jams,Misalignment,"Adjusted sensor thresholds, replaced faulty sensor, and verified readings.",CLOSED
+1038,M38,2024-01-12T07:00:00,2024-12-28T17:56:00,Frequent Jams,Bearing Wear,"Adjusted sensor thresholds, replaced faulty sensor, and verified readings.",CLOSED
+1039,M39,2024-01-07T07:03:00,2024-12-24T15:24:00,Frequent Jams,Calibration Drift,Escalated recurring material quality issue to supplier and updated incoming inspection plan.,CLOSED
+1040,M40,2024-01-15T06:20:00,2024-12-31T01:23:00,Overheating,Misalignment,Replaced worn components and recalibrated line.,CLOSED
+1041,M41,2024-01-02T07:25:00,2024-12-20T07:07:00,Sensor Errors,Bearing Wear,Replaced worn components and recalibrated line.,CLOSED
+1042,M42,2024-01-01T09:43:00,2024-12-30T02:43:00,Frequent Jams,Misalignment,Replaced worn components and recalibrated line.,CLOSED
+1043,M43,2024-01-02T14:35:00,2024-12-30T10:36:00,Frequent Jams,Misalignment,Realigned mechanical assembly and tightened fixtures.,CLOSED
+1044,M44,2024-01-01T09:11:00,2024-12-31T14:55:00,Frequent Jams,Calibration Drift,Realigned mechanical assembly and tightened fixtures.,CLOSED
+1045,M45,2024-01-03T06:55:00,2024-12-07T23:11:00,Overheating,Material Quality,"Adjusted sensor thresholds, replaced faulty sensor, and verified readings.",CLOSED

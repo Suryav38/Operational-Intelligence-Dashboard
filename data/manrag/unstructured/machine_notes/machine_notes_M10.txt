@@ -1,0 +1,16 @@
+Machine: M10
+Line: L1
+Type: Press
+
+Operator Notes:
+This asset generally runs reliably under standard operating conditions.
+Most issues are related to routine wear, minor jams, or sensor calibration.
+
+Operating Guidelines:
+- Follow the standard startup checklist, including safety and interlock checks.
+- Keep the work area clear of excess material, tools, and debris.
+- Record any recurring stoppages, product defects, or unusual noise patterns in the shift report.
+
+Escalation:
+- If the same stoppage reason appears more than twice in a shift, log a maintenance request.
+- If product quality concerns are observed, hold suspect pallets and notify quality.

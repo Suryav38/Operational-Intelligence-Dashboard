@@ -1,0 +1,15 @@
+Ticket ID: 1002
+Machine: M08
+Opened: 2024-01-08
+Issue: Vibration
+
+Summary:
+Operator and maintenance team observed recurring issues on M08 over multiple shifts.
+Root cause was identified as calibration drift based on inspection and downtime patterns.
+
+Action Taken:
+Adjusted sensor thresholds and verified readings.
+
+Recommendation:
+Monitor M08 closely for the next two weeks and log any minor symptoms early.
+Schedule a follow-up inspection if abnormal noise, vibration, or performance is observed again.

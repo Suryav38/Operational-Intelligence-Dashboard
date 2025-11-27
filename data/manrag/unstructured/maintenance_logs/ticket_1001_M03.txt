@@ -1,0 +1,15 @@
+Ticket ID: 1001
+Machine: M03
+Opened: 2024-03-14
+Issue: Frequent Jams
+
+Summary:
+Operator and maintenance team observed recurring issues on M03 over multiple shifts.
+Root cause was identified as misalignment based on inspection and downtime patterns.
+
+Action Taken:
+Replaced worn components and recalibrated.
+
+Recommendation:
+Monitor M03 closely for the next two weeks and log any minor symptoms early.
+Schedule a follow-up inspection if abnormal noise, vibration, or performance is observed again.

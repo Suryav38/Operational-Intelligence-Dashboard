@@ -1,0 +1,15 @@
+Ticket ID: 1007
+Machine: M14
+Opened: 2024-01-13
+Issue: Vibration
+
+Summary:
+Operator and maintenance team observed recurring issues on M14 over multiple shifts.
+Root cause was identified as bearing wear based on inspection and downtime patterns.
+
+Action Taken:
+Realigned mechanical assembly and tightened fixtures.
+
+Recommendation:
+Monitor M14 closely for the next two weeks and log any minor symptoms early.
+Schedule a follow-up inspection if abnormal noise, vibration, or performance is observed again.

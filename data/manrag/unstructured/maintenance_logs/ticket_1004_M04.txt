@@ -1,0 +1,18 @@
+Ticket ID: 1004
+Machine: M04
+Opened: 2024-01-08
+Issue: Overheating
+
+Summary:
+Recurring issues were observed on machine M04 across multiple shifts, triggering a maintenance review.
+Based on downtime patterns, operator feedback, and inspection, the primary root cause was identified as calibration drift.
+
+Corrective Actions:
+Adjusted sensor thresholds, replaced faulty sensor, and verified readings.
+
+Follow-Up:
+- Monitor M04 closely over the next two weeks.
+- Log any early symptoms such as noise, vibration, minor jams, or sensor irregularities.
+- Escalate immediately if unplanned downtime exceeds the normal range for this asset.
+
+This log is intended to support future root-cause analysis by providing historical context on how the issue was previously resolved.

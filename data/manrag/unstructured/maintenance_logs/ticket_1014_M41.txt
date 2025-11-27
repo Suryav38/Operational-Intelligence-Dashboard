@@ -1,0 +1,15 @@
+Ticket ID: 1014
+Machine: M41
+Opened: 2024-01-10
+Issue: Overheating
+
+Summary:
+Operator and maintenance team observed recurring issues on M41 over multiple shifts.
+Root cause was identified as bearing wear based on inspection and downtime patterns.
+
+Action Taken:
+Realigned mechanical assembly and tightened fixtures.
+
+Recommendation:
+Monitor M41 closely for the next two weeks and log any minor symptoms early.
+Schedule a follow-up inspection if abnormal noise, vibration, or performance is observed again.

@@ -1,0 +1,15 @@
+Ticket ID: 1008
+Machine: M28
+Opened: 2024-02-22
+Issue: Frequent Jams
+
+Summary:
+Operator and maintenance team observed recurring issues on M28 over multiple shifts.
+Root cause was identified as calibration drift based on inspection and downtime patterns.
+
+Action Taken:
+Escalated material quality issue to supplier.
+
+Recommendation:
+Monitor M28 closely for the next two weeks and log any minor symptoms early.
+Schedule a follow-up inspection if abnormal noise, vibration, or performance is observed again.

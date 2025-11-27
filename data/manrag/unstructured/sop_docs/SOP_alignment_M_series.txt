@@ -1,0 +1,46 @@
+Document Title: SOP - Mechanical Alignment for M-Series Machines
+Document ID: SOP-MECH-ALIGN-001
+Revision: 2.0
+Owner: Maintenance Engineering
+Effective Date: 2023-09-01
+
+1. Purpose
+This procedure defines the standard method for inspecting and correcting mechanical alignment
+on M-series machines to minimize vibration, scrap, and unplanned downtime.
+
+2. Scope
+Applies to all M-series machines operating on Lines L1, L2, and L3.
+
+3. Responsibilities
+- Maintenance Technicians: Perform alignment inspections and adjustments.
+- Line Supervisors: Schedule planned alignment checks and verify completion.
+- Operators: Report abnormal noise, vibration, or recurring jams.
+
+4. Required PPE
+- Safety glasses
+- Safety shoes
+- Cut-resistant gloves
+- Hearing protection (in high-noise areas)
+
+5. Procedure
+5.1 Lockout/Tagout
+    a. Stop the machine and follow site lockout/tagout procedures.
+    b. Verify zero energy state before proceeding.
+
+5.2 Inspection
+    a. Inspect belts, pulleys, couplings, and mounting points for visible wear or misalignment.
+    b. Check for loose fasteners, cracked mounts, or abnormal wear patterns.
+
+5.3 Alignment
+    a. Use approved alignment tools to verify shaft and belt alignment.
+    b. Adjust as necessary until alignment is within specified tolerances.
+    c. Tighten all mounting bolts to specified torque.
+
+5.4 Verification
+    a. Remove lockout/tagout and restart the machine.
+    b. Run a short test batch and monitor vibration, noise, and scrap levels.
+    c. If abnormal conditions persist, escalate to the Maintenance Supervisor.
+
+6. Documentation
+- Record all alignment activities, measurements, and replaced components in the maintenance system.
+- Tag any components that must be monitored in future inspections.

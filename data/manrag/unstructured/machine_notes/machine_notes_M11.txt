@@ -1,0 +1,21 @@
+Machine: M11
+Line: L1
+Type: Assembler
+
+Operator Notes (High Attention Asset):
+This machine has a known history of vibration and alignment issues, especially during extended production runs
+and immediately after mechanical changeovers.
+
+Common Observations:
+- Increased noise and vibration at higher speeds.
+- Minor jams at the infeed section that can escalate if not cleared promptly.
+- Gradual rise in scrap rate (surface defects, dimension out of spec) when alignment drifts.
+
+Operating Guidelines:
+- Perform a quick vibration and noise check at the start of each shift.
+- Stop and inspect if minor stoppages occur more than 3 times within a 2-hour window.
+- Document all abnormal events in the shift log, even if resolved quickly.
+
+Escalation:
+- If unplanned downtime exceeds 60 minutes in a shift, notify maintenance immediately.
+- If repeated alignment issues occur in the same week, request a full mechanical inspection.

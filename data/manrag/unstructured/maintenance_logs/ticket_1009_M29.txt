@@ -1,0 +1,15 @@
+Ticket ID: 1009
+Machine: M29
+Opened: 2024-01-30
+Issue: Overheating
+
+Summary:
+Operator and maintenance team observed recurring issues on M29 over multiple shifts.
+Root cause was identified as bearing wear based on inspection and downtime patterns.
+
+Action Taken:
+Replaced worn components and recalibrated.
+
+Recommendation:
+Monitor M29 closely for the next two weeks and log any minor symptoms early.
+Schedule a follow-up inspection if abnormal noise, vibration, or performance is observed again.

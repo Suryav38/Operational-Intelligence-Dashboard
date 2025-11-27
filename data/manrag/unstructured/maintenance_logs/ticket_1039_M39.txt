@@ -1,0 +1,18 @@
+Ticket ID: 1039
+Machine: M39
+Opened: 2024-01-07
+Issue: Frequent Jams
+
+Summary:
+Recurring issues were observed on machine M39 across multiple shifts, triggering a maintenance review.
+Based on downtime patterns, operator feedback, and inspection, the primary root cause was identified as calibration drift.
+
+Corrective Actions:
+Escalated recurring material quality issue to supplier and updated incoming inspection plan.
+
+Follow-Up:
+- Monitor M39 closely over the next two weeks.
+- Log any early symptoms such as noise, vibration, minor jams, or sensor irregularities.
+- Escalate immediately if unplanned downtime exceeds the normal range for this asset.
+
+This log is intended to support future root-cause analysis by providing historical context on how the issue was previously resolved.

@@ -1,0 +1,21 @@
+Weekly Operations Summary
+Week starting: 2024-05-20
+Line: L3
+
+Production:
+- Total units produced: 439504
+- Total scrap units: 10288
+- Average scrap rate: 2.34%
+
+Downtime:
+- Total downtime: 1964 minutes
+Top downtime causes:
+- MATERIAL_JAM occurred 6 time(s)
+- CHANGEOVER_ISSUE occurred 3 time(s)
+- MECH_FAILURE occurred 2 time(s)
+
+Usage:
+This summary is used during weekly operations huddles to:
+- Review overall performance for the line
+- Identify recurring scrap or downtime drivers
+- Decide if corrective actions, trials, or maintenance interventions are required.
