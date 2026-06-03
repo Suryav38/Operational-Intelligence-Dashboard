@@ -1,9 +1,9 @@
 streamlit
 pandas
-numpy==1.26.4
+numpy<2.0.0
 plotly
 langchain-openai
-langchain-chroma
+langchain-chroma==0.1.4
 chromadb==0.5.23
 python-dotenv
 statsmodels
