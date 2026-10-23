@@ -1,0 +1,5 @@
+Tool group note - Fab B (development fab, DUV only) - Dry etch
+Installed tools: 13.0
+Q3 2026: productive 65.7%, engineering 13.3%, unscheduled down 6.4%, average queue 0.63 h per lot step.
+
+Thirteen chambers. NAND Gen C high-aspect-ratio etch takes about 2.2x the time of a standard etch pass. New chambers have a lead time of about three quarters.

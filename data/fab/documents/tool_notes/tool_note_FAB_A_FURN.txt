@@ -1,0 +1,5 @@
+Tool group note - Fab A (development fab with EUV) - Diffusion furnace (batch)
+Installed tools: 13.0
+Q3 2026: productive 60.3%, engineering 6.0%, unscheduled down 3.4%, average queue 0.05 h per lot step.
+
+Batch furnaces run up to 4 lots; development lots average 3 lots per run. Waiting to fill batches adds queue time.

@@ -1,0 +1,17 @@
+TD Quarterly Planning Review - 2026Q3
+Attendees: TD IE Strategy, Process Integration, Engineering, Operations, Finance
+
+Wafer starts this quarter:
+- FAB_A DRAM Node A: requested 260 WSPW, actual 250
+- FAB_A DRAM Node B (EUV): requested 790 WSPW, actual 650
+- FAB_A 3D NAND Gen C: requested 150 WSPW, actual 150
+- FAB_A HBM test vehicle: requested 190 WSPW, actual 150
+- FAB_A Short-loop experiments: requested 560 WSPW, actual 600
+- FAB_B DRAM Node A: requested 200 WSPW, actual 200
+- FAB_B 3D NAND Gen C: requested 390 WSPW, actual 350
+- FAB_B Short-loop experiments: requested 340 WSPW, actual 400
+
+Discussion and decisions:
+- EUV at Fab A averaged 79% loading in Q3 with an average queue of 12 hours per pass, the largest single queue in the fab.
+- NAND Gen C requests for 2027 grow to 480 WSPW at Fab B by Q4. Fab B etch cannot absorb this without help; options are a load move to Fab A (NAND Gen C is qualified there) or additional etch chambers (lead time about 3 quarters).
+- Finance asked for a bias-adjusted view of 2027 requests before approving new tools.

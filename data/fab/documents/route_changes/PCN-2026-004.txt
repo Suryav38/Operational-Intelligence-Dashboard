@@ -1,0 +1,9 @@
+Process Change Notice PCN-2026-004
+Owner: Process Integration
+Program: HBM test vehicle
+Effective: 2026Q2
+
+Change:
+TSV module adds two etch, two PVD and one CMP step.
+
+Capacity review: TD IE Strategy to assess tool-group impact before release.

@@ -1,0 +1,8 @@
+TD Capacity Planning Guidelines
+
+1. Loading = required tool hours / available production hours (calendar hours minus scheduled downtime, unscheduled downtime and engineering time).
+2. Plan tool groups at or below 85% loading. Above 85% queue time grows quickly; above 100% the plan cannot be run.
+3. Program teams submit wafer-start requests each quarter. IE Strategy compares requests with historical actuals before committing capacity.
+4. Moving a program to another site requires that the program is qualified at that site. New qualifications take about two quarters.
+5. Options for a constraint, in order: re-balance load across sites, adjust timing of experiments, recover availability, then add tools.
+6. Hot lots (about 10% of lots) get priority at every step; keep the share low so normal lots do not stall.

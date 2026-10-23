@@ -1,0 +1,17 @@
+TD Quarterly Planning Review - 2025Q4
+Attendees: TD IE Strategy, Process Integration, Engineering, Operations, Finance
+
+Wafer starts this quarter:
+- FAB_A DRAM Node A: requested 280 WSPW, actual 270
+- FAB_A DRAM Node B (EUV): requested 600 WSPW, actual 518
+- FAB_A 3D NAND Gen C: requested 140 WSPW, actual 135
+- FAB_A HBM test vehicle: requested 100 WSPW, actual 74
+- FAB_A Short-loop experiments: requested 580 WSPW, actual 603
+- FAB_B DRAM Node A: requested 210 WSPW, actual 215
+- FAB_B 3D NAND Gen C: requested 360 WSPW, actual 351
+- FAB_B Short-loop experiments: requested 380 WSPW, actual 412
+
+Discussion and decisions:
+- HBM test vehicle started in Q3 2025; actual starts were about 20% below request.
+- Approved purchase of a second EUV scanner for Fab A, expected production release 2027Q4.
+- Short-loop experiments ran about 10% above request; teams submit them late in the quarter.

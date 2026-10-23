@@ -1,0 +1,17 @@
+TD Quarterly Planning Review - 2026Q1
+Attendees: TD IE Strategy, Process Integration, Engineering, Operations, Finance
+
+Wafer starts this quarter:
+- FAB_A DRAM Node A: requested 260 WSPW, actual 258
+- FAB_A DRAM Node B (EUV): requested 700 WSPW, actual 569
+- FAB_A 3D NAND Gen C: requested 150 WSPW, actual 140
+- FAB_A HBM test vehicle: requested 120 WSPW, actual 95
+- FAB_A Short-loop experiments: requested 500 WSPW, actual 563
+- FAB_B DRAM Node A: requested 200 WSPW, actual 201
+- FAB_B 3D NAND Gen C: requested 390 WSPW, actual 356
+- FAB_B Short-loop experiments: requested 400 WSPW, actual 430
+
+Discussion and decisions:
+- Fab B deposition above 84%; three additional CVD/ALD chambers planned for 2027Q3.
+- Engineering holds account for roughly a third of DRAM Node B cycle time. Action: daily hold review with Process Integration.
+- Fab A etch expansion (3 chambers) planned for 2027Q2.

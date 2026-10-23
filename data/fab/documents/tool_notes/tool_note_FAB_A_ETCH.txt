@@ -1,0 +1,5 @@
+Tool group note - Fab A (development fab with EUV) - Dry etch
+Installed tools: 24.0
+Q3 2026: productive 60.7%, engineering 12.3%, unscheduled down 6.4%, average queue 0.1 h per lot step.
+
+Three additional etch chambers planned for 2027Q2. NAND Gen C high-aspect-ratio etch is qualified on Fab A chambers.

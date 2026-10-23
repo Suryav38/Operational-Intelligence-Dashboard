@@ -1,0 +1,9 @@
+Process Change Notice PCN-2026-017
+Owner: Process Integration
+Program: Short-loop experiments
+Effective: 2026Q3
+
+Change:
+New gate-stack short loop adds furnace anneal; about one extra furnace pass per short-loop wafer.
+
+Capacity review: TD IE Strategy to assess tool-group impact before release.

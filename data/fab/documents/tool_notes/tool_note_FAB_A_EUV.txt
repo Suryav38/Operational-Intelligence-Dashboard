@@ -1,0 +1,5 @@
+Tool group note - Fab A (development fab with EUV) - Litho EUV scanner
+Installed tools: 1.0
+Q3 2026: productive 53.5%, engineering 20.1%, unscheduled down 6.2%, average queue 12.25 h per lot step.
+
+Single EUV scanner. Engineering time about 15% for resist and dose experiments. Second scanner approved, production release 2027Q4. Any slip moves the release to 2028Q1.

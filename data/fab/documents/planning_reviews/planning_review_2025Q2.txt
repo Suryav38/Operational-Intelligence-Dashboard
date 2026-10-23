@@ -1,0 +1,16 @@
+TD Quarterly Planning Review - 2025Q2
+Attendees: TD IE Strategy, Process Integration, Engineering, Operations, Finance
+
+Wafer starts this quarter:
+- FAB_A DRAM Node A: requested 290 WSPW, actual 289
+- FAB_A DRAM Node B (EUV): requested 510 WSPW, actual 407
+- FAB_A 3D NAND Gen C: requested 140 WSPW, actual 145
+- FAB_A Short-loop experiments: requested 590 WSPW, actual 632
+- FAB_B DRAM Node A: requested 240 WSPW, actual 218
+- FAB_B 3D NAND Gen C: requested 300 WSPW, actual 293
+- FAB_B Short-loop experiments: requested 340 WSPW, actual 390
+
+Discussion and decisions:
+- DRAM Node B ran 16% below its requested starts for the third quarter in a row; program team asked to keep the request unchanged to protect EUV access.
+- Fab B etch loading reached 82% as NAND Gen C ramps. Flagged as a watch item.
+- Decision: keep loading ceiling at 85% for single-tool groups (EUV) because queue time rises sharply above that level.

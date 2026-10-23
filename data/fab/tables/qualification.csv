@@ -1,0 +1,11 @@
+site,program,qualified
+FAB_A,DRAM_A,True
+FAB_A,DRAM_B,True
+FAB_A,NAND_C,True
+FAB_A,HBM_TV,True
+FAB_A,SHORT,True
+FAB_B,DRAM_A,True
+FAB_B,DRAM_B,False
+FAB_B,NAND_C,True
+FAB_B,HBM_TV,False
+FAB_B,SHORT,True

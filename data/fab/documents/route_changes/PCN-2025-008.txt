@@ -1,0 +1,9 @@
+Process Change Notice PCN-2025-008
+Owner: Process Integration
+Program: DRAM Node B
+Effective: 2025Q3
+
+Change:
+Adds one EUV contact layer, replacing a DUV double-patterning pair. Net litho passes unchanged at DUV minus two, EUV plus one. One extra etch and one extra clean.
+
+Capacity review: TD IE Strategy to assess tool-group impact before release.

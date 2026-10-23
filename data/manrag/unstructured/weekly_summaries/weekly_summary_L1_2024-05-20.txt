@@ -1,9 +1,0 @@
-Weekly Operations Summary - Line L1 - week starting 2024-05-20
-
-Production: 79095 good units against a plan of 81887 (97% attainment).
-Scrap: 1795 units (2.22%).
-Downtime: 565 line minutes.
-Top downtime causes: MECH_FAILURE (264 min), MATERIAL_JAM (164 min), SENSOR_FAULT (137 min).
-Machines with most downtime: M11 (209 min), M15 (96 min).
-
-Used in the weekly operations huddle to review performance and agree corrective actions.

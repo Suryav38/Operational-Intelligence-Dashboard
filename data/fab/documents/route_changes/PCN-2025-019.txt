@@ -1,0 +1,9 @@
+Process Change Notice PCN-2025-019
+Owner: Process Integration
+Program: 3D NAND Gen C
+Effective: 2026Q1
+
+Change:
+Channel-hole etch recipe lengthened for higher aspect ratio; etch time per pass up about 10% on the high-aspect-ratio steps.
+
+Capacity review: TD IE Strategy to assess tool-group impact before release.

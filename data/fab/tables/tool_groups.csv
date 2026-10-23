@@ -1,0 +1,11 @@
+tool_group,name,area,min_per_wafer,sched_down_frac,unsched_down_frac,engineering_frac,production_availability,batch_lots,run_hours,sample_rate
+EUV,Litho EUV scanner,Litho,1.0,0.06,0.09,0.15,0.7,,,
+DUV,Litho DUV immersion,Litho,0.4,0.04,0.05,0.1,0.81,,,
+ETCH,Dry etch,Etch,2.0,0.05,0.06,0.12,0.77,,,
+DEP,CVD/ALD deposition,Thin films,2.4,0.05,0.05,0.1,0.8,,,
+PVD,PVD metallization,Thin films,1.5,0.04,0.04,0.08,0.84,,,
+CMP,CMP,Planarization,2.4,0.06,0.06,0.08,0.8,,,
+WET,Wet clean,Wet,1.0,0.03,0.04,0.05,0.88,,,
+FURN,Diffusion furnace (batch),Diffusion,4.8,0.04,0.04,0.06,0.86,3.0,6.0,
+IMPL,Ion implant,Implant,1.0,0.05,0.05,0.08,0.82,,,
+METRO,Metrology & inspection,Metrology,1.5,0.03,0.03,0.1,0.84,,,0.35
