@@ -1,0 +1,17 @@
+Maintenance Ticket 1133
+Machine: M28 (Line L2)
+Opened: 2024-08-06 01:53
+Status: CLOSED
+Issue: Frequent Jams
+Root cause: Calibration Drift
+
+Summary:
+Technician responded to a high-severity stop on M28. Inspection pointed to calibration drift.
+M28 logged 36 stops during 2024.
+
+Corrective action:
+Adjusted sensor thresholds, replaced faulty sensor, and verified readings.
+
+Follow-up:
+- Monitor M28 for noise, vibration, minor jams or sensor irregularities over the next two weeks.
+- Escalate if unplanned downtime exceeds the normal range for this asset.

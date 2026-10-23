@@ -1,0 +1,17 @@
+Maintenance Ticket 1020
+Machine: M02 (Line L1)
+Opened: 2024-02-01 15:08
+Status: CLOSED
+Issue: Frequent Jams
+Root cause: Misalignment
+
+Summary:
+Technician responded to a high-severity stop on M02. Inspection pointed to misalignment.
+M02 logged 49 stops during 2024.
+
+Corrective action:
+Realigned mechanical assembly per SOP-MECH-ALIGN-001 and tightened fixtures.
+
+Follow-up:
+- Monitor M02 for noise, vibration, minor jams or sensor irregularities over the next two weeks.
+- Escalate if unplanned downtime exceeds the normal range for this asset.

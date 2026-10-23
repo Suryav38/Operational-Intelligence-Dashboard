@@ -1,522 +1,392 @@
-import streamlit as st
-from datetime import timedelta, datetime
-from pathlib import Path
+import json
 import os
-import numpy as np
+from datetime import timedelta
+
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
-
-# RAG imports
+import streamlit as st
 from dotenv import load_dotenv
-from langchain_openai import OpenAIEmbeddings, ChatOpenAI
-from langchain_community.vectorstores import Chroma
 
-# ======================================
-# 1. Configuration & Styling
-# ======================================
-st.set_page_config(
-    page_title="Intelligent Operations AI Assistant",
-    layout="wide",
-    initial_sidebar_state="expanded",
-    page_icon=""
-)
+import assistant as ai
+import capacity_model as cm
+import plant_metrics as pm
 
-# Professional CSS
+# ======================================================================
+# 1. Page setup
+# ======================================================================
+st.set_page_config(page_title="Operational Intelligence Dashboard", layout="wide",
+                   initial_sidebar_state="expanded")
+
 st.markdown("""
 <style>
-    .main { background-color: #f8f9fa; }
-    h1, h2, h3 { color: #2c3e50; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-    
-    /* Modern KPI Card */
-    .metric-container {
-        background-color: white;
-        padding: 15px;
-        border-radius: 10px;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-        border-top: 4px solid #3498db;
-        text-align: center;
-        transition: transform 0.2s;
-    }
-    .metric-container:hover { transform: translateY(-2px); }
-    .metric-label { font-size: 0.8rem; color: #7f8c8d; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; }
-    .metric-value { font-size: 1.8rem; font-weight: 700; color: #2c3e50; margin: 5px 0; }
-    .metric-sub { font-size: 0.75rem; color: #95a5a6; }
-    
-    /* Alert Boxes */
-    .alert-box { padding: 10px 15px; border-radius: 6px; margin-bottom: 10px; font-size: 0.9rem; border-left: 4px solid; }
-    .alert-crit { background-color: #fdeaea; border-color: #e74c3c; color: #c0392b; }
-    .alert-warn { background-color: #fff8e1; border-color: #f1c40f; color: #7f8c8d; }
-    
-    /* --- CHAT FIX (AGGRESSIVE) --- */
-    /* Target the container and ALL children elements */
-    div[data-testid="stChatMessage"] {
-        background-color: #ffffff !important;
-        border: 1px solid #e0e0e0;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-    }
-    
-    /* Force text color for user and assistant messages */
-    div[data-testid="stChatMessage"] * {
-        color: #1a1a1a !important;
-    }
-    
-    /* Differentiate User vs Assistant slightly */
-    div[data-testid="stChatMessage"][data-author="user"] {
-        background-color: #e3f2fd !important; 
-    }
-    /* ----------------------------- */
-
+  .kpi {background: var(--secondary-background-color); padding: 14px 10px; border-radius: 10px;
+        border-top: 4px solid #3498db; text-align: center;}
+  .kpi-label {font-size: 0.75rem; text-transform: uppercase; letter-spacing: .5px; font-weight: 600; opacity: .75;}
+  .kpi-value {font-size: 1.7rem; font-weight: 700; margin: 4px 0;}
+  .kpi-sub {font-size: 0.75rem; opacity: .7;}
+  .flag {padding: 8px 12px; border-radius: 6px; margin-bottom: 6px; font-size: .9rem; border-left: 4px solid;}
+  .flag-Quality {background: rgba(241,196,15,.12); border-color: #f1c40f;}
+  .flag-Reliability {background: rgba(231,76,60,.10); border-color: #e74c3c;}
 </style>
 """, unsafe_allow_html=True)
 
-# ======================================
-# 2. RAG Setup (Cached)
-# ======================================
-@st.cache_resource
-def initialize_rag():
+GOOD, BAD = "#27ae60", "#e74c3c"
+load_dotenv(pm.ROOT / ".env")
+
+
+@st.cache_data(show_spinner=False)
+def get_data():
+    return pm.load_data()
+
+
+def get_secret(name, default=None):
     try:
-        if "OPENAI_API_KEY" in st.secrets:
-            os.environ["OPENAI_API_KEY"] = st.secrets["OPENAI_API_KEY"]
-        root = Path(__file__).resolve().parents[1]
-        env_path = root / ".env"
-        load_dotenv(env_path)
-        
-        persist_dir = root / "data" / "manrag" / "chroma_store"
-        embeddings = OpenAIEmbeddings()
-        vectordb = Chroma(persist_directory=str(persist_dir), embedding_function=embeddings)
-        retriever = vectordb.as_retriever(search_kwargs={"k": 3})
-        llm = ChatOpenAI(model="gpt-4o-mini", temperature=0) # Low temp for factual answers
-        return retriever, llm, None
-    except Exception as e:
-        return None, None, str(e)
+        value = st.secrets.get(name)
+    except Exception:  # no secrets file locally
+        value = None
+    return value or os.getenv(name, default)
 
-# ======================================
-# 3. Data Loading & Advanced Logic
-# ======================================
-def get_project_root() -> Path:
-    return Path(__file__).resolve().parents[1]
 
-@st.cache_data
-def load_data():
-    root = get_project_root()
-    data_path = root / "data" / "manrag" / "structured"
+@st.cache_resource(show_spinner=False)
+def get_llm(model, key):
+    from langchain_openai import ChatOpenAI
+    return ChatOpenAI(model=model, temperature=0, api_key=key)
 
-    if not data_path.exists():
-        st.error("❌ Data missing. Run `data_generation.py` first.")
-        st.stop()
 
-    prod = pd.read_csv(data_path / "production_daily.csv", parse_dates=["date"])
-    dt = pd.read_csv(data_path / "downtime_events.csv", parse_dates=["start_time", "end_time"])
-    machines = pd.read_csv(data_path / "dim_machine.csv")
-    
-    return prod, dt, machines
+@st.cache_resource(show_spinner="Indexing plant documents (first question only)...")
+def get_doc_search(key):
+    from langchain_openai import OpenAIEmbeddings
+    embeddings = OpenAIEmbeddings(model="text-embedding-3-small", api_key=key)
+    search, _ = ai.build_doc_search(pm.DOCS_DIR, embeddings)
+    return search
 
-def calculate_advanced_metrics(prod_df, dt_df):
-    """Calculates operational AND reliability metrics."""
-    # Production
-    total_produced = prod_df["produced_units"].sum()
-    total_scrap = prod_df["scrap_units"].sum()
-    good_units = max(0, total_produced - total_scrap)
-    
-    # Financials
-    EST_SCRAP_COST = 15.0
-    EST_DOWNTIME_COST_HR = 800.0
-    scrap_loss = total_scrap * EST_SCRAP_COST
-    
-    # Time
-    planned_hours = prod_df["planned_hours"].sum()
-    runtime_hours = prod_df["runtime_hours"].sum()
-    
-    # Downtime
-    if not dt_df.empty:
-        total_dt_min = dt_df["duration_min"].sum()
-        total_dt_hours = total_dt_min / 60.0
-        breakdown_count = len(dt_df)
-    else:
-        total_dt_min = 0
-        total_dt_hours = 0
-        breakdown_count = 0
 
-    downtime_loss = total_dt_hours * EST_DOWNTIME_COST_HR
-    total_financial_loss = scrap_loss + downtime_loss
+try:
+    data = get_data()
+except FileNotFoundError as exc:
+    st.error(str(exc))
+    st.stop()
 
-    # MTBF / MTTR
-    if breakdown_count > 0:
-        mtbf = runtime_hours / breakdown_count
-        mttr = total_dt_min / breakdown_count 
-    else:
-        mtbf = runtime_hours 
-        mttr = 0.0
-
-    # OEE Components
-    availability = (runtime_hours / planned_hours) if planned_hours > 0 else 0.0
-    quality = (good_units / total_produced) if total_produced > 0 else 0.0
-    
-    if "standard_cycle_time_sec" in prod_df.columns:
-        ideal_time_sec = (prod_df["produced_units"] * prod_df["standard_cycle_time_sec"]).sum()
-        actual_time_sec = runtime_hours * 3600
-        performance = (ideal_time_sec / actual_time_sec) if actual_time_sec > 0 else 0.0
-        performance = min(1.0, performance)
-    else:
-        performance = 0.90
-
-    oee = availability * performance * quality * 100
-
-    return {
-        "oee": round(oee, 1),
-        "availability": round(availability * 100, 1),
-        "performance": round(performance * 100, 1),
-        "quality": round(quality * 100, 1),
-        "scrap_rate": round((1-quality)*100, 2),
-        "downtime_hours": round(total_dt_hours, 1),
-        "mtbf": round(mtbf, 1),
-        "mttr": round(mttr, 1),
-        "financial_loss": int(total_financial_loss),
-        "breakdown_count": breakdown_count
-    }
-
-# ======================================
-# 4. Initialization
-# ======================================
-retriever, llm, rag_error = initialize_rag()
-prod, dt, machines = load_data()
-
-# ======================================
-# 5. Sidebar Filters
-# ======================================
+# ======================================================================
+# 2. Sidebar filters
+# ======================================================================
 st.sidebar.title("Filters")
+lines = ["All"] + sorted(data["prod"]["line_id"].unique())
+sel_line = st.sidebar.selectbox("Line", lines)
+mach = data["machines"] if sel_line == "All" else data["machines"][data["machines"]["line_id"] == sel_line]
+sel_machine = st.sidebar.selectbox("Machine", ["All"] + sorted(mach["machine_id"]),
+                                   help="Production is recorded per line, so OEE and scrap stay line-level. "
+                                        "Selecting a machine changes the reliability metrics.")
+min_d, max_d = pm.date_bounds(data)
+c1, c2 = st.sidebar.columns(2)
+start_date = c1.date_input("Start", value=max_d - timedelta(days=90), min_value=min_d, max_value=max_d)
+end_date = c2.date_input("End", value=max_d, min_value=min_d, max_value=max_d)
+if start_date > end_date:
+    st.sidebar.error("Start date is after end date.")
+    st.stop()
 
-line_opts = ["All"] + sorted(prod["line_id"].unique().tolist())
-sel_line = st.sidebar.selectbox("Line", line_opts)
+st.sidebar.markdown("---")
+st.sidebar.subheader("Assumptions")
+dt_cost = st.sidebar.number_input("Downtime cost ($/line-hour)", min_value=0, value=800, step=50)
+st.sidebar.caption("Scrap cost uses each SKU's unit cost. All data is synthetic.")
 
-if sel_line == "All":
-    machine_opts = ["All"] + sorted(machines["machine_id"].unique().tolist())
-else:
-    subset = machines[machines["line_id"] == sel_line]
-    machine_opts = ["All"] + sorted(subset["machine_id"].unique().tolist())
-sel_machine = st.sidebar.selectbox("Machine Asset", machine_opts)
+p_f, e_line, e_mach = pm.filter_data(data, sel_line, sel_machine, start_date, end_date)
+kpis = pm.compute_kpis(data, sel_line, sel_machine, start_date, end_date, dt_cost)
 
-# Date Filter
-min_d, max_d = prod["date"].min().date(), prod["date"].max().date()
-col_d1, col_d2 = st.sidebar.columns(2)
-start_date = col_d1.date_input("Start", value=max_d - timedelta(days=30), min_value=min_d, max_value=max_d)
-end_date = col_d2.date_input("End", value=max_d, min_value=min_d, max_value=max_d)
+# ======================================================================
+# 3. Header, KPI cards, watch list
+# ======================================================================
+st.title("Operational Intelligence Dashboard")
+st.caption("Simulated three-line assembly plant · synthetic 2024 data · Q1 2025 demand forecast")
+st.markdown(f"**Scope:** Line {sel_line} · Machine {sel_machine} · {start_date} to {end_date}")
 
-# ======================================
-# 6. Data Filtering
-# ======================================
-p_mask = (prod["date"].dt.date >= start_date) & (prod["date"].dt.date <= end_date)
-if sel_line != "All": p_mask &= (prod["line_id"] == sel_line)
-prod_f = prod[p_mask].copy()
 
-d_mask = (dt["start_time"].dt.date >= start_date) & (dt["start_time"].dt.date <= end_date)
-if sel_line != "All": d_mask &= (dt["line_id"] == sel_line)
-if sel_machine != "All": d_mask &= (dt["machine_id"] == sel_machine)
-dt_f = dt[d_mask].copy()
+def card(col, label, value, sub, ok):
+    color = "#3498db" if ok is None else (GOOD if ok else BAD)
+    col.markdown(f"""<div class="kpi" style="border-top-color:{color}">
+        <div class="kpi-label">{label}</div>
+        <div class="kpi-value" style="color:{color}">{value}</div>
+        <div class="kpi-sub">{sub}</div></div>""", unsafe_allow_html=True)
 
-kpis = calculate_advanced_metrics(prod_f, dt_f)
 
-# ======================================
-# 7. Dashboard Header
-# ======================================
-st.title("Operation Dashboard")
-st.markdown(f"**Scope:** {sel_line} > {sel_machine} | **Range:** {start_date} to {end_date}")
+T = pm.TARGETS
+mtbf_target = T["mtbf_machine_h"] if sel_machine != "All" else T["mtbf_line_h"]
+mtbf_label = f"MTBF ({sel_machine})" if sel_machine != "All" else "MTBF (line)"
+cols = st.columns(6)
+card(cols[0], "OEE", f"{kpis['oee_pct']}%",
+     f"A {kpis['availability_pct']} × P {kpis['performance_pct']} × Q {kpis['quality_pct']:.1f}",
+     kpis["oee_pct"] >= T["oee"])
+card(cols[1], "Availability", f"{kpis['availability_pct']}%",
+     f"Target ≥{T['availability']:.0f}% · {kpis['line_downtime_h']} h down", kpis["availability_pct"] >= T["availability"])
+card(cols[2], "Scrap rate", f"{kpis['scrap_rate_pct']}%",
+     f"Target ≤{T['scrap_rate']:.0f}% · ${kpis['scrap_cost_usd']:,}", kpis["scrap_rate_pct"] <= T["scrap_rate"])
+card(cols[3], mtbf_label, f"{kpis['mtbf_h']} h" if kpis["mtbf_h"] else "n/a",
+     f"Target ≥{mtbf_target:.0f} h · {kpis['failures']} failures",
+     None if kpis["mtbf_h"] is None else kpis["mtbf_h"] >= mtbf_target)
+card(cols[4], "MTTR", f"{kpis['mttr_min']} min" if kpis["mttr_min"] else "n/a",
+     f"Target ≤{T['mttr_min']:.0f} min", None if kpis["mttr_min"] is None else kpis["mttr_min"] <= T["mttr_min"])
+card(cols[5], "Plan attainment", f"{kpis['plan_attainment_pct']}%",
+     f"{kpis['good_units']:,} good units", kpis["plan_attainment_pct"] >= 95)
+
+if sel_machine != "All":
+    st.caption(f"OEE, availability and scrap are for line {sel_line} (production is recorded per line). "
+               f"MTBF and MTTR are for {sel_machine}.")
+
+flags = pm.exceptions(p_f, e_line)
+if flags:
+    st.markdown("##### Watch list")
+    for f in flags:
+        st.markdown(f"<div class='flag flag-{f['type']}'><b>{f['type']}:</b> {f['text']}</div>",
+                    unsafe_allow_html=True)
+
+# ======================================================================
+# 4. Analytics tabs
+# ======================================================================
+tab_prod, tab_qual, tab_rel, tab_cap, tab_how = st.tabs(
+    ["Production", "Quality", "Reliability", "Capacity planning", "How the AI works"])
+
+with tab_prod:
+    c1, c2 = st.columns([3, 2])
+    daily = pm.daily_series(p_f)
+    with c1:
+        st.markdown("##### Good units vs plan (daily)")
+        fig = go.Figure()
+        fig.add_bar(x=daily["date"], y=daily["good"], name="Good units", marker_color="#3498db")
+        fig.add_scatter(x=daily["date"], y=daily["planned_units"], name="Plan", mode="lines",
+                        line=dict(color=BAD, width=2))
+        fig.update_layout(height=340, margin=dict(l=0, r=0, t=10, b=0), legend=dict(orientation="h", y=1.1))
+        st.plotly_chart(fig, width="stretch")
+    with c2:
+        st.markdown("##### Weekly OEE and its parts")
+        w = pm.weekly_oee(p_f).melt(id_vars="week", var_name="Metric", value_name="Percent")
+        fig = px.line(w, x="week", y="Percent", color="Metric")
+        fig.add_hline(y=T["oee"], line_dash="dot", annotation_text=f"OEE target {T['oee']:.0f}%")
+        fig.update_layout(height=340, margin=dict(l=0, r=0, t=10, b=0), legend=dict(orientation="h", y=1.1))
+        st.plotly_chart(fig, width="stretch")
+
+with tab_qual:
+    unit_cost = data["skus"].set_index("sku_id")["unit_cost"]
+    c1, c2 = st.columns(2)
+    with c1:
+        st.markdown("##### Scrap rate % by line and supplier")
+        ls = pm.scrap_breakdown(p_f, "line_supplier").pivot(index="line_id", columns="supplier_id",
+                                                             values="scrap_rate_pct")
+        fig = px.imshow(ls, text_auto=".1f", color_continuous_scale="Reds", aspect="auto",
+                        labels=dict(color="Scrap %"))
+        fig.update_layout(height=320, margin=dict(l=0, r=0, t=10, b=0))
+        st.plotly_chart(fig, width="stretch")
+    with c2:
+        st.markdown("##### Scrap rate % by shift")
+        sh = pm.scrap_breakdown(p_f, "shift")
+        fig = px.bar(sh, x="shift_id", y="scrap_rate_pct", text="scrap_rate_pct",
+                     labels={"shift_id": "Shift", "scrap_rate_pct": "Scrap %"})
+        fig.add_hline(y=kpis["scrap_rate_pct"], line_dash="dot", annotation_text="Selection average")
+        fig.update_layout(height=320, margin=dict(l=0, r=0, t=10, b=0))
+        st.plotly_chart(fig, width="stretch")
+    st.markdown("##### SKUs with the highest scrap cost")
+    sku = pm.scrap_breakdown(p_f, "sku", unit_cost).sort_values("scrap_cost_usd", ascending=False).head(8)
+    st.dataframe(sku, hide_index=True, width="stretch")
+
+with tab_rel:
+    c1, c2 = st.columns([3, 2])
+    with c1:
+        st.markdown("##### Pareto: downtime by machine")
+        par = pm.downtime_breakdown(e_line, "machine").head(15)
+        fig = go.Figure()
+        fig.add_bar(x=par["machine_id"], y=par["downtime_min"], name="Downtime (min)", marker_color="#e67e22")
+        fig.add_scatter(x=par["machine_id"], y=par["cumulative_pct"], name="Cumulative % of all downtime",
+                        yaxis="y2", mode="lines+markers", line=dict(color="#2c3e50"))
+        fig.update_layout(height=340, margin=dict(l=0, r=0, t=10, b=0), legend=dict(orientation="h", y=1.12),
+                          yaxis=dict(title="Minutes"),
+                          yaxis2=dict(title="Cumulative %", overlaying="y", side="right", range=[0, 100]))
+        st.plotly_chart(fig, width="stretch")
+    with c2:
+        st.markdown("##### Downtime by cause")
+        cause = pm.downtime_breakdown(e_line, "cause")
+        cause["type"] = cause["cause_code"].map(lambda c: "Failure" if c in pm.FAILURE_CAUSES else "Stoppage")
+        fig = px.bar(cause, x="cause_code", y="downtime_min", color="type",
+                     color_discrete_map={"Failure": BAD, "Stoppage": "#95a5a6"},
+                     labels={"cause_code": "Cause", "downtime_min": "Minutes"})
+        fig.update_layout(height=340, margin=dict(l=0, r=0, t=10, b=0), legend=dict(orientation="h", y=1.12))
+        st.plotly_chart(fig, width="stretch")
+    st.markdown("##### Machines with the lowest MTBF (failures only)")
+    st.dataframe(pm.machine_reliability_table(p_f, e_line, data["machines"]).head(10),
+                 hide_index=True, width="stretch")
+
+with tab_cap:
+    st.markdown("##### Can each line meet the Q1 2025 demand forecast?")
+    st.caption("Rates come from the last 13 weeks of 2024; demand from the Q1 2025 forecast. "
+               "Move the levers to test a scenario.")
+    hist_p, hist_e, _ = cm._history(data)
+    worst = hist_e.groupby("machine_id")["duration_min"].sum().sort_values(ascending=False).head(5).index.tolist()
+    c = st.columns(6)
+    growth = c[0].slider("Demand growth %", -20, 40, 0, 5)
+    avail = c[1].slider("Availability gain (pts)", 0.0, 5.0, 0.0, 0.5)
+    scrap_cut = c[2].slider("Scrap reduction (pts)", 0.0, 2.0, 0.0, 0.1)
+    shifts = c[3].slider("Weekend shifts/week", 0, cm.MAX_EXTRA_SHIFTS, 0)
+    fix = c[4].selectbox("Fix machine", ["None"] + worst,
+                         help="Bring this machine's downtime down to its line's median machine.")
+    ceiling = c[5].slider("Loading ceiling %", 70, 95, 85, 5)
+    res = cm.run_scenario(data, "All", growth, avail, scrap_cut, shifts, None if fix == "None" else fix,
+                          ceiling / 100)
+    df = pd.DataFrame(res["lines"])
+    status_color = {"OK": GOOD, "At risk (above ceiling)": "#f39c12", "Cannot meet demand": BAD}
+
+    c1, c2 = st.columns([2, 3])
+    with c1:
+        fig = go.Figure()
+        fig.add_bar(x=df["line"], y=df["loading_pct"], text=df["loading_pct"].map(lambda v: f"{v:.0f}%"),
+                    marker_color=df["status"].map(status_color), name="Average week")
+        fig.add_scatter(x=df["line"], y=df["peak_week_loading_pct"], mode="markers", name="Peak week",
+                        marker=dict(symbol="line-ew-open", size=28, color="#2c3e50"))
+        fig.add_hline(y=ceiling, line_dash="dot", annotation_text=f"Ceiling {ceiling}%")
+        fig.add_hline(y=100, line_color=BAD, annotation_text="100%")
+        fig.update_layout(height=340, margin=dict(l=0, r=0, t=10, b=0), yaxis_title="Loading %",
+                          legend=dict(orientation="h", y=1.12))
+        st.plotly_chart(fig, width="stretch")
+    with c2:
+        show = df[["line", "status", "loading_pct", "available_h_wk", "required_h_wk", "gap_h_wk",
+                   "extra_shifts_to_reach_ceiling", "availability_pct", "performance_pct", "quality_pct"]]
+        st.dataframe(show.rename(columns={
+            "line": "Line", "status": "Status", "loading_pct": "Loading %", "available_h_wk": "Available h/wk",
+            "required_h_wk": "Required h/wk", "gap_h_wk": "Gap h/wk",
+            "extra_shifts_to_reach_ceiling": "Weekend shifts needed", "availability_pct": "A %",
+            "performance_pct": "P %", "quality_pct": "Q %"}), hide_index=True, width="stretch")
+        st.markdown("**Best single levers per line** (on top of this scenario)")
+        lever_rows = [{"Line": ln, **lv} for ln, lvs in res["levers"].items() for lv in lvs[:3]]
+        st.dataframe(pd.DataFrame(lever_rows).rename(columns={
+            "lever": "Lever", "loading_pct": "Loading %", "loading_change_pts": "Change (pts)", "status": "Status"}),
+            hide_index=True, width="stretch")
+    with st.expander("How the capacity model works"):
+        st.markdown("""
+- **Available hours/week** = scheduled hours × availability × performance (120 scheduled hours = 3 shifts × 5 days × 8 h)
+- **Required hours/week** = Σ over SKUs of (weekly demand ÷ quality yield) × ideal cycle time
+- **Loading** = required ÷ available. Above the ceiling the line is at risk: queues and lead times grow
+  sharply as loading approaches 100%.
+- **Gap** = required − available × ceiling. A positive gap is the shortfall to close.
+- **Fix machine** removes that machine's downtime above its line's median machine (a stop anywhere on a
+  serial line stops the line).
+- Limits: lines are treated as single resources, the SKU mix is fixed per line, and changeover time is
+  inside the historical availability.
+""")
+
+with tab_how:
+    st.markdown("##### How the AI assistant answers a question")
+    st.graphviz_chart("""
+digraph {
+  rankdir=LR; node [shape=box, style="rounded,filled", fillcolor="#eef4fb", fontname="Helvetica", fontsize=11];
+  q [label="Question in\\nplain English", fillcolor="#fdf2e9"];
+  llm [label="GPT (tool calling)\\nchooses tools and inputs", fillcolor="#e8f8f5"];
+  k [label="KPI + breakdown functions\\n(same pandas code as the charts)"];
+  c [label="Capacity model\\n(scenario levers)"];
+  s [label="Read-only SQL\\n(SQLite plant database)"];
+  d [label="Document search\\n(SOPs, tickets, shift reports)"];
+  a [label="Answer + sources\\n(every step shown)", fillcolor="#fdf2e9"];
+  q -> llm; llm -> k; llm -> c; llm -> s; llm -> d; k -> a; c -> a; s -> a; d -> a; llm -> a [style=dashed, label="explains"];
+}
+""")
+    st.markdown("""
+**Design choices**
+- **The model never does the math.** Every number comes from a tool: the same functions that draw the
+  charts, the capacity model, or a read-only SQL query. The model picks the tool and explains the result.
+- **Documents add the "why" and "what to do".** Retrieval over SOPs, maintenance tickets, shift reports
+  and weekly summaries supplies root causes and procedures.
+- **Every answer shows its work.** Expand "How this answer was built" under a reply to see each tool call,
+  its inputs, the SQL it ran and the documents it used.
+
+**Guardrails**
+- SQL runs on a read-only connection, accepts one SELECT statement, and returns at most 50 rows.
+- The assistant is told to say when the data doesn't contain an answer instead of guessing.
+- It defaults to the dashboard's current filters, so chart and answer use the same scope.
+
+**Limits**
+- The plant and its data are simulated. Connecting a real plant means pointing these tools at the
+  MES/ERP database instead of the SQLite file.
+""")
+
+# ======================================================================
+# 5. AI assistant
+# ======================================================================
 st.markdown("---")
+h1, h2 = st.columns([6, 1])
+h1.subheader("AI Factory Assistant")
+h1.caption("Ask in plain English. Numbers come from the plant data, procedures from SOPs and logs, "
+           "and every answer shows how it was built.")
+if h2.button("Clear chat", width="stretch"):
+    st.session_state.messages = []
+    st.rerun()
 
-col_alert, col_spacer = st.columns([2, 1])
-with col_alert:
-    if kpis['oee'] < 65:
-        st.markdown(f"<div class='alert-box alert-crit'>⚠️ **Critical OEE ({kpis['oee']}%)**: Production efficiency is critically low. Investigate Top 3 Downtime causes immediately.</div>", unsafe_allow_html=True)
-    elif kpis['scrap_rate'] > 4:
-         st.markdown(f"<div class='alert-box alert-warn'>🔸 **High Scrap Rate ({kpis['scrap_rate']}%)**: Quality yield is impacting financial margins.</div>", unsafe_allow_html=True)
+if "messages" not in st.session_state:
+    st.session_state.messages = []
 
-# ======================================
-# 8. High-Impact KPI Row
-# ======================================
-metric_cols = st.columns(5)
-metrics_def = [
-    ("OEE Score", f"{kpis['oee']}%", f"Perf: {kpis['performance']}%", "#3498db"),
-    ("Availability", f"{kpis['availability']}%", f"DT: {kpis['downtime_hours']}h", "#2ecc71"),
-    ("MT Between Failure", f"{kpis['mtbf']}h", "Target: >48h", "#9b59b6"),
-    ("Mean Time To Repair", f"{kpis['mttr']}m", "Target: <30m", "#e67e22"),
-    ("Est. Financial Loss", f"${kpis['financial_loss']:,}", "Scrap + DT Cost", "#e74c3c")
+SUGGESTIONS = [
+    "Which supplier is driving scrap on Line 2, and what does our procedure say to do?",
+    "Why is M11 losing so much time, and how much capacity would fixing it recover on Line 1?",
+    "Can Line 2 meet Q1 demand? If not, what's the cheapest way to close the gap?",
 ]
 
-for col, (label, val, sub, color) in zip(metric_cols, metrics_def):
-    col.markdown(f"""
-    <div class="metric-container" style="border-top-color: {color};">
-        <div class="metric-label">{label}</div>
-        <div class="metric-value" style="color: {color}">{val}</div>
-        <div class="metric-sub">{sub}</div>
-    </div>
-    """, unsafe_allow_html=True)
 
-st.write("") 
+def render_trace(trace):
+    if not trace:
+        return
+    with st.expander(f"How this answer was built ({len(trace)} step{'s' if len(trace) != 1 else ''})"):
+        for i, step in enumerate(trace, 1):
+            st.markdown(f"**{i}. `{step['tool']}`**")
+            args = step.get("args", {})
+            try:
+                result = json.loads(step["result"])
+            except (TypeError, ValueError):
+                result = step["result"]
+            if step["tool"] == "run_sql":
+                st.code(args.get("query", ""), language="sql")
+            elif args:
+                st.caption("Inputs: " + ", ".join(f"{k}={v}" for k, v in args.items()))
+            if step["tool"] == "search_documents" and isinstance(result, list):
+                for hit in result:
+                    st.markdown(f"📄 **{hit['source']}** ({hit['folder']})")
+                    st.caption(hit["text"][:220].replace("\n", " ") + "...")
+            elif isinstance(result, (dict, list)):
+                st.json(result, expanded=False)
+            else:
+                st.caption(str(result)[:500])
 
-# ======================================
-# 9. Analytics Tabs
-# ======================================
-tab_prod, tab_qual, tab_rel = st.tabs(["Production & Targets", "Quality & Yield (Granular)", "Reliability Analysis"])
 
-# --- Tab 1: Production ---
-with tab_prod:
-    col_p1, col_p2 = st.columns([2, 1])
-    with col_p1:
-        st.markdown("##### Production Volume vs Daily Target")
-        if not prod_f.empty:
-            daily = prod_f.groupby("date")["produced_units"].sum().reset_index()
-            
-            # --- FIXED TARGET LOGIC ---
-            # If All Lines selected: Target = 210,000 / day
-            # If Specific Line selected: Target = 70,000 / day
-            daily_target = 70000 if sel_line != "All" else 210000
-            daily["target"] = daily_target
-            
-            fig = go.Figure()
-            fig.add_trace(go.Bar(x=daily['date'], y=daily['produced_units'], name="Actual Output", marker_color="#3498db"))
-            fig.add_trace(go.Scatter(x=daily['date'], y=daily['target'], name=f"Target ({daily_target//1000}k)", line=dict(color="#e74c3c", width=3)))
-            fig.update_layout(height=350, margin=dict(l=0, r=0, t=30, b=0), legend=dict(orientation="h", y=1.1))
-            st.plotly_chart(fig, use_container_width=True)
-    
-    with col_p2:
-        st.markdown("##### Performance Heatmap")
-        if not prod_f.empty:
-            daily_oee = prod_f.groupby("date")[["runtime_hours", "planned_hours"]].sum().reset_index()
-            daily_oee["util"] = (daily_oee["runtime_hours"] / daily_oee["planned_hours"]) * 100
-            fig_trend = px.line(daily_oee, x="date", y="util", title="Daily Utilization %", line_shape="spline")
-            fig_trend.update_traces(line_color="#2ecc71")
-            fig_trend.update_layout(height=350)
-            st.plotly_chart(fig_trend, use_container_width=True)
-
-# --- Tab 2: Granular Quality ---
-with tab_qual:
-    col_q1, col_q2 = st.columns(2)
-    
-    with col_q1:
-        st.markdown("##### Line-wise Quality Yield (%)")
-        if not prod_f.empty:
-            line_qual = prod_f.groupby("line_id").agg({
-                "produced_units": "sum", 
-                "scrap_units": "sum"
-            }).reset_index()
-            line_qual["Quality %"] = ((line_qual["produced_units"] - line_qual["scrap_units"]) / line_qual["produced_units"] * 100).round(1)
-            
-            fig_line_q = px.bar(line_qual, x="line_id", y="Quality %", color="Quality %", color_continuous_scale="Teal", range_y=[80, 100], text="Quality %")
-            fig_line_q.update_layout(height=350)
-            st.plotly_chart(fig_line_q, use_container_width=True)
-            
-    with col_q2:
-        st.markdown("##### Machine-wise High Scrap (Top 10 Proxy)")
-        # Using breakdown frequency as proxy for unstable machines
-        if not dt_f.empty:
-            machine_issues = dt_f.groupby("machine_id").size().reset_index(name="Issue Count")
-            machine_issues = machine_issues.sort_values("Issue Count", ascending=False).head(10)
-            
-            fig_mach = px.bar(machine_issues, x="machine_id", y="Issue Count", title="Machines with Frequent Issues", color="Issue Count", color_continuous_scale="Reds")
-            fig_mach.update_layout(height=350)
-            st.plotly_chart(fig_mach, use_container_width=True)
-        else:
-            st.info("No machine-level failure data available for this period.")
-
-# --- Tab 3: Reliability (FIXED DATE CRASH) ---
-with tab_rel:
-    col_r1, col_r2 = st.columns(2)
-    with col_r1:
-        st.markdown("##### Pareto: Top Downtime Causes")
-        if not dt_f.empty:
-            pareto = dt_f.groupby("cause_code")["duration_min"].sum().sort_values(ascending=False).reset_index()
-            fig_par = px.bar(pareto, x="cause_code", y="duration_min", color="duration_min", color_continuous_scale="Reds")
-            fig_par.update_layout(height=350, xaxis_title="Failure Code", yaxis_title="Minutes Lost")
-            st.plotly_chart(fig_par, use_container_width=True)
-            
-    with col_r2:
-        st.markdown("##### MTTR Analysis (Repair Speed)")
-        if not dt_f.empty:
-            # FIX: Ensure proper datetime conversion for trendline math
-            dt_f['date_plot'] = pd.to_datetime(dt_f['start_time'].dt.date)
-            mttr_trend = dt_f.groupby("date_plot")["duration_min"].mean().reset_index()
-            
-            fig_mttr = px.scatter(mttr_trend, x="date_plot", y="duration_min", 
-                                  title="Avg Repair Time (Minutes)", 
-                                  trendline="lowess")
-            fig_mttr.update_layout(height=350)
-            st.plotly_chart(fig_mttr, use_container_width=True)
-
-# ======================================
-# 10. AI Assistant (Native UI)
-# ======================================
-st.markdown("---")
-
-col_header, col_clear = st.columns([6, 1])
-
-with col_header:
-    st.subheader("AI Factory Assistant")
-
-with col_clear:
-    # THE CLEAR BUTTON LOGIC
-    if st.button("Clear Chat", use_container_width=True):
-        st.session_state.messages = [
-            {
-                "role": "assistant", 
-                "content": "Hello! I can analyze scrap trends, downtime logs, and standard procedures. What do you need?",
-                "sources": []
-            }
-        ]
-        st.rerun() # Forces the app to reload immediately
-
-# Initialize Chat History (if not already done by the button)
-if "messages" not in st.session_state:
-    st.session_state.messages = [
-        {
-            "role": "assistant", 
-            "content": "Hello! I can analyze scrap trends, downtime logs, and standard procedures. What do you need?",
-            "sources": []
-        }
-    ]
-
-def clean_source_name(file_path):
-    """Converts a full file path into a clean filename for display."""
-    if not file_path:
-        return "Unknown Source"
-    return os.path.basename(file_path)
-
-def contextualize_query(llm, history, latest_query):
-    """
-    Takes conversation history and the latest user question.
-    If the user question references context (e.g., "it", "that machine"),
-    rewrites it into a standalone question.
-    """
-    if not history:
-        return latest_query
-    
-    # Keep only the last 2 exchanges to keep costs low and focus relevant
-    recent_history = history[-4:] 
-    
-    history_str = ""
-    for msg in recent_history:
-        role = "User" if msg["role"] == "user" else "Assistant"
-        history_str += f"{role}: {msg['content']}\n"
-
-    system_prompt = f"""
-    Given the chat history and the latest user question which might reference context in the chat history, 
-    formulate a standalone question which can be understood without the chat history. 
-    Do NOT answer the question, just rewrite it if needed and otherwise return it as is.
-    
-    Chat History:
-    {history_str}
-    
-    Latest User Question: {latest_query}
-    
-    Standalone Question:
-    """
-    
-    # We use a separate lightweight call to get the rewritten query
-    response = llm.invoke(system_prompt)
-    return response.content
-
-if "messages" not in st.session_state:
-    st.session_state.messages = [
-        {
-            "role": "assistant", 
-            "content": "Hello! I can analyze scrap trends, downtime logs, and standard procedures. What do you need?",
-            "sources": [] # Key: Add empty sources list for init message
-        }
-    ]
-
-# --- DISPLAY HISTORY ---
 for msg in st.session_state.messages:
     with st.chat_message(msg["role"]):
         st.markdown(msg["content"])
-        
-        # If this message has associated sources, show them in an expander
-        if "sources" in msg and msg["sources"]:
-            with st.expander("📚 View Source Documents"):
-                for source in msg["sources"]:
-                    # Formatting the source display
-                    source_name = clean_source_name(source.get("source", ""))
-                    snippet = source.get("content", "")[:150].replace("\n", " ") + "..."
-                    
-                    st.markdown(f"**📄 {source_name}**")
-                    st.caption(f"\"{snippet}\"")
-                    st.divider()
+        render_trace(msg.get("trace"))
 
-# --- CHAT INPUT HANDLER ---
-if prompt := st.chat_input("Ask about scrap, failures, or maintenance procedures..."):
-    # 1. Display User Message
-    st.session_state.messages.append({"role": "user", "content": prompt})
-    with st.chat_message("user"):
-        st.markdown(prompt)
+api_key = get_secret("OPENAI_API_KEY")
+if not api_key:
+    st.info("The assistant needs an OpenAI API key. Add OPENAI_API_KEY to the app's Streamlit secrets "
+            "(or a local .env file). The dashboard works without it.")
+else:
+    s_cols = st.columns(len(SUGGESTIONS))
+    clicked = None
+    for col, q in zip(s_cols, SUGGESTIONS):
+        if col.button(q, width="stretch"):
+            clicked = q
+    typed = st.chat_input("Ask about output, scrap, downtime, capacity or procedures...")
+    question = typed or clicked
+    if question:
+        st.session_state.messages.append({"role": "user", "content": question})
+        with st.chat_message("user"):
+            st.markdown(question)
+        with st.chat_message("assistant"):
+            scope = {"line": sel_line, "machine": sel_machine, "start": str(start_date), "end": str(end_date)}
+            try:
+                search = get_doc_search(api_key)
+                tools = ai.make_tools(data, scope, pm.DB_PATH, search)
+                llm = get_llm(get_secret("OPENAI_MODEL", "gpt-4o-mini"), api_key)
+                with st.spinner("Checking the plant data..."):
+                    out = ai.answer_question(question, st.session_state.messages[:-1], llm, tools, scope)
+                answer, trace = out["answer"], out["trace"]
+            except Exception as exc:
+                answer, trace = f"Sorry, the assistant hit an error: `{exc}`", []
+            st.markdown(answer)
+            render_trace(trace)
+        st.session_state.messages.append({"role": "assistant", "content": answer, "trace": trace})
 
-    # 2. Generate Response
-    with st.chat_message("assistant"):
-        message_placeholder = st.empty()
-        
-        if rag_error:
-            response = f"⚠️ System Error: {rag_error}"
-            message_placeholder.markdown(response)
-        else:
-            with st.spinner("Analyzing plant data..."):
-                
-                # --- STEP 1: CONTEXTUALIZE ---
-                history_for_context = st.session_state.messages[:-1]
-                standalone_query = contextualize_query(llm, history_for_context, prompt)
-                
-                # --- STEP 2: RETRIEVE ---
-                docs = retriever.invoke(standalone_query)
-                doc_text = "\n\n".join([d.page_content for d in docs])
-                
-                # --- STEP 3: ANSWER ---
-                context_str = f"""
-                Current Context:
-                - Line: {sel_line} | Machine: {sel_machine}
-                - OEE: {kpis['oee']}% | MTBF: {kpis['mtbf']}h
-                - Financial Loss: ${kpis['financial_loss']:,}
-                """
-                
-                final_prompt = f"""
-                You are a factory assistant. Answer using the context below.
-                
-                DASHBOARD METRICS:
-                {context_str}
-                
-                KNOWLEDGE BASE (SOPs/LOGS):
-                {doc_text}
-                
-                USER QUESTION: {prompt}
-                
-                Answer concisely with bullet points if needed.
-                """
-                
-                ai_response = llm.invoke(final_prompt)
-                response = ai_response.content
-                
-                message_placeholder.markdown(response)
-                
-                # --- STEP 4: SHOW SOURCES IMMEDIATELY ---
-                # Create a list of source dicts to save to history
-                sources_data = []
-                if docs:
-                    with st.expander("📚 View Source Documents"):
-                        for d in docs:
-                            src_name = clean_source_name(d.metadata.get("source", ""))
-                            # Save to list for history
-                            sources_data.append({"source": src_name, "content": d.page_content})
-                            
-                            # Display now
-                            st.markdown(f"**📄 {src_name}**")
-                            st.caption(f"\"{d.page_content[:150].replace(chr(10), ' ')}...\"")
-                            st.divider()
-
-    # 3. Save Assistant Response WITH SOURCES to History
-    st.session_state.messages.append({
-        "role": "assistant", 
-        "content": response,
-        "sources": sources_data # <--- This ensures they persist on refresh
-    })
-
-# ======================================
-# Footer
-# ======================================
 st.markdown("---")
-st.caption(f"All rights reserved  © {datetime.now().year}")
+st.caption("Portfolio project by Surya Vasanth · synthetic data for demonstration")

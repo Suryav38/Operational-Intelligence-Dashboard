@@ -1,0 +1,17 @@
+Maintenance Ticket 1167
+Machine: M39 (Line L3)
+Opened: 2024-09-19 02:48
+Status: CLOSED
+Issue: Frequent Jams
+Root cause: Calibration Drift
+
+Summary:
+Technician responded to a high-severity stop on M39. Inspection pointed to calibration drift.
+M39 logged 53 stops during 2024.
+
+Corrective action:
+Adjusted sensor thresholds, replaced faulty sensor, and verified readings.
+
+Follow-up:
+- Monitor M39 for noise, vibration, minor jams or sensor irregularities over the next two weeks.
+- Escalate if unplanned downtime exceeds the normal range for this asset.

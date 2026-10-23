@@ -1,0 +1,17 @@
+Maintenance Ticket 1080
+Machine: M18 (Line L2)
+Opened: 2024-05-03 03:08
+Status: CLOSED
+Issue: Vibration
+Root cause: Material Quality
+
+Summary:
+Technician responded to a high-severity stop on M18. Inspection pointed to material quality.
+M18 logged 51 stops during 2024.
+
+Corrective action:
+Escalated material issue to supplier and updated incoming inspection plan per SOP-MAT-QUAL-002.
+
+Follow-up:
+- Monitor M18 for noise, vibration, minor jams or sensor irregularities over the next two weeks.
+- Escalate if unplanned downtime exceeds the normal range for this asset.

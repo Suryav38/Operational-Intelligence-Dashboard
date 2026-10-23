@@ -1,0 +1,13 @@
+Shift Report - Line L3 - 2024-07-11 - NIGHT shift
+
+Quality:
+Shift scrap rate was 3.4% (161 of 4717 units).
+Worst run: SKU029 with material from SUP_B at 4.6% scrap.
+Operators reported dimensional defects and extra checks at the inspection station.
+
+Actions taken:
+- Held suspect material from SUP_B and notified quality per SOP-MAT-QUAL-002.
+- Increased inspection frequency for the rest of the shift.
+
+Notes for next shift:
+- Watch scrap on SKU029; escalate to purchasing if the issue repeats with SUP_B.

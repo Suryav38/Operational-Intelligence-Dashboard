@@ -1,0 +1,17 @@
+Maintenance Ticket 1048
+Machine: M33 (Line L3)
+Opened: 2024-03-16 02:46
+Status: CLOSED
+Issue: Overheating
+Root cause: Misalignment
+
+Summary:
+Technician responded to a high-severity stop on M33. Inspection pointed to misalignment.
+M33 logged 53 stops during 2024.
+
+Corrective action:
+Realigned mechanical assembly per SOP-MECH-ALIGN-001 and tightened fixtures.
+
+Follow-up:
+- Monitor M33 for noise, vibration, minor jams or sensor irregularities over the next two weeks.
+- Escalate if unplanned downtime exceeds the normal range for this asset.

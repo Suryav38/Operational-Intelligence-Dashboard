@@ -1,652 +1,479 @@
-import random
-from pathlib import Path
+"""
+Synthetic data generator for the Operational Intelligence Dashboard.
+
+Simulates a 3-line discrete assembly plant for calendar year 2024:
+  * Schedule: Monday-Friday, 3 shifts x 8 h per line (120 scheduled hours/week).
+  * Each shift runs 4 SKUs back to back in 2-hour blocks, so planned hours add
+    up to 8 per shift (the old version gave every SKU the full 8 hours).
+  * Machine downtime events are generated first; line downtime is derived from
+    them (a stop on any machine stops the serial line), so the production table
+    and the downtime log always agree.
+  * A Q1 2025 weekly demand forecast drives the capacity-planning tab.
+
+Planted problems the dashboard should surface:
+  * M11 (Line 1) is unreliable: ~3x the stop rate and ~3x longer repairs.
+  * Supplier SUP_B causes extra scrap on Line 2.
+  * Night shift runs ~3 points slower with +1 point scrap.
+
+All data is synthetic. Run from the repo root or the code/ folder:
+    python code/data_generation.py
+"""
+import shutil
 from datetime import datetime, timedelta
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
 
-# -----------------------------
-# Global config & random seeds
-# -----------------------------
 RNG = np.random.default_rng(42)
-random.seed(42)
 
-# Full year of data
 DATE_START = "2024-01-01"
-DATE_END = "2024-12-31" 
+DATE_END = "2024-12-31"
 
 LINES = ["L1", "L2", "L3"]
 SHIFTS = [
-    {"id": "MORNING", "start": "06:00", "end": "14:00"},
-    {"id": "EVENING", "start": "14:00", "end": "22:00"},
-    {"id": "NIGHT", "start": "22:00", "end": "06:00"},
+    {"id": "MORNING", "start_hour": 6},
+    {"id": "EVENING", "start_hour": 14},
+    {"id": "NIGHT", "start_hour": 22},
 ]
-
+SHIFT_MIN = 480
+SKU_BLOCKS = 4                      # SKUs per shift
+BLOCK_MIN = SHIFT_MIN // SKU_BLOCKS  # 120 minutes each
 MACHINES_PER_LINE = 15
-SKUS = [f"SKU{i:03d}" for i in range(1, 31)]  # SKU001 .. SKU030
-
-# Problem patterns
-PROBLEM_MACHINE = "M11"  
-PROBLEM_SUPPLIER = "SUP_B" 
+SKUS = [f"SKU{i:03d}" for i in range(1, 31)]
+SKUS_PER_LINE = 8
 SUPPLIERS = ["SUP_A", "SUP_B", "SUP_C", "SUP_D"]
+SUPPLIER_P = [0.3, 0.3, 0.2, 0.2]
+OPERATORS = ["Alex", "Jordan", "Riley", "Sam", "Taylor", "Morgan"]
+
+PROBLEM_MACHINE = "M11"
+PROBLEM_SUPPLIER = "SUP_B"
+PROBLEM_SUPPLIER_LINE = "L2"
+
+PLANNING_OEE = 0.85   # rate the scheduler plans to (sets planned_units)
+FAILURE_CAUSES = ["MECH_FAILURE", "SENSOR_FAULT"]
+
+# Q1 2025 demand relative to each line's 2024 Q4 output (line = 100% loaded today)
+DEMAND_FACTOR = {"L1": 0.93, "L2": 1.10, "L3": 0.78}
+FORECAST_WEEKS = 13
 
 
-def get_project_root() -> Path:
-    # script is in project_root/code/, so root is parent of parent
+def project_root() -> Path:
     return Path(__file__).resolve().parents[1]
 
 
-def ensure_dirs():
-    root = get_project_root()
-    data_root = root / "data" / "manrag"
+def reset_dirs():
+    """Delete old generated data so no stale files leak into the document index."""
+    data_root = project_root() / "data" / "manrag"
+    for sub in ["structured", "unstructured", "chroma_store"]:
+        shutil.rmtree(data_root / sub, ignore_errors=True)
+    db = data_root / "manrag_factory.db"
+    if db.exists():
+        db.unlink()
     structured = data_root / "structured"
     unstructured = data_root / "unstructured"
     structured.mkdir(parents=True, exist_ok=True)
-    (unstructured / "maintenance_logs").mkdir(parents=True, exist_ok=True)
-    (unstructured / "shift_reports").mkdir(parents=True, exist_ok=True)
-    (unstructured / "sop_docs").mkdir(parents=True, exist_ok=True)
-    (unstructured / "weekly_summaries").mkdir(parents=True, exist_ok=True)
-    (unstructured / "machine_notes").mkdir(parents=True, exist_ok=True)
+    for sub in ["maintenance_logs", "shift_reports", "sop_docs", "weekly_summaries", "machine_notes"]:
+        (unstructured / sub).mkdir(parents=True, exist_ok=True)
     return structured, unstructured
 
 
-# -----------------------------
-# Dimension tables
-# -----------------------------
-def generate_dim_line():
-    return pd.DataFrame(
-        {
-            "line_id": LINES,
-            "description": [f"Assembly Line {i+1}" for i in range(len(LINES))],
-        }
-    )
+def workdays():
+    days = pd.date_range(DATE_START, DATE_END, freq="D")
+    return [d for d in days if d.weekday() < 5]
 
 
-def generate_dim_shift():
-    return pd.DataFrame(
-        {
-            "shift_id": [s["id"] for s in SHIFTS],
-            "start_time": [s["start"] for s in SHIFTS],
-            "end_time": [s["end"] for s in SHIFTS],
-        }
-    )
-
-
-def generate_dim_machine():
-    rows = []
-    machine_idx = 1
+# ---------------------------------------------------------------- dimensions
+def make_dimensions():
+    dim_line = pd.DataFrame({"line_id": LINES,
+                             "description": [f"Assembly Line {i + 1}" for i in range(len(LINES))]})
+    dim_shift = pd.DataFrame({"shift_id": [s["id"] for s in SHIFTS],
+                              "start_time": ["06:00", "14:00", "22:00"],
+                              "end_time": ["14:00", "22:00", "06:00"]})
+    rows, idx = [], 1
     for line in LINES:
         for _ in range(MACHINES_PER_LINE):
-            rows.append(
-                {
-                    "machine_id": f"M{machine_idx:02d}",
-                    "line_id": line,
-                    "machine_type": RNG.choice(
-                        ["Press", "Cutter", "Assembler", "Conveyor"]
-                    ),
-                    "commissioned_date": "2020-01-01",
-                }
-            )
-            machine_idx += 1
-    return pd.DataFrame(rows)
+            rows.append({"machine_id": f"M{idx:02d}", "line_id": line,
+                         "machine_type": RNG.choice(["Press", "Cutter", "Assembler", "Conveyor"]),
+                         "commissioned_date": "2020-01-01"})
+            idx += 1
+    dim_machine = pd.DataFrame(rows)
+    dim_sku = pd.DataFrame({
+        "sku_id": SKUS,
+        "name": [f"Product {i}" for i in range(1, len(SKUS) + 1)],
+        "category": [RNG.choice(["Valve", "Controller", "Housing", "Bracket"]) for _ in SKUS],
+        "unit_cost": RNG.uniform(10, 200, size=len(SKUS)).round(2),
+        "ideal_cycle_time_sec": RNG.uniform(2.5, 8.0, size=len(SKUS)).round(1),
+    })
+    shuffled = RNG.permutation(SKUS).tolist()
+    line_sku = pd.DataFrame([{"line_id": line, "sku_id": sku}
+                             for i, line in enumerate(LINES)
+                             for sku in shuffled[i * SKUS_PER_LINE:(i + 1) * SKUS_PER_LINE]])
+    return dim_line, dim_shift, dim_machine, dim_sku, line_sku
 
 
-def generate_dim_sku():
-    categories = ["Valve", "Controller", "Housing", "Bracket"]
-    # NEW: Added ideal_cycle_time_sec to calculate Performance
-    return pd.DataFrame(
-        {
-            "sku_id": SKUS,
-            "name": [f"Product {i}" for i in range(1, len(SKUS) + 1)],
-            "category": [RNG.choice(categories) for _ in SKUS],
-            "unit_cost": RNG.uniform(10, 200, size=len(SKUS)).round(2),
-            "ideal_cycle_time_sec": RNG.uniform(2.5, 8.0, size=len(SKUS)).round(1) 
-        }
-    )
-
-
-# -----------------------------
-# Fact tables
-# -----------------------------
-def generate_production_daily(dim_machine: pd.DataFrame, dim_sku: pd.DataFrame):
-    """
-    UPDATED: Calculates produced units based on runtime and ideal cycle time.
-    Performance is now a derived result of (Actual / Ideal).
-    """
-    dates = pd.date_range(DATE_START, DATE_END, freq="D")
+# ---------------------------------------------------------------- downtime
+def make_downtime_events(dim_machine, days):
     rows = []
+    n_shifts = len(days) * len(SHIFTS)
+    for _, m in dim_machine.iterrows():
+        problem = m["machine_id"] == PROBLEM_MACHINE
+        stops_per_month = 14 if problem else 4
+        n_events = RNG.poisson(stops_per_month * 12)
+        slots = RNG.choice(n_shifts, size=min(n_events, n_shifts), replace=False)
+        for slot in slots:
+            day = days[slot // len(SHIFTS)]
+            shift = SHIFTS[slot % len(SHIFTS)]
+            shift_start = datetime.combine(day.date(), datetime.min.time()) + timedelta(hours=shift["start_hour"])
+            offset = int(RNG.integers(0, SHIFT_MIN - 5))
+            if problem:
+                duration = int(max(15, RNG.normal(100, 40)))
+                cause = RNG.choice(["MECH_FAILURE", "MATERIAL_JAM", "SENSOR_FAULT", "CHANGEOVER_ISSUE"],
+                                   p=[0.6, 0.2, 0.15, 0.05])
+            else:
+                duration = int(max(5, RNG.normal(35, 22)))
+                cause = RNG.choice(["MECH_FAILURE", "MATERIAL_JAM", "SENSOR_FAULT", "CHANGEOVER_ISSUE"],
+                                   p=[0.35, 0.3, 0.2, 0.15])
+            duration = min(duration, SHIFT_MIN - offset)  # keep the event inside its shift
+            start = shift_start + timedelta(minutes=offset)
+            severity = "LOW" if duration < 20 else ("MEDIUM" if duration < 60 else "HIGH")
+            rows.append({
+                "machine_id": m["machine_id"], "line_id": m["line_id"],
+                "shift_date": day.date().isoformat(), "shift_id": shift["id"],
+                "start_time": start.isoformat(), "end_time": (start + timedelta(minutes=duration)).isoformat(),
+                "start_offset_min": offset, "duration_min": duration,
+                "cause_code": cause, "severity": severity,
+                "operator_name": RNG.choice(OPERATORS),
+            })
+    df = pd.DataFrame(rows).sort_values("start_time").reset_index(drop=True)
+    df.insert(0, "event_id", range(1, len(df) + 1))
+    return df
 
-    # Create a lookup for cycle times
-    sku_cycle_map = dict(zip(dim_sku["sku_id"], dim_sku["ideal_cycle_time_sec"]))
 
-    # Assign SKUs to lines
-    line_sku_map = {
-        line: RNG.choice(SKUS, size=8, replace=False).tolist() for line in LINES
-    }
+def line_stop_intervals(events):
+    """Union of machine stop intervals per (line, date, shift), in minutes from shift start."""
+    out = {}
+    for key, grp in events.groupby(["line_id", "shift_date", "shift_id"]):
+        ivs = sorted(zip(grp["start_offset_min"], grp["start_offset_min"] + grp["duration_min"]))
+        merged = []
+        for s, e in ivs:
+            if merged and s <= merged[-1][1]:
+                merged[-1][1] = max(merged[-1][1], e)
+            else:
+                merged.append([s, e])
+        out[key] = merged
+    return out
 
-    for date in dates:
+
+def overlap(intervals, lo, hi):
+    return sum(max(0, min(e, hi) - max(s, lo)) for s, e in intervals)
+
+
+# ---------------------------------------------------------------- production
+def make_production(days, dim_sku, line_sku, stops):
+    ct = dict(zip(dim_sku["sku_id"], dim_sku["ideal_cycle_time_sec"]))
+    skus_by_line = line_sku.groupby("line_id")["sku_id"].apply(list).to_dict()
+    rows = []
+    for day in days:
+        d = day.date().isoformat()
         for line in LINES:
             for shift in SHIFTS:
-                skus_for_line = line_sku_map[line]
-                sku_sample = RNG.choice(skus_for_line, size=4, replace=False)
-                
-                for sku in sku_sample:
-                    planned_hours = 8.0
-                    
-                    # 1. Calculate Downtime
-                    downtime_minutes = max(0, int(RNG.normal(loc=25, scale=12)))
-                    
-                    # Problem Machine / Line logic simulation (indirectly affecting Line 2)
-                    if line == "L2" and RNG.random() > 0.8:
-                         downtime_minutes += int(RNG.uniform(10, 40))
-
-                    runtime_hours = max(0.0, planned_hours - (downtime_minutes / 60.0))
-                    runtime_seconds = runtime_hours * 3600
-                    
-                    # 2. Calculate Theoretical Max Production (100% Performance)
-                    ideal_cycle = sku_cycle_map[sku]
-                    max_possible_units = int(runtime_seconds / ideal_cycle) if ideal_cycle > 0 else 0
-                    
-                    # 3. Apply Performance Efficiency Factor
-                    # Normal lines run between 85% and 98% speed efficiency
-                    # Night shift is slightly slower (tired operators)
-                    perf_efficiency = RNG.uniform(0.85, 0.98)
-                    if shift["id"] == "NIGHT":
-                        perf_efficiency -= 0.03
-                    
-                    produced_units = int(max_possible_units * perf_efficiency)
-
-                    # 4. Calculate Scrap (Quality)
-                    scrap_rate = 0.02
-                    if shift["id"] == "NIGHT": scrap_rate += 0.01
-                    
-                    supplier = RNG.choice(SUPPLIERS, p=[0.3, 0.3, 0.2, 0.2])
-                    if supplier == PROBLEM_SUPPLIER and line == "L2":
+                intervals = stops.get((line, d, shift["id"]), [])
+                for seq, sku in enumerate(RNG.choice(skus_by_line[line], size=SKU_BLOCKS, replace=False), start=1):
+                    lo, hi = (seq - 1) * BLOCK_MIN, seq * BLOCK_MIN
+                    dt_min = overlap(intervals, lo, hi)
+                    runtime_h = (BLOCK_MIN - dt_min) / 60
+                    perf = RNG.uniform(0.86, 0.97) - (0.03 if shift["id"] == "NIGHT" else 0)
+                    produced = int(runtime_h * 3600 / ct[sku] * perf)
+                    supplier = RNG.choice(SUPPLIERS, p=SUPPLIER_P)
+                    scrap_rate = 0.02 + (0.01 if shift["id"] == "NIGHT" else 0)
+                    if supplier == PROBLEM_SUPPLIER and line == PROBLEM_SUPPLIER_LINE:
                         scrap_rate += 0.03
-                    
-                    # Add noise
-                    scrap_units = int(max(0, (produced_units * scrap_rate) + RNG.normal(0, 5)))
-                    
-                    # Ensure produced units >= scrap units
-                    if scrap_units > produced_units:
-                        scrap_units = produced_units
-
-                    rows.append(
-                        {
-                            "date": date.date().isoformat(),
-                            "line_id": line,
-                            "shift_id": shift["id"],
-                            "sku_id": sku,
-                            "supplier_id": supplier,
-                            "produced_units": produced_units,
-                            "scrap_units": scrap_units,
-                            "planned_hours": planned_hours,
-                            "runtime_hours": round(runtime_hours, 2),
-                            "downtime_minutes": downtime_minutes,
-                            # We store standard cycle time so dashboard can calculate Performance later
-                            "standard_cycle_time_sec": ideal_cycle 
-                        }
-                    )
-
+                    scrap = int(RNG.binomial(produced, scrap_rate)) if produced > 0 else 0
+                    rows.append({
+                        "date": d, "line_id": line, "shift_id": shift["id"], "run_seq": seq,
+                        "sku_id": sku, "supplier_id": supplier,
+                        "planned_hours": BLOCK_MIN / 60, "runtime_hours": round(runtime_h, 3),
+                        "downtime_minutes": int(dt_min),
+                        "planned_units": int(BLOCK_MIN * 60 / ct[sku] * PLANNING_OEE),
+                        "produced_units": produced, "scrap_units": scrap,
+                        "standard_cycle_time_sec": ct[sku],
+                    })
     return pd.DataFrame(rows)
 
 
-def generate_downtime_events(dim_machine: pd.DataFrame):
-    # (Same as before)
-    dates = pd.date_range(DATE_START, DATE_END, freq="D")
+def make_demand_forecast(prod):
+    """Weekly Q1 2025 demand (good units) per line and SKU."""
+    p = prod.copy()
+    p["date"] = pd.to_datetime(p["date"])
+    q4 = p[p["date"] >= "2024-10-01"]
+    weeks_q4 = q4["date"].dt.to_period("W").nunique()
+    base = (q4.assign(good=q4["produced_units"] - q4["scrap_units"])
+              .groupby(["line_id", "sku_id"])["good"].sum() / weeks_q4).reset_index(name="base")
+    first_monday = pd.Timestamp("2025-01-06")
     rows = []
-    event_id = 1
-    total_days = (dates[-1] - dates[0]).days + 1
-
-    for _, m in dim_machine.iterrows():
-        machine_id = m["machine_id"]
-        line_id = m["line_id"]
-
-        base_lambda_month = 5
-        if machine_id == PROBLEM_MACHINE:
-            base_lambda_month = 14 
-
-        months = total_days / 30.0
-        expected_events = RNG.poisson(base_lambda_month * months)
-
-        if expected_events == 0:
-            continue
-
-        event_days = RNG.choice(dates, size=expected_events, replace=False)
-        for day in event_days:
-            shift = RNG.choice(SHIFTS)
-            day_date = pd.to_datetime(day).date()
-            start_hour = int(shift["start"].split(":")[0])
-            start_time = datetime.combine(day_date, datetime.min.time()) + timedelta(hours=start_hour)
-            offset_min = int(RNG.integers(0, 4 * 60))
-            start_time = start_time + timedelta(minutes=offset_min)
-
-            if machine_id == PROBLEM_MACHINE:
-                duration_min = int(max(10, RNG.normal(loc=100, scale=45)))
-            else:
-                duration_min = int(max(5, RNG.normal(loc=35, scale=25)))
-
-            end_time = start_time + timedelta(minutes=duration_min)
-            cause_code = RNG.choice(
-                ["MECH_FAILURE", "MATERIAL_JAM", "SENSOR_FAULT", "CHANGEOVER_ISSUE"],
-                p=[0.4, 0.3, 0.2, 0.1],
-            )
-            severity = RNG.choice(["LOW", "MEDIUM", "HIGH"], p=[0.5, 0.3, 0.2])
-
-            rows.append(
-                {
-                    "event_id": event_id,
-                    "machine_id": machine_id,
-                    "line_id": line_id,
-                    "start_time": start_time.isoformat(),
-                    "end_time": end_time.isoformat(),
-                    "duration_min": duration_min,
-                    "cause_code": cause_code,
-                    "severity": severity,
-                    "shift_id": shift["id"],
-                    "operator_name": RNG.choice(
-                        ["Alex", "Jordan", "Riley", "Sam", "Taylor", "Morgan"]
-                    ),
-                }
-            )
-            event_id += 1
-
+    for w in range(FORECAST_WEEKS):
+        week = first_monday + pd.Timedelta(weeks=w)
+        for _, r in base.iterrows():
+            factor = DEMAND_FACTOR[r["line_id"]] * (1 + RNG.normal(0, 0.04))
+            rows.append({"week_start": week.date().isoformat(), "line_id": r["line_id"],
+                         "sku_id": r["sku_id"], "demand_units": int(r["base"] * factor)})
     return pd.DataFrame(rows)
 
 
-def generate_maintenance_tickets(downtime_events: pd.DataFrame):
-    # (Same as before)
+def make_maintenance_tickets(events):
+    """One ticket per HIGH-severity failure, closed 0.5-5 days later (open if very recent)."""
+    fails = events[(events["severity"] == "HIGH") & (events["cause_code"].isin(FAILURE_CAUSES))]
     rows = []
-    ticket_id = 1001
-
-    grouped = downtime_events.groupby("machine_id")["duration_min"].sum().reset_index()
-    for _, row in grouped.iterrows():
-        machine_id = row["machine_id"]
-        total_downtime = row["duration_min"]
-
-        if total_downtime > 300 or machine_id == PROBLEM_MACHINE:
-            machine_events = downtime_events[
-                downtime_events["machine_id"] == machine_id
-            ].sort_values("start_time")
-            first_event = machine_events.iloc[0]
-            last_event = machine_events.iloc[-1]
-
-            issue_type = RNG.choice(["Vibration", "Overheating", "Frequent Jams", "Sensor Errors"])
-            if machine_id == PROBLEM_MACHINE: issue_type = "Vibration"
-            
-            root_cause = RNG.choice(["Misalignment", "Bearing Wear", "Material Quality", "Calibration Drift"])
-            if machine_id == PROBLEM_MACHINE: root_cause = "Misalignment"
-
-            action_taken = RNG.choice([
-                    "Replaced worn components and recalibrated line.",
-                    "Realigned mechanical assembly and tightened fixtures.",
-                    "Adjusted sensor thresholds, replaced faulty sensor, and verified readings.",
-                    "Escalated recurring material quality issue to supplier and updated incoming inspection plan.",
-            ])
-
-            rows.append(
-                {
-                    "ticket_id": ticket_id,
-                    "machine_id": machine_id,
-                    "opened_at": first_event["start_time"],
-                    "closed_at": last_event["end_time"],
-                    "issue_type": issue_type,
-                    "root_cause": root_cause,
-                    "action_taken": action_taken,
-                    "status": "CLOSED",
-                }
-            )
-            ticket_id += 1
-
+    for i, (_, e) in enumerate(fails.iterrows()):
+        opened = datetime.fromisoformat(e["start_time"])
+        closed = opened + timedelta(hours=float(RNG.uniform(12, 120)))
+        status = "OPEN" if closed > datetime(2024, 12, 31, 23, 59) else "CLOSED"
+        if e["machine_id"] == PROBLEM_MACHINE:
+            issue, root = "Vibration", RNG.choice(["Misalignment", "Bearing Wear"], p=[0.8, 0.2])
+        else:
+            issue = "Sensor Errors" if e["cause_code"] == "SENSOR_FAULT" else RNG.choice(["Overheating", "Vibration", "Frequent Jams"])
+            root = RNG.choice(["Bearing Wear", "Calibration Drift", "Material Quality", "Misalignment"])
+        action = {
+            "Misalignment": "Realigned mechanical assembly per SOP-MECH-ALIGN-001 and tightened fixtures.",
+            "Bearing Wear": "Replaced worn bearings and recalibrated the station.",
+            "Calibration Drift": "Adjusted sensor thresholds, replaced faulty sensor, and verified readings.",
+            "Material Quality": "Escalated material issue to supplier and updated incoming inspection plan per SOP-MAT-QUAL-002.",
+        }[root]
+        rows.append({"ticket_id": 1001 + i, "machine_id": e["machine_id"], "line_id": e["line_id"],
+                     "event_id": e["event_id"], "opened_at": opened.isoformat(),
+                     "closed_at": closed.isoformat() if status == "CLOSED" else "",
+                     "issue_type": issue, "root_cause": root, "action_taken": action, "status": status})
     return pd.DataFrame(rows)
 
 
-# -----------------------------
-# Unstructured text generation
-# -----------------------------
-def write_maintenance_logs(unstructured_dir: Path, maint_tickets: pd.DataFrame):
-    # (Same as before)
-    logs_dir = unstructured_dir / "maintenance_logs"
-    logs_dir.mkdir(parents=True, exist_ok=True)
-
-    for _, row in maint_tickets.iterrows():
-        machine_id = row["machine_id"]
-        ticket_id = row["ticket_id"]
-        opened = str(row["opened_at"])[:10]
-        issue_type = row["issue_type"]
-        root_cause = row["root_cause"]
-        action = row["action_taken"]
-
-        text = f"""Ticket ID: {ticket_id}
-Machine: {machine_id}
-Opened: {opened}
-Issue: {issue_type}
+# ---------------------------------------------------------------- text documents
+def write_maintenance_logs(udir, tickets, events):
+    """Ticket write-ups: all M11 tickets in Q4 plus up to 2 per other machine."""
+    picks = pd.concat([
+        tickets[(tickets["machine_id"] == PROBLEM_MACHINE) & (tickets["opened_at"] >= "2024-10-01")],
+        tickets[tickets["machine_id"] != PROBLEM_MACHINE].groupby("machine_id").head(2),
+    ])
+    stops_per_machine = events.groupby("machine_id").size()
+    for _, t in picks.iterrows():
+        m = t["machine_id"]
+        text = f"""Maintenance Ticket {t['ticket_id']}
+Machine: {m} (Line {t['line_id']})
+Opened: {t['opened_at'][:16].replace('T', ' ')}
+Status: {t['status']}
+Issue: {t['issue_type']}
+Root cause: {t['root_cause']}
 
 Summary:
-Recurring issues were observed on machine {machine_id} across multiple shifts, triggering a maintenance review.
-Based on downtime patterns, operator feedback, and inspection, the primary root cause was identified as {root_cause.lower()}.
+Technician responded to a high-severity stop on {m}. Inspection pointed to {t['root_cause'].lower()}.
+{m} logged {stops_per_machine.get(m, 0)} stops during 2024.
 
-Corrective Actions:
-{action}
+Corrective action:
+{t['action_taken']}
 
-Follow-Up:
-- Monitor {machine_id} closely over the next two weeks.
-- Log any early symptoms such as noise, vibration, minor jams, or sensor irregularities.
-- Escalate immediately if unplanned downtime exceeds the normal range for this asset.
-
-This log is intended to support future root-cause analysis by providing historical context on how the issue was previously resolved.
+Follow-up:
+- Monitor {m} for noise, vibration, minor jams or sensor irregularities over the next two weeks.
+- Escalate if unplanned downtime exceeds the normal range for this asset.
 """
-        file_path = logs_dir / f"ticket_{ticket_id}_{machine_id}.txt"
-        file_path.write_text(text)
+        (udir / "maintenance_logs" / f"ticket_{t['ticket_id']}_{m}.txt").write_text(text)
 
 
-def write_shift_reports(unstructured_dir: Path, production_daily: pd.DataFrame):
-    # (Same as before)
-    reports_dir = unstructured_dir / "shift_reports"
-    reports_dir.mkdir(parents=True, exist_ok=True)
+def write_shift_reports(udir, prod, events):
+    p = prod.copy()
+    shift = (p.groupby(["date", "line_id", "shift_id"])
+               .agg(produced=("produced_units", "sum"), scrap=("scrap_units", "sum"),
+                    dt=("downtime_minutes", "sum")).reset_index())
+    shift["scrap_rate"] = shift["scrap"] / shift["produced"]
+    high_scrap = shift.sort_values("scrap_rate", ascending=False).groupby("line_id").head(20)
+    high_dt = shift.sort_values("dt", ascending=False).groupby("line_id").head(10)
+    for _, s in high_scrap.iterrows():
+        blocks = p[(p["date"] == s["date"]) & (p["line_id"] == s["line_id"]) & (p["shift_id"] == s["shift_id"])].copy()
+        blocks["rate"] = blocks["scrap_units"] / blocks["produced_units"]
+        worst = blocks.sort_values("rate", ascending=False).iloc[0]
+        text = f"""Shift Report - Line {s['line_id']} - {s['date']} - {s['shift_id']} shift
 
-    df = production_daily.copy()
-    df["scrap_rate"] = df["scrap_units"] / df["produced_units"].replace(0, np.nan)
-    high_scrap = df[df["scrap_rate"] > 0.05].head(80)
+Quality:
+Shift scrap rate was {s['scrap_rate'] * 100:.1f}% ({int(s['scrap'])} of {int(s['produced'])} units).
+Worst run: {worst['sku_id']} with material from {worst['supplier_id']} at {worst['rate'] * 100:.1f}% scrap.
+Operators reported dimensional defects and extra checks at the inspection station.
 
-    for _, row in high_scrap.iterrows():
-        date = row["date"]
-        line_id = row["line_id"]
-        shift_id = row["shift_id"]
-        scrap_rate = round(row["scrap_rate"] * 100, 2)
-        sku = row["sku_id"]
-        supplier = row["supplier_id"]
+Actions taken:
+- Held suspect material from {worst['supplier_id']} and notified quality per SOP-MAT-QUAL-002.
+- Increased inspection frequency for the rest of the shift.
 
-        text = f"""Line: {line_id}
-Date: {date}
-Shift: {shift_id}
-
-Summary:
-Elevated scrap rate of {scrap_rate}% was observed on SKU {sku} during this shift.
-Material was sourced from {supplier}, and operators reported more frequent jams and additional quality checks at the inspection station.
-
-Actions Taken:
-- Cleared accumulated material from feeders and guides.
-- Performed additional visual inspections on incoming material from {supplier}.
-- Logged a potential quality concern for supplier {supplier} for follow-up with the purchasing and quality teams.
-
-Recommendations:
-- Pre-screen a small sample lot from {supplier} before full changeover.
-- Increase inspection frequency for {supplier} deliveries until scrap levels return to baseline.
-- If high scrap persists across multiple shifts, consider temporary switch to an alternate supplier or material spec.
+Notes for next shift:
+- Watch scrap on {worst['sku_id']}; escalate to purchasing if the issue repeats with {worst['supplier_id']}.
 """
-        file_path = reports_dir / f"shift_{line_id}_{date}_{shift_id}.txt"
-        file_path.write_text(text)
-
-
-def write_weekly_line_summaries(unstructured_dir: Path, production_daily: pd.DataFrame, downtime_events: pd.DataFrame):
-    # (Same as before)
-    summaries_dir = unstructured_dir / "weekly_summaries"
-    summaries_dir.mkdir(parents=True, exist_ok=True)
-
-    prod = production_daily.copy()
-    prod["date"] = pd.to_datetime(prod["date"])
-    prod["week"] = prod["date"].dt.to_period("W").apply(lambda r: r.start_time.date())
-
-    weekly = (
-        prod.groupby(["week", "line_id"])
-        .agg(
-            total_units=("produced_units", "sum"),
-            total_scrap=("scrap_units", "sum"),
-            avg_scrap_rate=(
-                "scrap_units",
-                lambda x: x.sum()
-                / max(1, prod.loc[x.index, "produced_units"].sum()),
-            ),
-            total_downtime_min=("downtime_minutes", "sum"),
-        )
-        .reset_index()
-    )
-
-    dt = downtime_events.copy()
-    dt["start_dt"] = pd.to_datetime(dt["start_time"])
-    dt["week"] = dt["start_dt"].dt.to_period("W").apply(lambda r: r.start_time.date())
-
-    cause_counts = (
-        dt.groupby(["week", "line_id", "cause_code"])
-        .size()
-        .reset_index(name="cnt")
-    )
-
-    for _, row in weekly.iterrows():
-        week_start = row["week"]
-        line_id = row["line_id"]
-        total_units = int(row["total_units"])
-        total_scrap = int(row["total_scrap"])
-        scrap_rate_pct = round(row["avg_scrap_rate"] * 100, 2)
-        total_dt = int(row["total_downtime_min"])
-
-        subset_causes = cause_counts[
-            (cause_counts["week"] == week_start) & (cause_counts["line_id"] == line_id)
-        ].sort_values("cnt", ascending=False)
-
-        top_causes_txt = ""
-        for _, c in subset_causes.head(3).iterrows():
-            top_causes_txt += f"- {c['cause_code']} occurred {c['cnt']} time(s)\n"
-
-        text = f"""Weekly Operations Summary
-Week starting: {week_start}
-Line: {line_id}
-
-Production:
-- Total units produced: {total_units}
-- Total scrap units: {total_scrap}
-- Average scrap rate: {scrap_rate_pct}%
+        (udir / "shift_reports" / f"shift_{s['line_id']}_{s['date']}_{s['shift_id']}_quality.txt").write_text(text)
+    for _, s in high_dt.iterrows():
+        ev = events[(events["shift_date"] == s["date"]) & (events["line_id"] == s["line_id"]) &
+                    (events["shift_id"] == s["shift_id"])].sort_values("duration_min", ascending=False)
+        lines = "\n".join(f"- {r.machine_id}: {r.cause_code} for {r.duration_min} min" for r in ev.itertuples())
+        text = f"""Shift Report - Line {s['line_id']} - {s['date']} - {s['shift_id']} shift
 
 Downtime:
-- Total downtime: {total_dt} minutes
+The line lost {int(s['dt'])} minutes to stops this shift.
+{lines}
+
+Actions taken:
+- Maintenance responded to the longest stop; machine returned to service after inspection.
+
+Notes for next shift:
+- Run the start-of-shift vibration and noise check on the machines above.
 """
-        if top_causes_txt:
-            text += "Top downtime causes:\n" + top_causes_txt + "\n"
-        else:
-            text += "Top downtime causes:\n- No significant downtime recorded this week.\n\n"
+        (udir / "shift_reports" / f"shift_{s['line_id']}_{s['date']}_{s['shift_id']}_downtime.txt").write_text(text)
 
-        text += """Usage:
-This summary is used during weekly operations huddles to:
-- Review overall performance for the line
-- Identify recurring scrap or downtime drivers
-- Decide if corrective actions, trials, or maintenance interventions are required.
+
+def write_weekly_summaries(udir, prod, events):
+    p = prod.copy()
+    p["week"] = pd.to_datetime(p["date"]).dt.to_period("W").apply(lambda r: r.start_time.date())
+    e = events.copy()
+    e["week"] = pd.to_datetime(e["shift_date"]).dt.to_period("W").apply(lambda r: r.start_time.date())
+    wk = (p.groupby(["week", "line_id"])
+           .agg(produced=("produced_units", "sum"), scrap=("scrap_units", "sum"),
+                planned=("planned_units", "sum"), dt=("downtime_minutes", "sum")).reset_index())
+    for _, w in wk.iterrows():
+        ev = e[(e["week"] == w["week"]) & (e["line_id"] == w["line_id"])]
+        causes = ev.groupby("cause_code")["duration_min"].sum().sort_values(ascending=False).head(3)
+        machines = ev.groupby("machine_id")["duration_min"].sum().sort_values(ascending=False).head(2)
+        good = w["produced"] - w["scrap"]
+        text = f"""Weekly Operations Summary - Line {w['line_id']} - week starting {w['week']}
+
+Production: {good} good units against a plan of {w['planned']} ({good / w['planned'] * 100:.0f}% attainment).
+Scrap: {w['scrap']} units ({w['scrap'] / w['produced'] * 100:.2f}%).
+Downtime: {w['dt']} line minutes.
+Top downtime causes: {', '.join(f'{c} ({m} min)' for c, m in causes.items()) or 'none'}.
+Machines with most downtime: {', '.join(f'{m} ({v} min)' for m, v in machines.items()) or 'none'}.
+
+Used in the weekly operations huddle to review performance and agree corrective actions.
 """
-        file_path = summaries_dir / f"weekly_summary_{line_id}_{week_start}.txt"
-        file_path.write_text(text)
+        (udir / "weekly_summaries" / f"weekly_summary_{w['line_id']}_{w['week']}.txt").write_text(text)
 
 
-def write_machine_operator_notes(unstructured_dir: Path, dim_machine: pd.DataFrame):
-    # (Same as before)
-    notes_dir = unstructured_dir / "machine_notes"
-    notes_dir.mkdir(parents=True, exist_ok=True)
+def write_machine_notes(udir, dim_machine):
+    for _, m in dim_machine.iterrows():
+        if m["machine_id"] == PROBLEM_MACHINE:
+            body = """Operator Notes (High Attention Asset):
+This machine has a known history of vibration and alignment issues, especially during extended runs
+and right after mechanical changeovers.
 
-    for _, row in dim_machine.iterrows():
-        machine_id = row["machine_id"]
-        line_id = row["line_id"]
-        machine_type = row["machine_type"]
-
-        if machine_id == PROBLEM_MACHINE:
-            content = f"""Machine: {machine_id}
-Line: {line_id}
-Type: {machine_type}
-
-Operator Notes (High Attention Asset):
-This machine has a known history of vibration and alignment issues, especially during extended production runs
-and immediately after mechanical changeovers.
-
-Common Observations:
+Common observations:
 - Increased noise and vibration at higher speeds.
-- Minor jams at the infeed section that can escalate if not cleared promptly.
-- Gradual rise in scrap rate (surface defects, dimension out of spec) when alignment drifts.
+- Minor jams at the infeed that escalate if not cleared promptly.
+- Scrap rises (surface defects, dimensions out of spec) when alignment drifts.
 
-Operating Guidelines:
-- Perform a quick vibration and noise check at the start of each shift.
-- Stop and inspect if minor stoppages occur more than 3 times within a 2-hour window.
-- Document all abnormal events in the shift log, even if resolved quickly.
+Operating guidelines:
+- Do a vibration and noise check at the start of each shift.
+- Stop and inspect if minor stoppages occur more than 3 times in a 2-hour window.
+- Log every abnormal event in the shift report, even if resolved quickly.
 
 Escalation:
 - If unplanned downtime exceeds 60 minutes in a shift, notify maintenance immediately.
-- If repeated alignment issues occur in the same week, request a full mechanical inspection.
-"""
+- If alignment issues repeat in the same week, request a full mechanical inspection per SOP-MECH-ALIGN-001."""
         else:
-            content = f"""Machine: {machine_id}
-Line: {line_id}
-Type: {machine_type}
+            body = """Operator Notes:
+This asset generally runs reliably under standard conditions.
+Most issues are routine wear, minor jams or sensor calibration.
 
-Operator Notes:
-This asset generally runs reliably under standard operating conditions.
-Most issues are related to routine wear, minor jams, or sensor calibration.
-
-Operating Guidelines:
+Operating guidelines:
 - Follow the standard startup checklist, including safety and interlock checks.
-- Keep the work area clear of excess material, tools, and debris.
-- Record any recurring stoppages, product defects, or unusual noise patterns in the shift report.
+- Keep the work area clear of excess material, tools and debris.
+- Record recurring stoppages, defects or unusual noise in the shift report.
 
 Escalation:
 - If the same stoppage reason appears more than twice in a shift, log a maintenance request.
-- If product quality concerns are observed, hold suspect pallets and notify quality.
-"""
-        file_path = notes_dir / f"machine_notes_{machine_id}.txt"
-        file_path.write_text(content)
+- If quality concerns are observed, hold suspect pallets and notify quality."""
+        text = f"Machine: {m['machine_id']}\nLine: {m['line_id']}\nType: {m['machine_type']}\n\n{body}\n"
+        (udir / "machine_notes" / f"machine_notes_{m['machine_id']}.txt").write_text(text)
 
 
-def write_sop_docs(unstructured_dir: Path):
-    # (Same as before)
-    sop_dir = unstructured_dir / "sop_docs"
-    sop_dir.mkdir(parents=True, exist_ok=True)
-
-    sop_alignment = """Document Title: SOP - Mechanical Alignment for M-Series Machines
+SOP_ALIGNMENT = """Document Title: SOP - Mechanical Alignment for M-Series Machines
 Document ID: SOP-MECH-ALIGN-001
 Revision: 2.0
 Owner: Maintenance Engineering
 Effective Date: 2023-09-01
 
 1. Purpose
-This procedure defines the standard method for inspecting and correcting mechanical alignment
-on M-series machines to minimize vibration, scrap, and unplanned downtime.
+Standard method for inspecting and correcting mechanical alignment on M-series machines
+to minimize vibration, scrap and unplanned downtime.
 
 2. Scope
-Applies to all M-series machines operating on Lines L1, L2, and L3.
+All M-series machines on Lines L1, L2 and L3.
 
 3. Responsibilities
-- Maintenance Technicians: Perform alignment inspections and adjustments.
-- Line Supervisors: Schedule planned alignment checks and verify completion.
-- Operators: Report abnormal noise, vibration, or recurring jams.
+- Maintenance Technicians: perform alignment inspections and adjustments.
+- Line Supervisors: schedule planned alignment checks and verify completion.
+- Operators: report abnormal noise, vibration or recurring jams.
 
 4. Required PPE
-- Safety glasses
-- Safety shoes
-- Cut-resistant gloves
-- Hearing protection (in high-noise areas)
+Safety glasses, safety shoes, cut-resistant gloves, hearing protection in high-noise areas.
 
 5. Procedure
-5.1 Lockout/Tagout
-    a. Stop the machine and follow site lockout/tagout procedures.
-    b. Verify zero energy state before proceeding.
-
-5.2 Inspection
-    a. Inspect belts, pulleys, couplings, and mounting points for visible wear or misalignment.
-    b. Check for loose fasteners, cracked mounts, or abnormal wear patterns.
-
-5.3 Alignment
-    a. Use approved alignment tools to verify shaft and belt alignment.
-    b. Adjust as necessary until alignment is within specified tolerances.
-    c. Tighten all mounting bolts to specified torque.
-
-5.4 Verification
-    a. Remove lockout/tagout and restart the machine.
-    b. Run a short test batch and monitor vibration, noise, and scrap levels.
-    c. If abnormal conditions persist, escalate to the Maintenance Supervisor.
+5.1 Lockout/Tagout: stop the machine, apply site LOTO, verify zero energy.
+5.2 Inspection: check belts, pulleys, couplings and mounts for wear or misalignment; check for loose fasteners or cracked mounts.
+5.3 Alignment: verify shaft and belt alignment with approved tools; adjust to tolerance; torque mounting bolts to spec.
+5.4 Verification: remove LOTO, run a short test batch, monitor vibration, noise and scrap. Escalate to the Maintenance Supervisor if abnormal conditions persist.
 
 6. Documentation
-- Record all alignment activities, measurements, and replaced components in the maintenance system.
-- Tag any components that must be monitored in future inspections.
+Record alignment activities, measurements and replaced components in the maintenance system.
 """
-    sop_material = """Document Title: SOP - Handling Material Quality Issues
+
+SOP_MATERIAL = """Document Title: SOP - Handling Material Quality Issues
 Document ID: SOP-MAT-QUAL-002
 Revision: 1.3
 Owner: Quality Assurance
 Effective Date: 2023-06-15
 
 1. Purpose
-To define the standard response when material quality issues are suspected or confirmed,
-in order to protect product quality and prevent excessive scrap.
+Standard response when material quality issues are suspected or confirmed, to protect product quality and prevent excess scrap.
 
 2. Scope
-Applies to all incoming raw materials used on Lines L1, L2, and L3.
+All incoming raw materials used on Lines L1, L2 and L3.
 
-3. Responsibilities
-- Operators: Identify and report visible defects, jams, or abnormal behavior linked to material.
-- Quality Technicians: Inspect suspect material, perform checks, and make disposition decisions.
-- Purchasing: Coordinate with suppliers on quality concerns and corrective actions.
+3. Triggers for material quality review
+- Sudden increase in scrap linked to a specific supplier or batch.
+- Repeated jams or feeding issues with the same lot.
+- Visual defects (surface damage, wrong dimensions, contamination).
 
-4. Triggers for Material Quality Review
-- Sudden increase in scrap rate associated with a specific supplier or batch.
-- Repeated jams or feeding issues with the same material lot.
-- Visual defects (surface damage, incorrect dimensions, contamination).
+4. Procedure
+4.1 Immediate actions: stop the line if there is a safety or severe quality risk; isolate the suspect batch and tag it ON HOLD; record batch ID, supplier and time in the shift report.
+4.2 Inspection: inspect and measure suspect material against approved specs and reference samples; document findings.
+4.3 Disposition: if in spec, release for a controlled trial run; if out of spec, hold the batch and escalate to Quality and Purchasing; consider an alternate approved supplier.
 
-5. Procedure
-5.1 Immediate Actions
-    a. Stop production on the affected line if safety or severe quality risk is present.
-    b. Isolate the suspect material batch and label it as "ON HOLD".
-    c. Record batch ID, supplier, and time of issue in the shift report.
-
-5.2 Inspection
-    a. Perform visual inspection and basic measurements on suspect material.
-    b. Compare against approved specifications and reference samples.
-    c. Document findings and, if required, collect photo evidence.
-
-5.3 Disposition
-    a. If material is within spec, release for controlled trial run with close monitoring.
-    b. If material is out of spec, hold the batch and escalate to Quality and Purchasing.
-    c. Consider switching to an alternate approved supplier or batch if available.
-
-6. Documentation
-- All material issues must be logged in the quality system with batch ID and supplier.
-- Supplier performance metrics are updated monthly based on number and severity of issues.
+5. Documentation
+Log all material issues in the quality system with batch ID and supplier. Supplier scorecards are updated monthly.
 """
-    (sop_dir / "SOP_alignment_M_series.txt").write_text(sop_alignment)
-    (sop_dir / "SOP_material_quality.txt").write_text(sop_material)
 
 
-# -----------------------------
-# Main orchestration
-# -----------------------------
 def main():
-    structured_dir, unstructured_dir = ensure_dirs()
+    structured, unstructured = reset_dirs()
+    days = workdays()
+    dim_line, dim_shift, dim_machine, dim_sku, line_sku = make_dimensions()
+    events = make_downtime_events(dim_machine, days)
+    stops = line_stop_intervals(events)
+    prod = make_production(days, dim_sku, line_sku, stops)
+    demand = make_demand_forecast(prod)
+    tickets = make_maintenance_tickets(events)
 
-    # Dimensions
-    dim_line = generate_dim_line()
-    dim_shift = generate_dim_shift()
-    dim_machine = generate_dim_machine()
-    # Pass dim_machine here? No, dim_sku is independent.
-    dim_sku = generate_dim_sku()
+    tables = {
+        "dim_line": dim_line, "dim_shift": dim_shift, "dim_machine": dim_machine,
+        "dim_sku": dim_sku, "dim_line_sku": line_sku,
+        "production_daily": prod, "downtime_events": events.drop(columns="start_offset_min"),
+        "maintenance_tickets": tickets, "demand_forecast": demand,
+    }
+    for name, df in tables.items():
+        df.to_csv(structured / f"{name}.csv", index=False)
 
-    # Facts
-    # UPDATED: Pass dim_sku to production_daily
-    production_daily = generate_production_daily(dim_machine, dim_sku)
-    downtime_events = generate_downtime_events(dim_machine)
-    maint_tickets = generate_maintenance_tickets(downtime_events)
+    write_maintenance_logs(unstructured, tickets, events)
+    write_shift_reports(unstructured, prod, events)
+    write_weekly_summaries(unstructured, prod, events)
+    write_machine_notes(unstructured, dim_machine)
+    (unstructured / "sop_docs" / "SOP_alignment_M_series.txt").write_text(SOP_ALIGNMENT)
+    (unstructured / "sop_docs" / "SOP_material_quality.txt").write_text(SOP_MATERIAL)
 
-    # Save structured data
-    dim_line.to_csv(structured_dir / "dim_line.csv", index=False)
-    dim_shift.to_csv(structured_dir / "dim_shift.csv", index=False)
-    dim_machine.to_csv(structured_dir / "dim_machine.csv", index=False)
-    dim_sku.to_csv(structured_dir / "dim_sku.csv", index=False)
-
-    production_daily.to_csv(structured_dir / "production_daily.csv", index=False)
-    downtime_events.to_csv(structured_dir / "downtime_events.csv", index=False)
-    maint_tickets.to_csv(structured_dir / "maintenance_tickets.csv", index=False)
-
-    # Unstructured data
-    write_maintenance_logs(unstructured_dir, maint_tickets)
-    write_shift_reports(unstructured_dir, production_daily)
-    write_sop_docs(unstructured_dir)
-    write_weekly_line_summaries(unstructured_dir, production_daily, downtime_events)
-    write_machine_operator_notes(unstructured_dir, dim_machine)
-
-    print("Synthetic MANRAG dataset generated successfully.")
+    n_docs = sum(1 for _ in unstructured.rglob("*.txt"))
+    print(f"Synthetic plant data generated: {len(prod)} production rows, {len(events)} downtime events, "
+          f"{len(tickets)} tickets, {n_docs} text documents.")
 
 
 if __name__ == "__main__":

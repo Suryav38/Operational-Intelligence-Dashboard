@@ -1,0 +1,17 @@
+Maintenance Ticket 1179
+Machine: M40 (Line L3)
+Opened: 2024-10-17 01:26
+Status: CLOSED
+Issue: Sensor Errors
+Root cause: Material Quality
+
+Summary:
+Technician responded to a high-severity stop on M40. Inspection pointed to material quality.
+M40 logged 57 stops during 2024.
+
+Corrective action:
+Escalated material issue to supplier and updated incoming inspection plan per SOP-MAT-QUAL-002.
+
+Follow-up:
+- Monitor M40 for noise, vibration, minor jams or sensor irregularities over the next two weeks.
+- Escalate if unplanned downtime exceeds the normal range for this asset.

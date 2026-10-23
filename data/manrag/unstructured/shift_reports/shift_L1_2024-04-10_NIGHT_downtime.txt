@@ -1,0 +1,15 @@
+Shift Report - Line L1 - 2024-04-10 - NIGHT shift
+
+Downtime:
+The line lost 190 minutes to stops this shift.
+- M06: SENSOR_FAULT for 67 min
+- M11: MECH_FAILURE for 53 min
+- M15: MATERIAL_JAM for 36 min
+- M08: MECH_FAILURE for 29 min
+- M10: MATERIAL_JAM for 5 min
+
+Actions taken:
+- Maintenance responded to the longest stop; machine returned to service after inspection.
+
+Notes for next shift:
+- Run the start-of-shift vibration and noise check on the machines above.

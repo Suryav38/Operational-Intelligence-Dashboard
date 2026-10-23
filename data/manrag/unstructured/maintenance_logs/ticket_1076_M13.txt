@@ -1,0 +1,17 @@
+Maintenance Ticket 1076
+Machine: M13 (Line L1)
+Opened: 2024-04-25 23:01
+Status: CLOSED
+Issue: Overheating
+Root cause: Bearing Wear
+
+Summary:
+Technician responded to a high-severity stop on M13. Inspection pointed to bearing wear.
+M13 logged 60 stops during 2024.
+
+Corrective action:
+Replaced worn bearings and recalibrated the station.
+
+Follow-up:
+- Monitor M13 for noise, vibration, minor jams or sensor irregularities over the next two weeks.
+- Escalate if unplanned downtime exceeds the normal range for this asset.

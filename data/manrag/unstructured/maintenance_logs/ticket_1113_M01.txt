@@ -1,0 +1,17 @@
+Maintenance Ticket 1113
+Machine: M01 (Line L1)
+Opened: 2024-06-20 00:49
+Status: CLOSED
+Issue: Frequent Jams
+Root cause: Calibration Drift
+
+Summary:
+Technician responded to a high-severity stop on M01. Inspection pointed to calibration drift.
+M01 logged 50 stops during 2024.
+
+Corrective action:
+Adjusted sensor thresholds, replaced faulty sensor, and verified readings.
+
+Follow-up:
+- Monitor M01 for noise, vibration, minor jams or sensor irregularities over the next two weeks.
+- Escalate if unplanned downtime exceeds the normal range for this asset.

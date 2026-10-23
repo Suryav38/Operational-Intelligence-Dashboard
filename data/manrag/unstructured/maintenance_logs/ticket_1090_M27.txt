@@ -1,0 +1,17 @@
+Maintenance Ticket 1090
+Machine: M27 (Line L2)
+Opened: 2024-05-14 10:57
+Status: CLOSED
+Issue: Sensor Errors
+Root cause: Calibration Drift
+
+Summary:
+Technician responded to a high-severity stop on M27. Inspection pointed to calibration drift.
+M27 logged 58 stops during 2024.
+
+Corrective action:
+Adjusted sensor thresholds, replaced faulty sensor, and verified readings.
+
+Follow-up:
+- Monitor M27 for noise, vibration, minor jams or sensor irregularities over the next two weeks.
+- Escalate if unplanned downtime exceeds the normal range for this asset.

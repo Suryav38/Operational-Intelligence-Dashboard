@@ -1,0 +1,17 @@
+Maintenance Ticket 1026
+Machine: M31 (Line L3)
+Opened: 2024-02-13 06:47
+Status: CLOSED
+Issue: Frequent Jams
+Root cause: Bearing Wear
+
+Summary:
+Technician responded to a high-severity stop on M31. Inspection pointed to bearing wear.
+M31 logged 47 stops during 2024.
+
+Corrective action:
+Replaced worn bearings and recalibrated the station.
+
+Follow-up:
+- Monitor M31 for noise, vibration, minor jams or sensor irregularities over the next two weeks.
+- Escalate if unplanned downtime exceeds the normal range for this asset.

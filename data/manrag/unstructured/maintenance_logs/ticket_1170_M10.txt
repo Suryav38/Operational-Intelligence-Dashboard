@@ -1,0 +1,17 @@
+Maintenance Ticket 1170
+Machine: M10 (Line L1)
+Opened: 2024-09-23 22:33
+Status: CLOSED
+Issue: Sensor Errors
+Root cause: Material Quality
+
+Summary:
+Technician responded to a high-severity stop on M10. Inspection pointed to material quality.
+M10 logged 40 stops during 2024.
+
+Corrective action:
+Escalated material issue to supplier and updated incoming inspection plan per SOP-MAT-QUAL-002.
+
+Follow-up:
+- Monitor M10 for noise, vibration, minor jams or sensor irregularities over the next two weeks.
+- Escalate if unplanned downtime exceeds the normal range for this asset.

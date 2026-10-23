@@ -1,0 +1,15 @@
+Shift Report - Line L3 - 2024-02-26 - NIGHT shift
+
+Downtime:
+The line lost 143 minutes to stops this shift.
+- M44: MECH_FAILURE for 78 min
+- M35: MATERIAL_JAM for 53 min
+- M32: MATERIAL_JAM for 49 min
+- M41: MECH_FAILURE for 9 min
+- M45: SENSOR_FAULT for 5 min
+
+Actions taken:
+- Maintenance responded to the longest stop; machine returned to service after inspection.
+
+Notes for next shift:
+- Run the start-of-shift vibration and noise check on the machines above.

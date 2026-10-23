@@ -1,0 +1,17 @@
+Maintenance Ticket 1063
+Machine: M07 (Line L1)
+Opened: 2024-04-04 15:46
+Status: CLOSED
+Issue: Vibration
+Root cause: Material Quality
+
+Summary:
+Technician responded to a high-severity stop on M07. Inspection pointed to material quality.
+M07 logged 47 stops during 2024.
+
+Corrective action:
+Escalated material issue to supplier and updated incoming inspection plan per SOP-MAT-QUAL-002.
+
+Follow-up:
+- Monitor M07 for noise, vibration, minor jams or sensor irregularities over the next two weeks.
+- Escalate if unplanned downtime exceeds the normal range for this asset.

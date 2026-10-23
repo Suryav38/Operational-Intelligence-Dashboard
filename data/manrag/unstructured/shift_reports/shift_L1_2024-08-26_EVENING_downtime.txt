@@ -1,0 +1,14 @@
+Shift Report - Line L1 - 2024-08-26 - EVENING shift
+
+Downtime:
+The line lost 193 minutes to stops this shift.
+- M11: CHANGEOVER_ISSUE for 131 min
+- M14: MATERIAL_JAM for 25 min
+- M15: SENSOR_FAULT for 19 min
+- M07: SENSOR_FAULT for 18 min
+
+Actions taken:
+- Maintenance responded to the longest stop; machine returned to service after inspection.
+
+Notes for next shift:
+- Run the start-of-shift vibration and noise check on the machines above.

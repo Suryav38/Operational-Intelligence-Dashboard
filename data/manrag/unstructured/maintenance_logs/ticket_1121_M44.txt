@@ -1,0 +1,17 @@
+Maintenance Ticket 1121
+Machine: M44 (Line L3)
+Opened: 2024-07-09 02:38
+Status: CLOSED
+Issue: Sensor Errors
+Root cause: Material Quality
+
+Summary:
+Technician responded to a high-severity stop on M44. Inspection pointed to material quality.
+M44 logged 41 stops during 2024.
+
+Corrective action:
+Escalated material issue to supplier and updated incoming inspection plan per SOP-MAT-QUAL-002.
+
+Follow-up:
+- Monitor M44 for noise, vibration, minor jams or sensor irregularities over the next two weeks.
+- Escalate if unplanned downtime exceeds the normal range for this asset.

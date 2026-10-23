@@ -1,0 +1,12 @@
+Shift Report - Line L1 - 2024-05-17 - EVENING shift
+
+Downtime:
+The line lost 216 minutes to stops this shift.
+- M11: MECH_FAILURE for 210 min
+- M12: SENSOR_FAULT for 6 min
+
+Actions taken:
+- Maintenance responded to the longest stop; machine returned to service after inspection.
+
+Notes for next shift:
+- Run the start-of-shift vibration and noise check on the machines above.

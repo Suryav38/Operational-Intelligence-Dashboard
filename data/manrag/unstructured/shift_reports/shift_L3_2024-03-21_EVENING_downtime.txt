@@ -1,0 +1,15 @@
+Shift Report - Line L3 - 2024-03-21 - EVENING shift
+
+Downtime:
+The line lost 182 minutes to stops this shift.
+- M35: SENSOR_FAULT for 82 min
+- M31: SENSOR_FAULT for 80 min
+- M32: MATERIAL_JAM for 27 min
+- M34: MATERIAL_JAM for 23 min
+- M45: CHANGEOVER_ISSUE for 5 min
+
+Actions taken:
+- Maintenance responded to the longest stop; machine returned to service after inspection.
+
+Notes for next shift:
+- Run the start-of-shift vibration and noise check on the machines above.

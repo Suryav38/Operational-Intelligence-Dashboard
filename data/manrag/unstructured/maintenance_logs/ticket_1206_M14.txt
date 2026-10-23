@@ -1,0 +1,17 @@
+Maintenance Ticket 1206
+Machine: M14 (Line L1)
+Opened: 2024-11-28 17:51
+Status: CLOSED
+Issue: Sensor Errors
+Root cause: Bearing Wear
+
+Summary:
+Technician responded to a high-severity stop on M14. Inspection pointed to bearing wear.
+M14 logged 45 stops during 2024.
+
+Corrective action:
+Replaced worn bearings and recalibrated the station.
+
+Follow-up:
+- Monitor M14 for noise, vibration, minor jams or sensor irregularities over the next two weeks.
+- Escalate if unplanned downtime exceeds the normal range for this asset.

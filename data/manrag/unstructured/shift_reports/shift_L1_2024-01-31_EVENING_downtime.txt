@@ -1,0 +1,14 @@
+Shift Report - Line L1 - 2024-01-31 - EVENING shift
+
+Downtime:
+The line lost 238 minutes to stops this shift.
+- M11: MECH_FAILURE for 149 min
+- M08: MECH_FAILURE for 61 min
+- M09: MATERIAL_JAM for 23 min
+- M13: MATERIAL_JAM for 5 min
+
+Actions taken:
+- Maintenance responded to the longest stop; machine returned to service after inspection.
+
+Notes for next shift:
+- Run the start-of-shift vibration and noise check on the machines above.

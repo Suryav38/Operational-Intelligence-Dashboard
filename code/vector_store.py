@@ -1,37 +1,21 @@
-from pathlib import Path
+"""
+Optional local check of the document search (needs OPENAI_API_KEY in .env).
+
+The app builds this index in memory on the first chat question, so nothing
+needs to be saved to the repo. Run this to see what retrieval returns:
+    python code/vector_store.py "alignment procedure for M11"
+"""
+import sys
+
 from dotenv import load_dotenv
-from langchain_text_splitters import RecursiveCharacterTextSplitter
-from langchain_chroma import Chroma
-from langchain_community.document_loaders import TextLoader
 from langchain_openai import OpenAIEmbeddings
-import shutil
 
+import assistant as ai
+import plant_metrics as pm
 
-
-# --- load .env from project root ---
-env_path = Path(__file__).resolve().parents[1] / ".env"
-load_dotenv(env_path)
-# -----------------------------------
-
-root = Path(__file__).resolve().parents[1]
-docs_dir = root / "data" / "manrag" / "unstructured"
-persist_dir = root / "data" / "manrag" / "chroma_store"
-
-if persist_dir.exists():
-    shutil.rmtree(persist_dir)
-
-docs = []
-for file in docs_dir.rglob("*.txt"):
-    docs.extend(TextLoader(str(file)).load())
-
-splitter = RecursiveCharacterTextSplitter(chunk_size=800, chunk_overlap=150)
-chunks = splitter.split_documents(docs)
-
-vectordb = Chroma.from_documents(
-    chunks,
-    OpenAIEmbeddings(),
-    persist_directory=str(persist_dir),
-)
-
-
-print(f"✅ Vector store created at: {persist_dir}")
+load_dotenv(pm.ROOT / ".env")
+query = " ".join(sys.argv[1:]) or "What is the procedure for handling material quality issues?"
+search, n_chunks = ai.build_doc_search(pm.DOCS_DIR, OpenAIEmbeddings(model="text-embedding-3-small"))
+print(f"Indexed {n_chunks} chunks. Top results for: {query}\n")
+for hit in search(query, 4):
+    print(f"[{hit['folder']}/{hit['source']}]\n{hit['text'][:300]}\n")

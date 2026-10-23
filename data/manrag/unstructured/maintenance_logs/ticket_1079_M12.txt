@@ -1,0 +1,17 @@
+Maintenance Ticket 1079
+Machine: M12 (Line L1)
+Opened: 2024-05-02 20:41
+Status: CLOSED
+Issue: Sensor Errors
+Root cause: Bearing Wear
+
+Summary:
+Technician responded to a high-severity stop on M12. Inspection pointed to bearing wear.
+M12 logged 56 stops during 2024.
+
+Corrective action:
+Replaced worn bearings and recalibrated the station.
+
+Follow-up:
+- Monitor M12 for noise, vibration, minor jams or sensor irregularities over the next two weeks.
+- Escalate if unplanned downtime exceeds the normal range for this asset.

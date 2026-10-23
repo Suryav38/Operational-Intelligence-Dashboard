@@ -1,0 +1,13 @@
+Shift Report - Line L2 - 2024-03-29 - EVENING shift
+
+Downtime:
+The line lost 154 minutes to stops this shift.
+- M23: CHANGEOVER_ISSUE for 61 min
+- M22: SENSOR_FAULT for 54 min
+- M29: MECH_FAILURE for 39 min
+
+Actions taken:
+- Maintenance responded to the longest stop; machine returned to service after inspection.
+
+Notes for next shift:
+- Run the start-of-shift vibration and noise check on the machines above.

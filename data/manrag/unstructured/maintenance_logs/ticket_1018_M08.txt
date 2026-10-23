@@ -1,0 +1,17 @@
+Maintenance Ticket 1018
+Machine: M08 (Line L1)
+Opened: 2024-01-31 17:38
+Status: CLOSED
+Issue: Frequent Jams
+Root cause: Misalignment
+
+Summary:
+Technician responded to a high-severity stop on M08. Inspection pointed to misalignment.
+M08 logged 49 stops during 2024.
+
+Corrective action:
+Realigned mechanical assembly per SOP-MECH-ALIGN-001 and tightened fixtures.
+
+Follow-up:
+- Monitor M08 for noise, vibration, minor jams or sensor irregularities over the next two weeks.
+- Escalate if unplanned downtime exceeds the normal range for this asset.

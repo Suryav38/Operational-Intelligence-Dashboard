@@ -1,0 +1,17 @@
+Maintenance Ticket 1074
+Machine: M22 (Line L2)
+Opened: 2024-04-24 18:43
+Status: CLOSED
+Issue: Vibration
+Root cause: Calibration Drift
+
+Summary:
+Technician responded to a high-severity stop on M22. Inspection pointed to calibration drift.
+M22 logged 45 stops during 2024.
+
+Corrective action:
+Adjusted sensor thresholds, replaced faulty sensor, and verified readings.
+
+Follow-up:
+- Monitor M22 for noise, vibration, minor jams or sensor irregularities over the next two weeks.
+- Escalate if unplanned downtime exceeds the normal range for this asset.

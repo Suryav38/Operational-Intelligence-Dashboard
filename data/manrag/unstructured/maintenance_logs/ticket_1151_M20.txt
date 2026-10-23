@@ -1,0 +1,17 @@
+Maintenance Ticket 1151
+Machine: M20 (Line L2)
+Opened: 2024-09-03 01:45
+Status: CLOSED
+Issue: Overheating
+Root cause: Bearing Wear
+
+Summary:
+Technician responded to a high-severity stop on M20. Inspection pointed to bearing wear.
+M20 logged 65 stops during 2024.
+
+Corrective action:
+Replaced worn bearings and recalibrated the station.
+
+Follow-up:
+- Monitor M20 for noise, vibration, minor jams or sensor irregularities over the next two weeks.
+- Escalate if unplanned downtime exceeds the normal range for this asset.

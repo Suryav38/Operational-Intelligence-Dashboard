@@ -1,0 +1,16 @@
+Machine: M26
+Line: L2
+Type: Assembler
+
+Operator Notes:
+This asset generally runs reliably under standard conditions.
+Most issues are routine wear, minor jams or sensor calibration.
+
+Operating guidelines:
+- Follow the standard startup checklist, including safety and interlock checks.
+- Keep the work area clear of excess material, tools and debris.
+- Record recurring stoppages, defects or unusual noise in the shift report.
+
+Escalation:
+- If the same stoppage reason appears more than twice in a shift, log a maintenance request.
+- If quality concerns are observed, hold suspect pallets and notify quality.

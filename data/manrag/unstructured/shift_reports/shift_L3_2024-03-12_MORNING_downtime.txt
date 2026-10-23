@@ -1,0 +1,13 @@
+Shift Report - Line L3 - 2024-03-12 - MORNING shift
+
+Downtime:
+The line lost 175 minutes to stops this shift.
+- M45: MATERIAL_JAM for 71 min
+- M35: CHANGEOVER_ISSUE for 65 min
+- M32: CHANGEOVER_ISSUE for 39 min
+
+Actions taken:
+- Maintenance responded to the longest stop; machine returned to service after inspection.
+
+Notes for next shift:
+- Run the start-of-shift vibration and noise check on the machines above.

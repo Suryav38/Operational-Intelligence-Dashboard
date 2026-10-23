@@ -1,0 +1,17 @@
+Maintenance Ticket 1038
+Machine: M02 (Line L1)
+Opened: 2024-02-29 17:11
+Status: CLOSED
+Issue: Vibration
+Root cause: Calibration Drift
+
+Summary:
+Technician responded to a high-severity stop on M02. Inspection pointed to calibration drift.
+M02 logged 49 stops during 2024.
+
+Corrective action:
+Adjusted sensor thresholds, replaced faulty sensor, and verified readings.
+
+Follow-up:
+- Monitor M02 for noise, vibration, minor jams or sensor irregularities over the next two weeks.
+- Escalate if unplanned downtime exceeds the normal range for this asset.
