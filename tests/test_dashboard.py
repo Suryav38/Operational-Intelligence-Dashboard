@@ -10,7 +10,7 @@ def test_performance_is_first_and_no_ai_controls():
     at=app()
     assert not at.exception
     assert at.title[0].value=='Fab performance'
-    assert at.radio(key='page').options==['Fab performance','Capacity & scenarios','Lot flow & cycle time']
+    assert at.radio(key='page').options==['Fab performance','Demand outlook','Capacity & scenarios','Lot flow & cycle time']
     assert not at.text_area
     assert not any('AI' in b.label for b in at.button)
     assert any('Weekly cycle time'==s.value for s in at.subheader)

@@ -1,4 +1,4 @@
-# Data and deferred AI integration — v4
+# Data and deferred AI integration — v5
 
 AI features are paused in the stakeholder dashboard. `code/apprag.py` imports neither `assistant.py` nor `planning_copilot.py`, reads no API key and makes no external AI calls. There is no AI page, request parser, explanation button, connection status or document-preview panel in the UI.
 
@@ -7,3 +7,5 @@ The legacy modules and their automated tests remain in the repository for future
 The existing 11 structured tables and 15 text documents remain unchanged. The current UI uses deterministic functions and the original data. Family labels are a display mapping over the five existing programs, not additional product data.
 
 Machine OEE is a separate calculator: its example or uploaded records do not join the fab simulation and do not alter historical metrics or future capacity. Its required schema and definitions are documented in README.md and in `templates/machine_oee_template.csv`.
+
+The v5 demand outlook uses the retained deterministic request-realization model without AI. Weekly scenarios also remain deterministic. Before restoring legacy AI scenario tools, account for the new weekly mask, affected-fab display scope and declared HOT/NORMAL request metadata; legacy tools assume quarter-wide changes.
