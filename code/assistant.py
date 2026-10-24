@@ -81,12 +81,25 @@ Rules:
   open question instead.
 """
 
-READOUT_PROMPT = """Write a leadership readout for a TD quarterly planning review based ONLY on the scenario
-result JSON below. Format:
-**Bottom line:** one sentence.
-Then 3-5 bullets: what changed, which constraints appear or clear (site, tool group, quarter, loading %),
-which programs drive them, and the recommended option. Use only numbers present in the JSON. No preamble.
+BRIEF_RULES = """Use only numbers that appear in the JSON. Qualitative facts (lead times, qualification, past
+decisions) may come only from "context_documents". Write for a director: short, specific, no preamble.
+Use exactly these headings, each followed by one or two short sentences or bullets:
+**Recommendation:**
+**Why:**
+**Trade-off:**
+**Uncertainty:**
+**Needs sign-off:** (which of Engineering, Process Integration, Operations, Finance must confirm what)
 """
+
+READOUT_PROMPT = ("Write a decision brief for a TD quarterly planning review about ONE proposed plan change, "
+                  "using the scenario result JSON. The recommendation is one of: proceed, proceed with a named "
+                  "mitigation, or do not proceed.\n" + BRIEF_RULES)
+
+COMPARE_PROMPT = ("Write a decision brief for a TD quarterly planning review comparing the options in the JSON "
+                  "against the baseline. Recommend one option (or a combination, if the numbers support it) and "
+                  "say what it leaves unresolved.\n" + BRIEF_RULES)
+
+FALLBACK_MODELS = ["gpt-4.1-mini", "gpt-4o-mini"]
 
 
 def _json(obj) -> str:
@@ -171,8 +184,7 @@ def make_tools(data: dict, ctx: dict, db_path: Path = fd.DB_PATH, search_fn=None
         constraints before/after, new and cleared constraints, the largest loading changes, and the worst cells
         with their program drivers."""
         res = fc.run_scenario(data, changes, basis or ctx["basis"])
-        res.pop("_tables", None)
-        return _json(res)
+        return _json({k: v for k, v in res.items() if not k.startswith("_")})
 
     def run_sql(query: str) -> str:
         """Run ONE read-only SQLite SELECT against the planning and simulation database when no other tool
@@ -218,9 +230,99 @@ def extract_changes(llm, note: str) -> ChangeSet:
     return model.invoke([SystemMessage(EXTRACT_PROMPT), HumanMessage(note)])
 
 
-def draft_readout(llm, result: dict) -> str:
+def context_documents(changes, cells) -> list:
+    """Deterministic context for briefs: the planning guideline plus tool notes for the tool groups involved."""
+    keys = set()
+    for ch in changes:
+        c = ch if isinstance(ch, dict) else ch.model_dump()
+        if c.get("site") and c.get("tool_group"):
+            keys.add((c["site"], c["tool_group"]))
+        if c.get("type") == "move_load" and c.get("to_site"):
+            keys.update((c["to_site"], tg) for tg in ("ETCH", "DEP", "EUV"))
+    for cell in cells:
+        parts = cell.split()
+        if len(parts) >= 2:
+            keys.add((parts[0], parts[1]))
+    docs = []
+    for site, tg in sorted(keys):
+        f = fd.DOCS / "tool_notes" / f"tool_note_{site}_{tg}.txt"
+        if f.exists():
+            docs.append({"source": f.name, "text": f.read_text()})
+    g = fd.DOCS / "guidelines" / "td_capacity_planning_guidelines.txt"
+    docs.append({"source": g.name, "text": g.read_text()})
+    return docs
+
+
+def draft_readout(llm, result: dict, changes=()) -> str:
     payload = {k: v for k, v in result.items() if not k.startswith("_")}
+    payload["context_documents"] = context_documents(changes, result.get("new_constraints", []))
     return llm.invoke([SystemMessage(READOUT_PROMPT), HumanMessage(_json(payload))]).content
+
+
+def draft_comparison(llm, comparison: dict, option_changes: dict) -> str:
+    payload = dict(comparison)
+    cells = [c for o in comparison["options"] for c in o["new_constraints"]]
+    payload["context_documents"] = context_documents([c for v in option_changes.values() for c in v], cells)
+    return llm.invoke([SystemMessage(COMPARE_PROMPT), HumanMessage(_json(payload))]).content
+
+
+# ------------------------------------------------------------------ OpenAI connection
+def explain_error(exc, model: str = "") -> str:
+    """Turn an OpenAI error into a plain-English fix."""
+    import openai
+    msg = str(exc)
+    if isinstance(exc, openai.AuthenticationError):
+        return ("OpenAI rejected the API key. Create a new key at platform.openai.com/api-keys and paste it "
+                "into the app's Secrets as OPENAI_API_KEY.")
+    if isinstance(exc, openai.RateLimitError) and ("insufficient_quota" in msg or "credit" in msg):
+        return ("The OpenAI account behind this key has no credit left. Add credit at "
+                "platform.openai.com/settings/organization/billing, wait a few minutes, then try again.")
+    if isinstance(exc, openai.RateLimitError):
+        return "OpenAI's rate limit was hit. Wait a minute and try again."
+    if isinstance(exc, openai.NotFoundError) or "model_not_found" in msg:
+        return (f"The model '{model}' isn't available to this key. Add OPENAI_MODEL to the app's Secrets "
+                "with a model your account can use, for example gpt-4.1-mini.")
+    if isinstance(exc, openai.PermissionDeniedError):
+        return "This API key doesn't have permission for that model or project. Check the key's project settings."
+    if isinstance(exc, openai.APIConnectionError):
+        return "The app couldn't reach OpenAI. Reboot the app in Streamlit Cloud and try again."
+    return f"{type(exc).__name__}: {msg[:300]}"
+
+
+def make_llm(key: str, model: str, **kw):
+    from langchain_openai import ChatOpenAI
+    reasoning = model.startswith(("gpt-5", "o1", "o3", "o4"))
+    return ChatOpenAI(model=model, api_key=key, **({} if reasoning else {"temperature": 0}), **kw)
+
+
+def pick_model(key: str, preferred: str) -> str:
+    """Return the first model this key can use: the preferred one, then common fallbacks."""
+    import openai
+    tried = []
+    for m in [preferred] + [x for x in FALLBACK_MODELS if x != preferred]:
+        try:
+            make_llm(key, m, max_tokens=5, max_retries=0).invoke("Reply OK")
+            return m
+        except openai.NotFoundError:
+            tried.append(m)
+        except openai.BadRequestError as exc:
+            if "model" not in str(exc).lower():
+                raise
+            tried.append(m)
+    raise RuntimeError(f"None of these models are available to this key: {', '.join(tried)}. "
+                       "Add OPENAI_MODEL to the app's Secrets with a model your account can use.")
+
+
+def check_connection(key: str, preferred: str):
+    """Returns (ok, message) after testing the chat model and the embeddings model."""
+    from langchain_openai import OpenAIEmbeddings
+    try:
+        model = pick_model(key, preferred)
+        OpenAIEmbeddings(model="text-embedding-3-small", api_key=key, max_retries=0).embed_query("test")
+        note = "" if model == preferred else f" ('{preferred}' isn't available, so it uses {model}.)"
+        return True, f"Connected. Chat model {model} and document search both work.{note}"
+    except Exception as exc:
+        return False, explain_error(exc, preferred)
 
 
 def answer_question(question: str, history: list, llm, tools: list, ctx: dict, max_steps: int = 6) -> dict:

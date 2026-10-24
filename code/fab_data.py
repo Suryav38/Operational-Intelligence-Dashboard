@@ -94,6 +94,6 @@ def operating_curve(data, site="FAB_A", tool_group="EUV"):
     r = t[(t["site"] == site) & (t["tool_group"] == tool_group)].iloc[0]
     u0, q0, pt = r["loading_pct"] / 100, r["avg_queue_h"], r["avg_process_h"]
     k = q0 / (u0 / (1 - u0) * pt) if u0 < 1 and pt > 0 else 1.0
-    u = np.linspace(0.30, 0.97, 60)
+    u = np.linspace(0.30, 0.99, 140)
     return {"u_pct": (u * 100).round(1), "queue_h": (k * u / (1 - u) * pt).round(2),
             "sim_point": (round(u0 * 100, 1), q0), "k": round(k, 2), "process_h": pt}

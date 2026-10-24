@@ -257,4 +257,42 @@ def run_scenario(data, changes, basis="requested", ceiling=C.LOADING_CEILING) ->
             for r in worst[["site", "tool_group", "quarter", "loading_pct", "tools", "tools_needed_at_ceiling",
                             "tool_gap"]].to_dict(orient="records")],
         "_tables": {"base": tb, "scenario": ts},
+        "_states": {"base": base, "scenario": scen},
     }
+
+
+def _tightest(table):
+    r = table.sort_values("loading_pct", ascending=False).iloc[0]
+    return f"{r['site']} {r['tool_group']} {r['quarter']} {r['loading_pct']:.0f}%"
+
+
+def compare_options(data, options: dict, basis="requested", ceiling=C.LOADING_CEILING) -> dict:
+    """Run each option (name -> list of changes) against the same baseline and summarize side by side."""
+    base_tab = loading_table(base_state(data, basis), ceiling)
+    base_cons = constraints(base_tab, ceiling)
+    out = {"basis": basis, "ceiling_pct": ceiling * 100,
+           "baseline": {"at_risk_cells": len(base_cons),
+                        "over_100_pct": int(base_cons["status"].str.startswith("Cannot").sum()),
+                        "tightest_cell": _tightest(base_tab)},
+           "options": []}
+    for name, changes in options.items():
+        r = run_scenario(data, changes, basis, ceiling)
+        tab = r["_tables"]["scenario"]
+        cons = constraints(tab, ceiling)
+        b, s = r["_states"]["base"], r["_states"]["scenario"]
+        moved = sum(max(0.0, b["wspw"][x][p][i] - s["wspw"][x][p][i])
+                    for x in C.SITES for p in C.PROGRAM_ORDER for i in range(len(Q))) / len(Q)
+        out["options"].append({
+            "option": name,
+            "applied_changes": r["applied_changes"],
+            "warnings": r["warnings"],
+            "at_risk_cells": len(cons),
+            "over_100_pct": int(cons["status"].str.startswith("Cannot").sum()),
+            "cleared_constraints": r["cleared_constraints"],
+            "new_constraints": r["new_constraints"],
+            "tightest_cell": _tightest(tab),
+            "tools_added": int(sum(t[3] for t in s["extra_tools"])),
+            "avg_wspw_moved_or_deferred": round(moved),
+            "worst_cells_after": r["worst_cells_after"][:3],
+        })
+    return out
