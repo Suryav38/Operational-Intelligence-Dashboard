@@ -1,17 +1,31 @@
-# v3 validation record
+# Validation — v4
 
-Validated on Python 3.12 with the pinned dependencies.
+## Completed
 
-- **35 automated tests passed.** Checks cover capacity arithmetic, unchanged baselines, quarter boundaries, qualifications, availability recovery, Combined views, completed-cohort metrics, typed AI request reading, grounded scenario explanations, document retrieval, embeddings with a mock client, read-only SQL, evidence validation, hypothetical calculations and Streamlit interactions.
-- **Combined capacity is site-specific.** The default quarter includes 19 installed fab/equipment combinations. The Combined view sums starts and counts each site's exceptions; it never offsets a constrained group with unrelated spare capacity.
-- **Combined production is correctly weighted.** Counts and aligned WIP snapshots are summed; full-flow cycle time is weighted by completed lots; wafer-survival yield uses the matching completed cohorts.
-- **Offline model self-check passed.**
-- **Desktop review completed at 1512 × 1100.** All four views, a calculated scenario, source-document preview, and the lower chart rows were exercised. No JavaScript page errors or horizontal document overflow were observed.
-- **Mobile review completed at 390 × 844.** No horizontal document overflow was detected.
-- **Browser export verified.** The Combined capacity download contains 76 rows: 19 fab/equipment combinations across four quarters, with the selected planning limit.
-- **Read-only SQL was exercised against the actual supplied database.** Rejected write/extension attempts did not modify its bytes.
-- **Original data preserved.** The 11 CSV tables, 15 TXT documents and SQLite database match the uploaded archive byte-for-byte.
+- **51 automated tests passed** under Python 3.12. Includes deterministic capacity/forecast/retrieval tests retained from v3, new execution-cohort/OEE tests and the updated dashboard interaction tests. AI backend tests use mocks; the current UI makes no AI calls.
+- Offline capacity/scenario checks passed; source files compiled successfully.
+- All-program reconstructed weekly starts, output and WIP match the original published weekly tables exactly across the 13-week window.
+- HOT + NORMAL partitions and the five program partitions reconcile to total weekly flow and WIP.
+- Filtered completed cohorts use the selected date interval; combined weekly cycle time is weighted by actual completed lots. Empty cohorts and short-loop exclusions are explicit.
+- Earlier-cutoff WIP ages are reconstructed from timestamps. Future completions/output are hidden; route progress is unavailable for historical cutoffs because no intermediate progress events exist.
+- Default completed full-flow queue + hold share verified at approximately 40.04%, rather than the proposed >50% claim.
+- Exact target WSPW applies independently to each affected quarter while preserving baseline inputs and unaffected quarters.
+- Machine OEE matches the known worked example: 75% availability × 83.333% performance × 98% quality = 61.25% OEE. Tests reject missing, duplicate, non-finite, negative, inconsistent and >100% performance inputs. Empty-output behavior is explicit.
+- Browser checks covered all production tabs, a real two-record OEE CSV upload, capacity/scenario views and lot detail/export. No JavaScript page errors were observed.
+- Desktop layout inspected at 1512×1100 and mobile at 390×844. No document-level horizontal overflow. Tabs scroll on mobile; KPI cards stack.
+- Actual capacity download contained 76 rows (19 fab/equipment combinations × 4 quarters). Actual WIP lot export contained 359 lots with no future completion/output fields.
+- SHA-256 comparison confirmed all **27 original data files unchanged**: 11 CSVs, 15 text documents and one SQLite database.
 
-Live OpenAI calls were not made because no user API credentials were supplied. Tests use mock responses for text generation, tool selection and embeddings, together with real local calculations, SQL and keyword document retrieval. A user's own API key is required to verify live extraction, semantic retrieval and generated answers.
+## Practical limits
 
-Citation and numeric checks catch some unsupported output but do not establish that every interpretation or source association is correct. Human review remains necessary. This validates the synthetic prototype's behavior, not accuracy or deployment readiness for a real fab.
+- All fab data is synthetic and independent of Micron. Detailed operation covers 29 June–27 September 2026. Start-request history and future planning retain their separately labelled periods.
+- No measured individual-machine OEE exists in the fab simulation. The OEE calculator uses a clearly separate example or user-supplied machine-period records; it is not an inferred fab KPI.
+- The data supports five program routes and lot/priority detail, not product SKU, per-step event history or machine-level attribution.
+- Equipment-state health is quarter-level and shared by programs, so only the site/equipment filters apply. Historical attainment follows site/program filters, not execution weeks or priority.
+- The capacity model uses configured routes, equipment, availability and arrivals; requested starts come from the plan CSV. CSV equipment snapshots alone do not override configuration.
+- Equipment releases contribute a full quarter of capacity. Aggregate equipment gaps do not include costs, ROI or qualification implementation plans.
+- Future capacity scenarios do not rerun the historical simulation or predict new queues, cycle time or lot due dates.
+- Source lot timestamps have minute resolution. WIP uses original input-wafer equivalents. Finite-window WIP and completed-lot cycle time are not presented as an exact Little's Law balance.
+- Uploaded OEE records must represent non-overlapping single-recipe periods under a consistent planned-time policy. The app validates arithmetic and record uniqueness, not the truth of source measurements or overlapping time labels.
+
+Internal browser screenshots and test uploads are excluded from the deliverable.

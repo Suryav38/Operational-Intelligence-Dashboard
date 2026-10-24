@@ -59,7 +59,7 @@ def compare_tables(baseline, scenario, ceiling=0.85):
     return t
 
 def run_review(data, site, program, pct, first_quarter, last_quarter, ceiling=0.85,
-               recovery_group=None, recovery_points=0.0):
+               recovery_group=None, recovery_points=0.0,target_wspw=None):
     if program not in C.QUALIFIED[site]:
         raise ValueError("This program is not qualified at the selected site.")
     if not math.isfinite(pct) or not -100 <= pct <= 100:
@@ -68,6 +68,14 @@ def run_review(data, site, program, pct, first_quarter, last_quarter, ceiling=0.
         raise ValueError("The end quarter must be on or after the start quarter.")
     changes = [fc.PlanChange(type="starts_change", site=site, program=program, pct=pct,
                             from_quarter=first_quarter, to_quarter=last_quarter)]
+    if target_wspw is not None:
+        if not math.isfinite(target_wspw) or target_wspw<0:
+            raise ValueError('Target WSPW must be a finite, non-negative weekly rate.')
+        original=fc.base_state(data)['wspw'][site][program]
+        changes=[fc.PlanChange(type='starts_change',site=site,program=program,
+                    wspw_delta=target_wspw-original[i],from_quarter=q,to_quarter=q)
+                 for i,q in enumerate(C.PLAN_QUARTERS)
+                 if first_quarter<=q<=last_quarter]
     if recovery_points:
         if recovery_group not in C.TOOL_GROUP_ORDER or C.INSTALLED_TOOLS[site][recovery_group] <= 0:
             raise ValueError("Choose an installed equipment group for availability recovery.")
@@ -86,7 +94,7 @@ def run_review(data, site, program, pct, first_quarter, last_quarter, ceiling=0.
             "comparison": compare_tables(tb, ts, ceiling), "applied": applied,
             "changes": [c.model_dump(exclude_none=True) for c in changes],
             "site": site, "program": program, "pct": pct, "first_quarter": first_quarter,
-            "last_quarter": last_quarter, "ceiling": ceiling}
+            "last_quarter": last_quarter, "ceiling": ceiling,'target_wspw':target_wspw}
 
 def production_metrics(data, site):
     """Fixed 13-week window; completed-cohort yield; full-flow CT excludes SHORT."""

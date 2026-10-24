@@ -6,7 +6,7 @@ import review_model as rm
 
 BLUE,TEAL,AMBER,RED='#185adb','#27877f','#b97520','#bd4343'
 SITE_COLORS={'FAB_A':BLUE,'FAB_B':TEAL,'Both':'#24374f'}
-PROGRAM_SHORT={'DRAM_A':'DRAM A','DRAM_B':'DRAM B','NAND_C':'NAND C','HBM_TV':'HBM test vehicle','SHORT':'Short loops'}
+PROGRAM_SHORT={p:C.PROGRAMS[p]['name'] for p in C.PROGRAM_ORDER}
 PROGRAM_COLORS=['#185adb','#56a1cb','#27877f','#9b8cb9','#b8c4d3']
 
 def style(fig,height=300,title_x=None):
@@ -14,7 +14,7 @@ def style(fig,height=300,title_x=None):
         font=dict(family='Arial, sans-serif',size=11,color='#24374f'),
         paper_bgcolor='rgba(0,0,0,0)',plot_bgcolor='rgba(0,0,0,0)',
         margin=dict(l=0,r=12,t=15,b=55),
-        legend=dict(orientation='h',y=-.23,yanchor='top',x=0,font=dict(size=10)),
+        legend=dict(orientation='h',y=-.23,yanchor='top',x=0,font=dict(size=10),traceorder='normal'),
         hoverlabel=dict(bgcolor='white',font_size=12))
     fig.update_xaxes(gridcolor='#e8edf4',zeroline=False)
     fig.update_yaxes(gridcolor='#e8edf4',zeroline=False)
@@ -64,26 +64,32 @@ def equipment_compare(table,scope,quarter,ceiling):
     fig.update_yaxes(autorange='reversed')
     return fig
 
-def starts_mix(state,scope,quarter):
+def starts_mix(state,scope,quarter,programs=None):
     fig=go.Figure();i=C.PLAN_QUARTERS.index(quarter)
+    programs=C.PROGRAM_ORDER if programs is None else programs
     for s in sites(scope):
-        fig.add_bar(y=[PROGRAM_SHORT[p] for p in C.PROGRAM_ORDER],x=[state['wspw'][s][p][i] for p in C.PROGRAM_ORDER],
+        fig.add_bar(y=[PROGRAM_SHORT[p] for p in programs],x=[state['wspw'][s][p][i] for p in programs],
                     orientation='h',name=rm.SITE_LABELS[s],marker_color=SITE_COLORS[s],hovertemplate='%{y}<br>%{x:,.0f} wafers/week<extra>'+rm.SITE_LABELS[s]+'</extra>')
     style(fig,300);fig.update_layout(barmode='group');fig.update_xaxes(title='Requested wafer starts / week');fig.update_yaxes(autorange='reversed')
     return fig
 
-def workload_drivers(state,scope,table,ceiling):
+def workload_drivers(state,scope,table,ceiling,programs=None):
     t=focus_table(table,scope,ceiling);groups=list(dict.fromkeys(zip(t.site,t.tool_group)))
     quarter=t.quarter.iloc[0] if len(t) else C.PLAN_QUARTERS[0]
     labels=[rm.SITE_LABELS[s]+' · '+rm.GROUP_LABELS[g] for s,g in groups]
     records=[rm.program_workload(state,s,g,quarter) for s,g in groups]
     fig=go.Figure()
+    selected=set(C.PROGRAM_ORDER if programs is None else programs)
     for p,color in zip(C.PROGRAM_ORDER,PROGRAM_COLORS):
+        if p not in selected:continue
         name=C.PROGRAMS[p]['name'];values=[]
         for r in records:
             m=r[r.Program==name]; values.append(float(m['Share %'].iloc[0]) if len(m) else 0)
         fig.add_bar(y=labels,x=values,orientation='h',name=PROGRAM_SHORT[p],marker_color=color,
                     hovertemplate='%{y}<br>%{x:.1f}% of required hours<extra>'+PROGRAM_SHORT[p]+'</extra>')
+    if selected!=set(C.PROGRAM_ORDER):
+        other=[sum(r.loc[~r.Program.isin([C.PROGRAMS[p]['name'] for p in selected]),'Share %']) for r in records]
+        fig.add_bar(y=labels,x=other,orientation='h',name='Other programs',marker_color='#d3dce8')
     style(fig,max(300,len(groups)*30+110));fig.update_layout(barmode='stack',margin=dict(l=0,r=12,t=12,b=95),legend=dict(y=-.32))
     fig.update_xaxes(title='Share of required tool-hours (%)',range=[0,100]);fig.update_yaxes(autorange='reversed')
     return fig

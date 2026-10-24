@@ -1,38 +1,32 @@
-# Five-minute stakeholder walkthrough
+# Stakeholder walkthrough — v4
 
-Present this as a self-directed prototype using synthetic data.
+All data is synthetic. Describe this as an independent planning prototype.
 
-## 1. Compare the network — about one minute
+## 1. Execution first (90 seconds)
 
-Start with Combined, 2027Q2 and the 85% policy. Show the four KPIs, the quarterly heatmap and the equipment comparison. Describe the constraint in each fab. Use wafer-start mix and workload contribution to explain the program drivers. The Combined view retains site-specific capacity constraints; it does not pool all equipment into one utilization figure.
+Open **Fab performance → Production overview** with Combined and all programs. Explain four metrics: completions/week, completed-lot cycle time, WIP and same-cohort wafer yield. Compare the two fabs' WIP and cycle-time trends. Filter **DRAM → DRAM Node B (EUV)**, then **HOT**. Explain that combined cycle time is weighted by actual completed lots. Reset the program, priority and week filters before the next comparison.
 
-## 2. Test one request — about two minutes
+## 2. Equipment health and plan attainment (60 seconds)
 
-Open Scenario review. Read or enter a request for DRAM Node B, +10%, at Fab A, during 2027Q2 only. If live AI is enabled, use the visible AI request reader and review the extracted fields. Otherwise use the manual controls and state that live AI is disabled.
+In **Equipment health**, compare productive, standby, engineering, scheduled down and unscheduled down. These are full-quarter group time allocations, not individual-machine OEE. Show the equipment queue trend. In **Historical attainment**, compare requested and actual start rates across quarters. This history follows the selected programs, not the execution-week slider.
 
-Select Compare scenario. Show baseline and scenario equipment loading, then the horizon-wide risk chart. Explain which constraints are new and which already existed. Optionally test recovered availability, treating it as an assumption requiring Operations confirmation.
+## 3. Find the bottleneck (90 seconds)
 
-Select Explain results with AI if configured. Its interpretation supplements the computed evidence; it is not an approval.
+Open **Capacity & scenarios → Capacity outlook**, Combined, 2027Q2. The requested plan is 2,900 WSPW. Fab A EUV loading is 98.2%; Fab B Etch and Deposition are also above the demo 85% limit. Follow the horizon heatmap to Q3 EUV >100% and its Q4 relief from a second scanner. The equipment-gap table identifies tools required at the limit without inventing spending or ROI.
 
-## 3. Connect an operating observation — about one minute
+In **Scenario comparison**, select Fab A / DRAM Node B (EUV), +10%, Q2 only. Compare: EUV rises to 106.0%. Show baseline/scenario loads and risk across quarters. Alternatively enter a target WSPW. Confirm that every other program stays in the calculation even when the display is focused on one program.
 
-Open Fab performance. Keep Combined selected. Compare the two fabs' WIP and cycle time. Explain that overall cycle time is weighted by completed full-flow lots and line yield uses matching completed cohorts. Avoid treating this historical simulation as a forecast of the proposed plan.
+## 4. Explain flow losses with evidence (60 seconds)
 
-## 4. Show one cited AI insight — about one minute
+Open **Lot flow & cycle time**. Compare processing, queues, transport and engineering holds by program, HOT/NORMAL cohorts, distributions and WIP ages. Queue + hold is about 40% in the default full-flow data. Avoid claiming all holds are removable waste. Open **Lot explorer** and inspect a specific lot or WIP cohort. Intermediate route progress is intentionally unavailable because the data has only a final progress snapshot.
 
-Open AI copilot and select Use latest reviewed scenario. Ask:
+## Optional: machine OEE (45 seconds)
 
-> Why is the most constrained equipment at risk, and what do the planning notes add?
+Open **Fab performance → Machine OEE**. State explicitly that EXAMPLE-01 is a worked calculation separate from the fab simulation. Show A/P/Q and 61.25% OEE, edit an input, or upload actual machine-period records using the template. Do not describe this example as measured Fab A/B OEE.
 
-Show the cited answer, open one source, and show what the AI read or calculated. Distinguish current model values from historical equipment notes. A document provides engineering context; it does not establish a causal explanation by itself.
+## Scope to explain if asked
 
-If no API key is configured, show Preview evidence and explain the retrieval workflow. Do not present a mock response as a live AI result.
-
-## Questions to be ready for
-
-- Where did the data come from? Synthetic configuration, request history and a SimPy simulation.
-- What does the AI read? The same selected model results as the dashboard, structured tables through read-only queries, and retrieved passages from the planning documents.
-- Why 85%? A demo planning buffer; the correct policy depends on actual equipment behavior and service requirements.
-- Why can one fab's spare capacity not cancel another's constraint? Work needs compatible, qualified equipment at a particular site.
-- What can this model claim? Aggregate capacity risk and comparisons. Exact lot lateness, ROI and implemented savings require more data and validation.
-- What does the AI add? Natural-language access, evidence retrieval, comparison and interpretation, with sources that a planner can inspect.
+- Five programs, two fabs, lot/priority detail; no product SKU, machine event or current process-step history.
+- Operating detail: 13 simulated weeks in Q3 2026. Requested/actual starts: 2024Q1–2026Q3. Capacity plan: 2027Q1–Q4.
+- Capacity predicts aggregate hours, equipment gaps and constraints. New queue/cycle-time predictions would require a validated simulation scenario.
+- AI is paused in this version; calculation, filtering and export operate without an API key. Legacy retrieval/model-call modules remain available for a later embedded question interface.

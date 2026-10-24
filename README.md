@@ -1,18 +1,31 @@
-# TD Planning — Stakeholder Review (v3)
+# TD Fab — Performance & Planning (v4)
 
-An independent interview prototype for a fictional two-fab Technology Development network. **All data is synthetic.** The interface is designed for a stakeholder review; it does not reproduce a Micron internal screen.
+An independent interview prototype for a fictional two-fab Technology Development network. **All fab data is synthetic.** This does not reproduce a Micron internal dashboard.
 
-## What is in this version
+## Three views
 
-- **Fab A, Fab B and Combined** views. Combined is the default.
-- **Capacity plan:** comparative loading heatmap, equipment benchmark, wafer-start mix and workload-driver charts. Detailed tables and definitions are expandable.
-- **Scenario review:** optional AI note reading, a guided loading change, baseline-versus-scenario charts, horizon-wide risk comparison and an AI explanation.
-- **Fab performance:** wafer flow, WIP by fab, cycle time by program/fab and cycle-time composition. The reporting window is historical simulation data, not live production.
-- **AI copilot:** reads the dashboard's selected site, quarter, limit and baseline/scenario; queries structured tables; retrieves planning-document passages; returns cited insights and an evidence trace.
+1. **Fab performance** opens first. Its tabs cover production overview, equipment health, historical start attainment and machine OEE.
+2. **Capacity & scenarios** combines the quarterly capacity outlook with manual demand scenarios. Change demand by percentage or enter an exact target WSPW for every selected quarter; optionally test availability recovery.
+3. **Lot flow & cycle time** provides cycle-time decomposition, priority comparisons, cycle-time distributions, WIP aging and a downloadable lot explorer.
+
+AI features are paused: there is no AI page, request reader, API status, AI explanation or external model call in the application entry point. Legacy AI modules and their tests are retained for a later integration. No API key is required.
+
+## Filters and supported detail
+
+- Site: Combined, Fab A or Fab B.
+- Program family: DRAM, NAND, HBM or Experiments.
+- Program names: DRAM Node A, DRAM Node B (EUV), 3D NAND Gen C, HBM test vehicle and Short-loop experiments, restricted to the selected fab's qualifications.
+- Execution: HOT/NORMAL priority and a reporting-week range.
+- Equipment health: equipment-group selection.
+- Lot explorer: completed during the period, WIP at the period end, or started during the period.
+
+The original data has no product/SKU codes, recipe-level event history, individual machine IDs or process-step timestamps. Program → fab → priority → lot is the finest supported execution hierarchy. The source route table supports equipment-group workload tracing, but not tracking the current operation of a lot.
+
+**Capacity filters are a program focus, not a change to network demand.** Equipment loading, risks, gaps and scenarios retain every program's workload. The selected programs focus the starts chart and workload contribution chart; the latter groups other programs explicitly. Equipment health covers the entire Q3 2026 and follows only site/equipment filters. Historical attainment follows site/program filters over 2024Q1–2026Q3, independent of execution weeks and lot priority. These scopes are labelled on their tabs.
 
 ## Run
 
-Python 3.11 or 3.12 is supported; validation used Python 3.12. From the extracted project root:
+Python 3.11 or 3.12 is supported. From the project root:
 
 ```bash
 python -m pip install -r requirements.txt
@@ -20,92 +33,78 @@ python code/self_check.py
 python -m streamlit run code/apprag.py
 ```
 
-For Streamlit Community Cloud, keep the entry point at **code/apprag.py**. The supplied data is ready to use; do not regenerate it merely to start the app.
+For Streamlit Community Cloud, use **code/apprag.py** as the entry point. The supplied data is ready to use; do not regenerate it merely to start the app.
 
-## Enable live AI
+## Machine OEE
 
-In Streamlit Community Cloud, open your app's **Manage app → menu → Settings → Secrets**, or open app settings from your workspace. Add:
+The existing fab simulation contains group time states, not sufficient measurements for individual machine OEE. Its equipment charts are labelled **Equipment time allocation** and **Production loading**.
 
-```toml
-OPENAI_API_KEY = "your-own-api-key"
-OPENAI_MODEL = "gpt-4o-mini"
-```
+The Machine OEE tab adds a working calculator with two input modes:
 
-Save the settings. For local use, copy `.env.example` to `.env` and supply the values there. Never commit your actual key. The sidebar says whether a key is configured; that is not a claim that a live connection was verified.
+- **Worked example:** EXAMPLE-01 is explicitly independent of the fab simulation. Editable inputs default to 480 planned minutes, 360 run minutes, 60 seconds ideal cycle, 300 processed units and 294 first-pass good units. A = 75%, P = 83.333%, Q = 98%, OEE = 61.25%.
+- **Upload machine records:** supply the columns in `templates/machine_oee_template.csv`. No uploaded data is written back to the project or used by the fab capacity model. All records are evaluated in the uploaded file's own scope, independent of sidebar filters.
 
-Without a key, the charts, manual scenarios, source-document preview and exports work. Live AI buttons are disabled and no fake answer is substituted. See `AI_AND_DATA_GUIDE.md` for the AI workflow.
+| Field | Meaning |
+|---|---|
+| machine_id | Individual machine identifier |
+| period | Unique, non-overlapping reporting block for this machine |
+| recipe_id | Single recipe / ideal cycle standard for this record |
+| planned_minutes | Planned production time under an agreed scheduling policy |
+| run_minutes | Actual run time within that planned period |
+| ideal_cycle_seconds | Ideal seconds per processed unit for that recipe |
+| total_count | All units processed in the period |
+| good_count | Units that pass first time, without rework |
 
-## How the AI reads the dashboard and documents
+Availability = run / planned time. Performance = ideal time × total count / run time. Quality = good / total count. OEE = A × P × Q = good count × ideal time / planned time. Unit conversions are explicit. Split mixed recipes into separate non-overlapping periods; do not reuse the full shift's planned time for every recipe. Counts must be whole, finite and non-negative; good ≤ total; run ≤ planned; performance must not exceed 100%. For zero output, quality is undefined and OEE is zero. The interface does not average unlike machines' OEE.
 
-1. The application supplies the current dashboard calculations and filter context as source **S1**. It reads the underlying data, not screenshot pixels.
-2. SQL tools query the **11 structured CSV/SQLite tables** for historical, lot-level and planning details. Capacity questions use the deterministic model. Read-only queries have table restrictions, operation limits and row caps.
-3. The **15 planning documents** are chunked with filename/position metadata. OpenAI `text-embedding-3-small` embeddings and keyword scores are combined for retrieval. This small corpus uses an in-memory vector index; a separate Chroma service is unnecessary. If semantic retrieval is unavailable, keyword fallback is identified.
-4. The language model combines the evidence and cites **[S1]**, **[S2]**, **[D1]**, etc. Users can inspect source values, SQL, document passages and tool steps. Unknown citations and quantities absent from cited sources are rejected. These checks do not prove that every interpretation or causal statement is correct; human review remains necessary.
-5. Hypothetical calculations use a separate copy of the plan. They do not edit files, approve requests or replace the scenario displayed elsewhere.
+Reference: [Vorne's OEE formulas](https://www.oee.com/calculating-oee/).
 
-Notes supply context, not automatic route changes. A process-change notice must be reconciled with the configured baseline before applying it again. Historical notes and current planning results retain their own periods.
+## Execution definitions
 
-The compact scenario explanation has an additional check: its numerical quantities are substituted from known model-fact references. Unrecognized references and literal generated digits are rejected.
+The source simulation covers **29 June–27 September 2026**, after warm-up. Some lots began earlier and completed within this window.
 
-## Combined metric definitions
+- Weekly starts: input wafers from lots started in that week, following selected filters.
+- Weekly completions: surviving output wafers from lots completed in that week.
+- WIP: original input-wafer equivalents for lots active at each week end; reconstructed from minute-resolution start/end timestamps. The all-program totals reconcile exactly to the original weekly CSV.
+- Cycle time: completed-lot mean, weighted by the underlying lots across both fabs. Short loops are excluded unless enabled; they remain in flow/WIP/yield when selected.
+- Yield: output divided by input for the same completed cohort; wafer survival, not electrical die yield or machine first-pass quality.
+- Weekly cycle time: weighted across that week's completed lots, not an unweighted average of fab averages.
+- Lot explorer: completed/start cohorts follow selected weeks. WIP age is reconstructed at the selected cutoff. Route progress is shown only at the final simulation snapshot because intermediate progress history is absent. Future completions/output are hidden when reviewing an earlier cutoff.
+- Queue + hold share: measured from the selected completed cycle-time cohort. The default full-flow population is approximately **40.0%**, not >50%. Including transport raises non-processing share to approximately 63.6%. Engineering holds can be necessary development work; the dashboard does not classify all elapsed time as avoidable waste.
 
-- **Wafer starts, completions and WIP:** sum the two sites' aligned weekly quantities.
-- **Cycle time:** mean across the actual completed full-flow lots from both sites. This is lot-weighted; it is not an unweighted mean of site averages.
-- **Line yield:** total surviving output wafers divided by input wafers for those same completed cohorts. This measures wafer survival, not electrical die yield.
-- **Capacity risk:** count and compare each **fab/equipment** combination separately. Spare hours in Fab A do not erase a Fab B constraint. Equipment qualifications still apply.
-- **WIP:** input-wafer equivalents from weekly snapshots; each active lot contributes its original 25 wafers. Interim losses are not removed from that snapshot quantity.
+Little's Law is not claimed as an exact reconciliation of the current finite-window KPI cards. Snapshot WIP, completed cohorts, short-loop exclusions and boundary effects must be aligned for such an analysis.
 
-## Model scope
+## Capacity definitions
 
-Required hours/week = Σ starts/week × passes/wafer × minutes/pass × sampling fraction ÷ 60. Available hours/week = installed resources × 168 × production availability. Loading is required divided by available hours.
+Required hours/week = Σ starts/week × passes/wafer × minutes/pass × sampling ÷ 60. Available hours/week = installed resources × 168 × production availability. Loading = required / available hours.
 
-The 85% planning limit is a chosen demo policy, not an asserted Micron standard. Equipment released in a quarter contributes a full quarter of capacity. Groups are pooled within each site. This aggregate model does not predict exact lot due dates, scenario queue times, costs, savings or ROI.
+The 85% limit is a demo planning policy. Equipment releases contribute for the full stated quarter. Spare capacity at one fab does not cancel a constraint at the other. Additional-tool counts are aggregate requirements at that limit, before qualification and financial review. There are no equipment prices, costs or ROI estimates.
 
-Operating performance covers **29 June–27 September 2026**, after a simulation warm-up. Some lots began before this window and completed inside it. The historical simulation is not rerun when a future request changes.
+Historical performance is not rerun when a future demand scenario changes. The capacity model does not predict scenario queues, cycle times, due dates or savings.
 
-The original request-realization regression is retained as a supporting analytics tool. Lower historical realization does not guarantee spare capacity against committed requests.
+`fab_config.py` supplies routing, equipment, availability and arrival assumptions. `plan_2027.csv` supplies requested demand. Equipment/route CSVs are generated snapshots of the configuration. The original 11 CSVs, 15 text documents and SQLite database are preserved unchanged.
 
-## Update your existing Mac/GitHub project
+## Update your Mac/GitHub project
 
-Save the new download as **td-fab-planner-v3.zip** in Downloads. In Cursor's terminal:
+Download **td-fab-planner-v4.zip** to Downloads. In Cursor's terminal:
 
 ```bash
-unzip -q -o "$HOME/Downloads/td-fab-planner-v3.zip" -d "$HOME/Downloads/td-planner-v3"
-ditto "$HOME/Downloads/td-planner-v3/td-fab-planner-update" "$HOME/Desktop/Operational-Intelligence-Dashboard"
+unzip -q -o "$HOME/Downloads/td-fab-planner-v4.zip" -d "$HOME/Downloads/td-planner-v4"
+ditto "$HOME/Downloads/td-planner-v4/td-fab-planner-update" "$HOME/Desktop/Operational-Intelligence-Dashboard"
 cd "$HOME/Desktop/Operational-Intelligence-Dashboard"
 git status
-```
-
-Check that `code/planning_copilot.py` and `code/executive_charts.py` appear among the new files. Then:
-
-```bash
 git add -A
-git commit -m "Add stakeholder comparisons and grounded AI copilot"
+git commit -m "Lead with fab performance and add program filters and machine OEE calculator"
 git push origin main
 ```
 
-Your Streamlit deployment must then rebuild from that commit. Refresh after the deployment completes.
+Refresh after Streamlit finishes rebuilding from the new commit. Keep the entry point at `code/apprag.py`.
 
-## Tests and files
+## Validation
 
 ```bash
 python -m pip install -r requirements-dev.txt
 python -m pytest -q
 ```
 
-| File | Purpose |
-|---|---|
-| `code/apprag.py` | Four stakeholder-facing views |
-| `code/executive_charts.py` | Comparative charts |
-| `code/review_model.py` | Scope-safe metrics and Combined aggregation |
-| `code/planning_copilot.py` | Hybrid retrieval, read-only SQL, model tools and citation checks |
-| `code/assistant.py` | AI request extraction and grounded scenario explanation |
-| `code/fab_capacity.py` | Capacity/scenario engine |
-| `code/fab_config.py` | Assumptions, routes, equipment and plans |
-| `DEMO_GUIDE.md` | Five-minute interview walkthrough |
-| `AI_AND_DATA_GUIDE.md` | AI methodology and questions to demonstrate |
-| `VALIDATION.md` | Checks completed and remaining limits |
-
-The original 11 CSV files, 15 text documents and SQLite database are preserved. `fab_config.py` remains the source for many model assumptions; CSV equipment/route files are generated snapshots. `plan_2027.csv` supplies demand. Optional `python code/data_generation.py` regenerates and overwrites the synthetic data folder.
-
-Public technical references: [OpenAI function calling](https://developers.openai.com/api/docs/guides/function-calling), [OpenAI embeddings](https://developers.openai.com/api/docs/guides/embeddings), [Streamlit settings and secrets](https://docs.streamlit.io/deploy/streamlit-community-cloud/manage-your-app/app-settings).
+See `VALIDATION.md` for results and `DEMO_GUIDE.md` for the interview walkthrough.

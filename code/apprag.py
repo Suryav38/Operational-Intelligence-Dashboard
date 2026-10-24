@@ -1,324 +1,328 @@
-"""Stakeholder workspace: comparative charts, scoped scenarios and grounded AI."""
+"""Stakeholder review: execution first, explicit cohorts, capacity and lot detail."""
 from __future__ import annotations
 import html
-import json
-import os
 from pathlib import Path
 import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
-from dotenv import load_dotenv
-import assistant as ai
 import executive_charts as ec
+import performance_charts as pc
+import execution_model as em
+import oee_model as om
 import fab_capacity as fc
 import fab_config as C
 import fab_data as fd
-import planning_copilot as rag
 import review_model as rm
 
-st.set_page_config(page_title='TD Planning | Stakeholder Review',page_icon='◫',layout='wide')
+st.set_page_config(page_title='TD Fab | Performance & Planning',page_icon='◫',layout='wide')
 st.markdown('<style>'+Path(__file__).with_name('dashboard.css').read_text()+'</style>',unsafe_allow_html=True)
-load_dotenv(fd.ROOT/'.env')
-
 @st.cache_data(show_spinner=False)
 def load_data():return fd.load()
 try:data=load_data()
-except Exception as exc:
-    st.error(f'The project data could not be loaded: {exc}');st.stop()
-
-def secret(name,default=''):
-    try:return st.secrets.get(name) or os.getenv(name,default)
-    except (FileNotFoundError,st.errors.StreamlitSecretNotFoundError):return os.getenv(name,default)
-API_KEY=str(secret('OPENAI_API_KEY')).strip().strip('"')
-MODEL=str(secret('OPENAI_MODEL','gpt-4o-mini')).strip()
+except Exception as exc:st.error(f'Project data could not be loaded: {exc}');st.stop()
 ss=st.session_state
 
 def card(col,label,value,sub='',tone=''):
     col.markdown(f'<div class="kpi"><div class="kpi-label">{html.escape(label)}</div><div class="kpi-value {tone}">{html.escape(str(value))}</div><div class="kpi-sub">{html.escape(sub)}</div></div>',unsafe_allow_html=True)
+def number(value,decimals=1,suffix=''):
+    return '—' if pd.isna(value) else f'{value:,.{decimals}f}'+suffix
 
 def chart(fig,key):st.plotly_chart(fig,width='stretch',config={'displayModeBar':False},key=key)
-
-def title(name,period):
-    st.markdown('<div class="topline"><div class="eyebrow">TD / STRATEGY & OPERATIONS</div><span class="badge">SYNTHETIC DEMO</span></div>',unsafe_allow_html=True)
-    st.title(name)
-    st.caption(rm.SITE_LABELS[site]+' · '+period)
-
 def panel(col,name):
     box=col.container(border=True);box.subheader(name);return box
 
-def table_view(t):
-    t=t.copy();t['Site']=t.site.map(rm.SITE_LABELS);t['Equipment']=t.tool_group.map(rm.GROUP_LABELS)
-    return t
+def title(name,period):
+    st.markdown('<div class="topline"><div class="eyebrow">TD / STRATEGY & OPERATIONS</div><span class="badge">SYNTHETIC DEMO</span></div>',unsafe_allow_html=True)
+    st.title(name);st.caption(rm.SITE_LABELS[site]+' · '+period)
+def table_view(frame):
+    out=frame.copy();out['Site']=out.site.map(rm.SITE_LABELS);out['Equipment']=out.tool_group.map(rm.GROUP_LABELS);return out
 
-st.sidebar.markdown('<div class="brand"><div class="brand-mark">TD</div><div><div class="brand-title">Planning workspace</div><div class="brand-sub">Stakeholder review</div></div></div>',unsafe_allow_html=True)
-page=st.sidebar.radio('Workspace',['Capacity plan','Scenario review','Fab performance','AI copilot'],key='page')
+def export_table(frame,labels=None):
+    return frame.rename(columns=labels or {}).to_csv(index=False)
+
+st.sidebar.markdown('<div class="brand"><div class="brand-mark">TD</div><div><div class="brand-title">Fab performance & planning</div><div class="brand-sub">Stakeholder review</div></div></div>',unsafe_allow_html=True)
+PAGES=['Fab performance','Capacity & scenarios','Lot flow & cycle time']
+if ss.get('page') not in PAGES:ss['page']=PAGES[0]
+page=st.sidebar.radio('Workspace',PAGES,key='page')
 st.sidebar.divider()
 site=st.sidebar.selectbox('Site',['Both','FAB_A','FAB_B'],format_func=rm.SITE_LABELS.get,key='site')
-if page!='Fab performance':
+family=st.sidebar.selectbox('Program family',['All families','DRAM','NAND','HBM','Experiments'],key='family')
+options=em.program_options(site,family)
+if ss.get('_program_scope')!=(site,family):
+    ss['_program_scope']=(site,family);ss['programs']=options
+programs=st.sidebar.multiselect('Program names',options,format_func=lambda p:C.PROGRAMS[p]['name'],key='programs')
+if not options:st.sidebar.caption('This family has no qualified program at this fab.')
+if page=='Capacity & scenarios':
     ss.setdefault('quarter',ss.get('_planning_quarter','2027Q2'))
-    quarter=st.sidebar.selectbox('Review quarter',C.PLAN_QUARTERS,key='quarter')
-    ss['_planning_quarter']=quarter
-else:quarter=ss.get('_planning_quarter','2027Q2')
-with st.sidebar.expander('Review assumptions'):
-    ceiling=st.slider('Planning limit (%)',75,95,85,5,key='ceiling_pct',disabled=page=='Fab performance')/100
-    st.caption('Loading uses available production hours. Combined capacity risks remain separate by fab and equipment group. All programs stay in the model.')
-    st.caption('85% is a demo planning policy. Historical operation: 29 Jun–27 Sep 2026. Planning basis: requested starts.')
+    quarter=st.sidebar.selectbox('Review quarter',C.PLAN_QUARTERS,key='quarter');ss['_planning_quarter']=quarter
+    with st.sidebar.expander('Planning assumptions'):
+        ceiling=st.slider('Planning limit (%)',75,95,85,5,key='ceiling_pct')/100
+        st.caption('85% is a demo planning policy. Equipment releases contribute from the start of their stated quarter.')
+    priority='All priorities';first=last=None;include_short=False
+else:
+    quarter=ss.get('_planning_quarter','2027Q2');ceiling=ss.get('ceiling_pct',85)/100
+    priority=st.sidebar.selectbox('Lot priority',['All priorities','HOT','NORMAL'],key='priority')
+    weeks=sorted(data['sim_fab_weekly'].week_start.unique())
+    first,last=st.sidebar.select_slider('Reporting weeks',weeks,value=(weeks[0],weeks[-1]),format_func=lambda w:pd.Timestamp(w).strftime('%d %b'),key='report_weeks')
+    include_short=st.sidebar.checkbox('Include short loops in cycle time',value=False,key='include_short')
+    st.sidebar.caption('Weeks begin Monday. WIP is measured at each week end.')
 st.sidebar.divider()
-st.sidebar.markdown('**AI copilot**')
-st.sidebar.caption('Key configured' if API_KEY else 'Setup needed: OPENAI_API_KEY')
-st.sidebar.caption('11 structured tables · 15 planning documents')
-state=fc.base_state(data);table=fc.loading_table(state,ceiling)
+st.sidebar.caption('5 programs · 2 fabs · 13 simulated operating weeks')
+state=fc.base_state(data);capacity=fc.loading_table(state,ceiling)
 
 
-def capacity_page():
-    title('Capacity outlook',quarter+' review · 2027 plan')
-    m=rm.capacity_summary(table,state,site,quarter,ceiling)
+def overview(p):
     cols=st.columns(4)
-    card(cols[0],'Wafer starts / week',f"{m['starts']:,.0f}",'Requested plan')
-    card(cols[1],'At-risk equipment',f"{m['at_risk']} / {m['groups']}",f'At or above {ceiling*100:.0f}%','alert' if m['at_risk'] else '')
-    card(cols[2],'Peak equipment load',f"{m['worst_load']:.1f}%",rm.SITE_LABELS[m['worst_site']]+' · '+rm.GROUP_LABELS[m['worst_group']],'danger' if m['worst_load']>100 else 'alert')
-    card(cols[3],'Over capacity',str(m['over_capacity']),'Fab / equipment groups >100%','danger' if m['over_capacity'] else '')
+    card(cols[0],'Completions / week',number(p['avg_outs'],0),'Selected programs & priority')
+    card(cols[1],'Cycle time',number(p['cycle_days'],1,' d'),'All selected programs' if include_short else 'Full-flow completed lots')
+    card(cols[2],'Average WIP',number(p['avg_wip'],0),'Input-wafer equivalents')
+    card(cols[3],'Line yield',number(p['yield_pct'],2,'%'),'Completed-cohort wafer survival')
     st.write('')
-    cols=st.columns([1.25,1],gap='large')
-    with panel(cols[0],'Loading across quarters'):
+    a,b=st.columns(2,gap='large')
+    with panel(a,'Weekly wafer flow'):chart(pc.weekly_flow(p),'weekly_flow')
+    with panel(b,'WIP by fab'):chart(pc.weekly_trend(p,'wip_wafers'),'weekly_wip')
+    a,b=st.columns(2,gap='large')
+    with panel(a,'Weekly cycle time'):chart(pc.weekly_trend(p,'avg_cycle_time_days'),'weekly_ct')
+    with panel(b,'Cycle time by program'):chart(pc.cycle_by_program(p),'cycle_program')
+    with st.expander('Program scorecard & metric definitions'):
+        summary=p['completed'].groupby(['site','program']).agg(completed_lots=('lot_id','size'),wafers_in=('wafers_in','sum'),wafers_out=('wafers_out','sum'),mean_cycle_days=('cycle_time_days','mean')).reset_index()
+        summary['Yield (%)']=100*summary.wafers_out/summary.wafers_in
+        summary['Site']=summary.site.map(rm.SITE_LABELS);summary['Program']=summary.program.map(ec.PROGRAM_SHORT)
+        st.dataframe(summary[['Site','Program','completed_lots','wafers_out','mean_cycle_days','Yield (%)']].rename(columns={'completed_lots':'Completed lots','wafers_out':'Wafers out','mean_cycle_days':'Mean cycle time (d)'}).round(2),hide_index=True,width='stretch')
+        st.caption('Flow, WIP and yield include all selected programs. Cycle-time charts follow the short-loop checkbox. Cycle time is completed-lot weighted; yield uses input and output from the same completed cohorts. Scorecard cycle times include each listed program. Filtered WIP is reconstructed from lot timestamps and original input quantities. Empty cohorts display —.')
+        st.caption('Little’s Law is a diagnostic relationship, not an enforced equality between these finite-window KPIs. The weekly snapshots and completed cohorts have different boundary effects.')
+    st.download_button('Download filtered weekly performance',export_table(p['weekly']),'filtered_weekly_performance.csv','text/csv')
+
+
+def equipment_page():
+    st.caption('Q3 2026 · full-quarter shared equipment groups · site filter applies; program, priority and week filters do not.')
+    available=[g for g in C.TOOL_GROUP_ORDER if any(C.INSTALLED_TOOLS[s][g] for s in ec.sites(site))]
+    selected=st.multiselect('Equipment groups',available,default=[g for g in rm.FOCUS_GROUPS if g in available],format_func=rm.GROUP_LABELS.get,key='health_groups_'+site)
+    if not selected:st.info('Select an equipment group to compare.');return
+    frame=em.equipment_health(data,site,selected);cols=st.columns(4)
+    worst=frame.sort_values('loading_pct',ascending=False).iloc[0]
+    card(cols[0],'Installed machines',number(frame.tools.sum(),0),'Selected equipment groups')
+    card(cols[1],'Peak production loading',number(worst.loading_pct,1,'%'),rm.SITE_LABELS[worst.site]+' · '+rm.GROUP_LABELS[worst.tool_group])
+    card(cols[2],'Longest equipment queue',number(frame.avg_queue_h.max(),2,' h'),'Mean wait per equipment visit')
+    card(cols[3],'Highest downtime',number(frame.downtime_pct.max(),1,'%'),'Scheduled + unscheduled')
+    st.write('');a,b=st.columns([1.2,1],gap='large')
+    with panel(a,'Equipment time allocation'):chart(pc.equipment_states(frame),'equipment_states')
+    with panel(b,'Weekly equipment queues'):chart(pc.queue_trend(data,site,selected),'equipment_queues')
+    with st.expander('Equipment scorecard & definitions'):
+        view=table_view(frame)
+        cols=['Site','Equipment','tools','productive_pct','standby_pct','engineering_pct','sched_down_pct','unsched_down_pct','loading_pct','avg_queue_h']
+        labels={'tools':'Machines','productive_pct':'Productive (%)','standby_pct':'Standby (%)','engineering_pct':'Engineering (%)','sched_down_pct':'Scheduled down (%)','unsched_down_pct':'Unscheduled down (%)','loading_pct':'Production loading (%)','avg_queue_h':'Queue / visit (h)'}
+        st.dataframe(view[cols].rename(columns=labels).round(2),hide_index=True,width='stretch')
+        st.caption('State percentages share a calendar-time denominator and may total 99.9–100.1% after rounding. Production loading uses productive time divided by time available after engineering and downtime. These are group measurements, not individual-machine OEE.')
+    st.download_button('Download equipment health',export_table(frame),'Q3_2026_equipment_health.csv','text/csv')
+
+
+def attainment_page():
+    st.caption('2024Q1–2026Q3 · historical weekly start rates by quarter · site and program filters apply; lot priority and reporting-week filters do not.')
+    frame=em.historical_attainment(data,site,programs)
+    if frame.empty:st.info('No historical starts for this selection.');return
+    latest=frame.iloc[-1];cols=st.columns(4)
+    card(cols[0],'Latest requested WSPW',number(latest.requested_wspw,0),latest.quarter)
+    card(cols[1],'Latest actual WSPW',number(latest.actual_wspw,0),latest.quarter)
+    card(cols[2],'Latest attainment',number(latest.attainment_pct,1,'%'),'Actual starts / requested starts')
+    card(cols[3],'Latest variance',number(latest.actual_wspw-latest.requested_wspw,0),'Wafers / week')
+    st.write('')
+    a,b=st.columns([1.25,1],gap='large')
+    with panel(a,'Requested vs actual wafer starts'):chart(pc.attainment(frame),'attainment_trend')
+    with panel(b,'Attainment by quarter'):
+        fig=go.Figure(go.Bar(x=frame.quarter,y=frame.attainment_pct,marker_color=[ec.TEAL if x>=100 else ec.BLUE for x in frame.attainment_pct]))
+        ec.style(fig,320);fig.add_hline(y=100,line_dash='dot',line_color=ec.AMBER);fig.update_yaxes(title='Actual / requested (%)',rangemode='tozero');chart(fig,'attainment_ratio')
+    with st.expander('Historical source values'):
+        st.dataframe(frame.rename(columns={'quarter':'Quarter','requested_wspw':'Requested WSPW','actual_wspw':'Actual WSPW','attainment_pct':'Attainment (%)'}).round(1),hide_index=True,width='stretch')
+        st.caption('Attainment measures wafer starts, not output, delivery performance or forecast accuracy. Historical under-realization does not guarantee spare capacity against future commitments.')
+    st.download_button('Download historical attainment',export_table(frame),'historical_start_attainment.csv','text/csv')
+
+
+def machine_oee_page():
+    st.caption('Machine OEE requires its own time, speed and first-pass quality records. The fab simulation contains group time states only.')
+    mode=st.radio('OEE inputs',['Worked example','Upload machine records'],horizontal=True,key='oee_source')
+    if mode=='Worked example':
+        st.info('Illustrative calculator · EXAMPLE-01 is independent of Fab A / Fab B. Dashboard filters do not apply.')
+        with st.expander('Edit example inputs',expanded=False):
+            a,b,c=st.columns(3)
+            planned=a.number_input('Planned production time (min)',min_value=1.,value=480.,key='oee_planned')
+            runtime=b.number_input('Run time (min)',min_value=0.,value=360.,key='oee_runtime')
+            ideal=c.number_input('Ideal cycle time (seconds / unit)',min_value=.001,value=60.,key='oee_ideal')
+            a,b=st.columns(2)
+            total=a.number_input('Total processed units',min_value=0,value=300,step=1,key='oee_total')
+            good=b.number_input('First-pass good units',min_value=0,value=294,step=1,key='oee_good')
+        records=om.example();records.loc[0,['planned_minutes','run_minutes','ideal_cycle_seconds','total_count','good_count']]=[planned,runtime,ideal,total,good]
+    else:
+        st.caption('One single-recipe record per machine and non-overlapping period. Uploaded records use their own scope; dashboard filters do not apply.')
+        st.download_button('Download machine OEE template',pd.DataFrame(columns=om.COLUMNS).to_csv(index=False),'machine_oee_template.csv','text/csv')
+        uploaded=st.file_uploader('Machine-period CSV',type=['csv'],key='machine_oee_upload')
+        if uploaded is None:return
+        if uploaded.size>5*1024*1024:st.error('Use a CSV smaller than 5 MB.');return
+        try:records=pd.read_csv(uploaded)
+        except Exception:st.error('The file could not be read as a CSV.');return
+    try:out=om.calculate(records)
+    except ValueError as exc:st.error(str(exc));return
+    if ss.get('oee_record') not in out.index:ss['oee_record']=out.index[0]
+    selection=st.selectbox('Machine / period',list(out.index),format_func=lambda i:str(out.loc[i,'machine_id'])+' · '+str(out.loc[i,'period']),key='oee_record')
+    row=out.loc[selection];cols=st.columns(4)
+    for col,label,value in zip(cols,['Availability','Performance','Quality','OEE'],[row.availability_pct,row.performance_pct,row.quality_pct,row.oee_pct]):
+        card(col,label,number(value,2,'%'),'Selected machine / period')
+    st.write('')
+    a,b=st.columns(2,gap='large')
+    with panel(a,'OEE factors'):
+        fig=go.Figure(go.Bar(y=['Availability','Performance','Quality','OEE'],x=[row.availability_pct,row.performance_pct,row.quality_pct,row.oee_pct],orientation='h',marker_color=[ec.BLUE,ec.TEAL,ec.AMBER,'#24374f']))
+        ec.style(fig,290);fig.update_xaxes(range=[0,100],title='Percent');fig.update_yaxes(autorange='reversed');chart(fig,'oee_factors')
+    with panel(b,'Machine-period comparison'):
+        fig=go.Figure(go.Bar(y=out.machine_id.astype(str)+' · '+out.period.astype(str),x=out.oee_pct,orientation='h',marker_color=ec.BLUE))
+        ec.style(fig,max(290,min(600,len(out)*30+85)));fig.update_xaxes(range=[0,100],title='OEE (%)');fig.update_yaxes(autorange='reversed');chart(fig,'oee_machines')
+    with st.expander('OEE formulas & source records'):
+        st.caption('Availability = run / planned time. Performance = ideal cycle time × total count / run time. Quality = first-pass good / total count. OEE = A × P × Q. Planned production time must follow a declared scheduling policy. Split mixed recipes into separate periods with their own ideal cycle standards. No unweighted average of machine OEE is shown. With no processed units, quality is undefined; OEE is zero.')
+        st.dataframe(out.round(2),hide_index=True,width='stretch')
+        st.markdown('[Calculation reference: Vorne OEE](https://www.oee.com/calculating-oee/)')
+    st.download_button('Download calculated machine OEE',export_table(out),'machine_oee_results.csv','text/csv')
+
+
+def performance_page():
+    title('Fab performance',pd.Timestamp(first).strftime('%d %b')+'–'+(pd.Timestamp(last)+pd.Timedelta(days=6)).strftime('%d %b %Y')+' · execution review')
+    tabs=st.tabs(['Production overview','Equipment health','Historical attainment','Machine OEE'])
+    with tabs[0]:
+        if not programs:st.info('Select at least one program in the sidebar.')
+        else:
+            p=em.execution(data,site,programs,priority,first,last,include_short)
+            overview(p)
+    with tabs[1]:equipment_page()
+    with tabs[2]:attainment_page()
+    with tabs[3]:machine_oee_page()
+
+
+def capacity_outlook():
+    m=rm.capacity_summary(capacity,state,site,quarter,ceiling);cols=st.columns(4)
+    card(cols[0],'Wafer starts / week',number(m['starts'],0),'All programs in selected fab(s)')
+    card(cols[1],'At-risk equipment',f"{m['at_risk']} / {m['groups']}",f'At or above {ceiling*100:.0f}%','alert' if m['at_risk'] else '')
+    card(cols[2],'Peak equipment load',number(m['worst_load'],1,'%'),rm.SITE_LABELS[m['worst_site']]+' · '+rm.GROUP_LABELS[m['worst_group']],'danger' if m['worst_load']>100 else 'alert')
+    card(cols[3],'Additional tools at limit',str(int(rm.select_scope(capacity,site,quarter).tool_gap.sum())),'Model requirement · before qualification / cost review')
+    st.write('');a,b=st.columns([1.25,1],gap='large')
+    with panel(a,'Loading across quarters'):
         all_groups=st.toggle('Show all equipment groups',value=False,key='all_groups')
-        chart(ec.loading_heatmap(table,site,quarter,ceiling,all_groups),'capacity_heatmap')
-    with panel(cols[1],quarter+' · equipment comparison'):
-        chart(ec.equipment_compare(table,site,quarter,ceiling),'equipment_comparison')
-    st.caption(f'Green: below {ceiling*100:.0f}% · amber: {ceiling*100:.0f}%–100% · red: over capacity. Dashed line = planning limit. Dotted line = available capacity.')
-    cols=st.columns(2,gap='large')
-    with panel(cols[0],quarter+' · wafer starts by program'):
-        chart(ec.starts_mix(state,site,quarter),'starts_mix')
-    with panel(cols[1],'What consumes the equipment hours?'):
-        chart(ec.workload_drivers(state,site,rm.select_scope(table,site,quarter),ceiling),'load_drivers')
-    with st.expander('Exceptions, equipment releases & calculation details'):
-        current=table_view(rm.select_scope(table,site,quarter))
-        current['Status']=current.loading_pct.map(lambda x:rm.risk_label(x,ceiling))
-        exceptions=current[current.Status!='Within planning limit']
-        st.dataframe(exceptions[['Site','Equipment','loading_pct','required_h_wk','available_h_wk','Status']].round(1),hide_index=True,width='stretch')
-        arrivals=data['tool_arrivals']
-        if site!='Both':arrivals=arrivals[arrivals.site==site]
-        st.dataframe(arrivals,hide_index=True,width='stretch')
-        selected=current[['site','tool_group']].apply(tuple,axis=1).tolist()
-        choice=st.selectbox('Trace equipment',selected,format_func=lambda k:rm.SITE_LABELS[k[0]]+' · '+rm.GROUP_LABELS[k[1]],key='trace_equipment')
-        detail=rm.program_workload(state,*choice,quarter)
-        st.dataframe(detail.round(2),hide_index=True,width='stretch')
-        st.caption('Required h/week = Σ starts × passes × minutes/pass × sampling ÷ 60. Available h/week = resources × 168 × production availability. Resources released in a quarter contribute for that full quarter.')
-    st.download_button('Download capacity review',rm.select_scope(table,site).assign(planning_limit_pct=ceiling*100,demand_basis='requested').to_csv(index=False),f'{site}_2027_capacity_review.csv','text/csv')
-
-
-def copy_ai_draft():
-    d=ai.validate_request(ai.StartRequest(**ss['ai_draft']))
-    scope='Both' if ss.get('site')=='Both' else d.site
-    ss['site'],ss['quarter']=scope,d.first_quarter
-    ss['_planning_quarter']=d.first_quarter
-    ss['_scenario_scope']=(scope,d.first_quarter)
-    ss['scenario_site']=d.site
-    ss['scenario_program'],ss['scenario_pct']=d.program,float(d.change_pct)
-    ss['scenario_first'],ss['scenario_last']=d.first_quarter,d.last_quarter
-    ss['recovery_enabled']=False;ss['review']=None
+        chart(ec.loading_heatmap(capacity,site,quarter,ceiling,all_groups),'capacity_heatmap')
+    with panel(b,quarter+' · equipment comparison'):chart(ec.equipment_compare(capacity,site,quarter,ceiling),'equipment_comparison')
+    st.caption(f'Green <{ceiling*100:.0f}% · amber {ceiling*100:.0f}–100% · red >100%. Network loading retains all programs; program filters focus the charts below.')
+    if programs:
+        a,b=st.columns(2,gap='large')
+        with panel(a,'Requested starts · selected programs'):chart(ec.starts_mix(state,site,quarter,programs),'starts_mix')
+        with panel(b,'Share of equipment workload'):chart(ec.workload_drivers(state,site,rm.select_scope(capacity,site,quarter),ceiling,programs),'load_drivers')
+    with st.expander('Equipment gaps, releases & calculation details'):
+        current=table_view(rm.select_scope(capacity,site,quarter));current['Status']=current.loading_pct.map(lambda x:rm.risk_label(x,ceiling))
+        st.dataframe(current[['Site','Equipment','tools','tools_needed_at_ceiling','tool_gap','loading_pct','required_h_wk','available_h_wk','Status']].rename(columns={'tools':'Installed / released','tools_needed_at_ceiling':'Needed at limit','tool_gap':'Additional tools','loading_pct':'Loading (%)','required_h_wk':'Required h/week','available_h_wk':'Available h/week'}).round(1),hide_index=True,width='stretch')
+        arrivals=rm.select_scope(data['tool_arrivals'],site);st.dataframe(arrivals,hide_index=True,width='stretch')
+        choices=list(zip(current.site,current.tool_group))
+        selected=st.selectbox('Trace equipment',choices,format_func=lambda k:rm.SITE_LABELS[k[0]]+' · '+rm.GROUP_LABELS[k[1]],key='trace_equipment')
+        st.dataframe(rm.program_workload(state,*selected,quarter).round(2),hide_index=True,width='stretch')
+        st.caption('Required h/week = Σ starts × passes × minutes/pass × sampling ÷ 60. Available h/week = resources × 168 × production availability. This is an aggregate capacity screen; capital costs and ROI are not included.')
+    st.download_button('Download capacity review',export_table(rm.select_scope(capacity,site).assign(planning_limit_pct=ceiling*100,demand_basis='requested')),f'{site}_2027_capacity_review.csv','text/csv')
 
 
 def scenario_page():
-    title('Scenario comparison',quarter+' review · baseline vs proposed change')
-    previous=ss.get('review')
     if ss.get('_scenario_scope')!=(site,quarter):
-        ss['_scenario_scope']=(site,quarter)
-        previous=None;ss['review']=None
-        for k in ['scenario_site','scenario_program','scenario_pct','scenario_first','scenario_last','recovery_enabled']:
-            ss.pop(k,None)
-    ss.setdefault('scenario_site',previous['site'] if previous else ('FAB_A' if site=='Both' else site))
-    request_site=ss['scenario_site'] if site=='Both' else site
-    ss.setdefault('scenario_program',previous['program'] if previous else ('DRAM_B' if request_site=='FAB_A' else 'NAND_C'))
-    ss.setdefault('scenario_pct',float(previous['pct']) if previous else 10.0)
-    ss.setdefault('scenario_first',previous['first_quarter'] if previous else quarter)
-    ss.setdefault('scenario_last',previous['last_quarter'] if previous else quarter)
-    with st.container(border=True):
-        st.subheader('AI request reader')
-        note=st.text_area('Planning note',f'Increase DRAM Node B wafer starts by 10% at Fab A during {quarter} only.',height=75,key='planning_note')
-        if st.button('Extract request',disabled=not API_KEY):
-            try:
-                with st.spinner('Reading the request…'):ss['ai_draft']=ai.extract_request(note,API_KEY,MODEL).model_dump()
-                ss['ai_note_source']=note
-            except Exception as exc:st.error(ai.explain_error(exc));ss.pop('ai_draft',None)
-        if not API_KEY:st.caption('Enable live AI in Streamlit app settings → Secrets. Manual controls remain available.')
-        if ss.get('ai_draft') and ss.get('ai_note_source')==note:
-            d=ai.StartRequest(**ss['ai_draft'])
-            st.dataframe(pd.DataFrame([{'Program':d.program,'Site':d.site,'Change %':d.change_pct,'From':d.first_quarter,'Through':d.last_quarter}]),hide_index=True,width='stretch')
-            try:ai.validate_request(d);valid=True
-            except ValueError as exc:valid=False;st.warning(str(exc))
-            st.button('Copy reviewed request to controls',on_click=copy_ai_draft,disabled=not valid)
-            with st.expander('Source quote & open questions'):st.write(d.source_quote);st.write(d.open_questions)
-    if site=='Both':request_site=st.selectbox('Change at',list(C.SITES),format_func=rm.SITE_LABELS.get,key='scenario_site')
-    if ss.get('scenario_program') not in C.QUALIFIED[request_site]:ss['scenario_program']='DRAM_A'
-    cols=st.columns([1.4,1,1,1])
-    program=cols[0].selectbox('Program',C.QUALIFIED[request_site],format_func=lambda p:ec.PROGRAM_SHORT[p],key='scenario_program')
-    pct=cols[1].number_input('Starts change (%)',min_value=-100.,max_value=100.,step=5.,key='scenario_pct')
-    first=cols[2].selectbox('From',C.PLAN_QUARTERS,key='scenario_first')
-    last=cols[3].selectbox('Through',C.PLAN_QUARTERS,key='scenario_last')
-    recovery=st.checkbox('Test availability recovery',key='recovery_enabled')
+        ss['_scenario_scope']=(site,quarter);ss['review']=None
+        ss['scenario_first']=quarter;ss['scenario_last']=quarter
+    request_site=st.selectbox('Change demand at',['FAB_A','FAB_B'],format_func=rm.SITE_LABELS.get,key='scenario_site') if site=='Both' else site
+    eligible=[p for p in programs if p in C.QUALIFIED[request_site]]
+    if not eligible:st.info('Select a program qualified at the fab receiving the demand change.');return
+    if ss.get('scenario_program') not in eligible:ss['scenario_program']='DRAM_B' if 'DRAM_B' in eligible else eligible[0]
+    a,b,c=st.columns([1.3,1,1])
+    program=a.selectbox('Program',eligible,format_func=ec.PROGRAM_SHORT.get,key='scenario_program')
+    if 'scenario_first' not in ss:ss['scenario_first']=quarter
+    if 'scenario_last' not in ss:ss['scenario_last']=quarter
+    first_q=b.selectbox('From quarter',C.PLAN_QUARTERS,key='scenario_first')
+    last_q=c.selectbox('Through quarter',C.PLAN_QUARTERS,key='scenario_last')
+    mode=st.radio('Demand input',['Percentage change','Target WSPW'],horizontal=True,key='demand_mode')
+    pct=st.number_input('Starts change (%)',min_value=-100.,max_value=100.,value=10.,step=5.,key='scenario_pct') if mode=='Percentage change' else 0.
+    target=st.number_input('Target starts / week',min_value=0.,value=float(state['wspw'][request_site][program][C.PLAN_QUARTERS.index(first_q)]),step=25.,key='target_'+request_site+'_'+program+'_'+first_q) if mode=='Target WSPW' else None
+    if target is not None:st.caption('The target weekly rate applies to this program in every selected quarter.')
+    recovery=st.checkbox('Test equipment availability recovery',key='recovery_enabled')
     recovery_group,points=None,0.
     if recovery:
         a,b=st.columns(2)
-        recovery_group=a.selectbox('Equipment to recover',[g for g in C.TOOL_GROUP_ORDER if C.INSTALLED_TOOLS[request_site][g]>0],format_func=rm.GROUP_LABELS.get,key='recovery_group')
-        points=b.number_input('Recovery (percentage points)',min_value=.5,max_value=15.,value=5.,step=.5)
-    signature=(site,request_site,program,pct,first,last,ceiling,recovery_group,points)
+        recovery_group=a.selectbox('Equipment to recover',[g for g in C.TOOL_GROUP_ORDER if C.INSTALLED_TOOLS[request_site][g]>0],format_func=rm.GROUP_LABELS.get,key='recovery_group_'+request_site)
+        points=b.number_input('Recovery (percentage points)',min_value=.5,max_value=15.,value=5.,step=.5,key='recovery_points')
+    signature=(site,request_site,program,pct,target,first_q,last_q,ceiling,recovery_group,points)
     if st.button('Compare scenario',type='primary'):
         try:
-            ss['review']=rm.run_review(data,request_site,program,pct,first,last,ceiling,recovery_group,points)
-            ss['review_signature']=signature;ss['inspect_quarter']=first;ss.pop('ai_explanation',None)
+            ss['review']=rm.run_review(data,request_site,program,pct,first_q,last_q,ceiling,recovery_group,points,target_wspw=target)
+            ss['review_signature']=signature;ss['inspect_quarter']=first_q
         except ValueError as exc:ss['review']=None;st.error(str(exc))
     review=ss.get('review')
     if not review:return
     if ss.get('review_signature')!=signature:st.info('Inputs changed. Select Compare scenario to update the results.');return
     inspect=st.selectbox('Inspect quarter',C.PLAN_QUARTERS,key='inspect_quarter')
-    brief=rm.decision_brief(review,inspect,site);before,after=brief['before'],brief['after']
-    cols=st.columns(4)
-    card(cols[0],'Starts / week',f"{before['starts']:,.0f} → {after['starts']:,.0f}")
-    card(cols[1],'At-risk equipment',f"{before['at_risk']} → {after['at_risk']}",f'{ceiling*100:.0f}% limit','alert')
-    card(cols[2],'Peak load',f"{after['worst_load']:.1f}%",rm.SITE_LABELS[after['worst_site']]+' · '+after['worst_group'],'danger' if after['worst_load']>100 else 'alert')
-    card(cols[3],'Over capacity',str(after['over_capacity']),'Fab / equipment groups','danger' if after['over_capacity'] else '')
+    brief=rm.decision_brief(review,inspect,site);before,after=brief['before'],brief['after'];cols=st.columns(4)
+    card(cols[0],'Starts / week',f"{before['starts']:,.0f} → {after['starts']:,.0f}",'All programs in selected fab(s)')
+    card(cols[1],'At-risk equipment',f"{before['at_risk']} → {after['at_risk']}",f'{ceiling*100:.0f}% planning limit','alert')
+    card(cols[2],'Peak scenario load',number(after['worst_load'],1,'%'),rm.SITE_LABELS[after['worst_site']]+' · '+rm.GROUP_LABELS[after['worst_group']],'danger' if after['worst_load']>100 else 'alert')
+    card(cols[3],'Over capacity',str(after['over_capacity']),'Fab / equipment groups >100%')
     st.write('')
     a,b=st.columns([1.3,1],gap='large')
     with panel(a,inspect+' · baseline vs scenario'):chart(ec.scenario_loads(review,site,inspect,ceiling),'scenario_loads')
     with panel(b,'Risk across the planning horizon'):chart(ec.scenario_risks(review,site,ceiling),'scenario_risks')
     st.caption(brief['recommendation'])
-    context=rm.ai_review_context(review,inspect,site);context_key=json.dumps(context,sort_keys=True)
-    if st.button('Explain results with AI',disabled=not API_KEY,type='primary'):
-        try:
-            with st.spinner('Explaining the model results…'):out=ai.explain_scenario(context,API_KEY,MODEL)
-            ss['ai_explanation']={'context_key':context_key,'result':out}
-        except Exception as exc:ss.pop('ai_explanation',None);st.error(ai.explain_error(exc))
-    saved=ss.get('ai_explanation')
-    if saved and saved['context_key']==context_key:
-        st.caption('AI-generated interpretation · verify against evidence')
-        out=saved['result'];st.write(out['summary']);st.write(out['operating_implication'])
-        for item in out['suggested_checks']:st.write('• '+item)
-    elif saved:st.caption('Generate a new AI explanation for this quarter and scenario.')
     with st.expander('All equipment results & applied assumptions'):
-        t=table_view(rm.select_scope(review['comparison'],site,inspect))
-        st.dataframe(t[['Site','Equipment','loading_pct_base','loading_pct_scenario','change_pp','status']].round(1),hide_index=True,width='stretch')
+        frame=table_view(rm.select_scope(review['comparison'],site,inspect))
+        st.dataframe(frame[['Site','Equipment','loading_pct_base','loading_pct_scenario','change_pp','tool_gap_scenario','status']].round(1),hide_index=True,width='stretch')
         st.write(review['applied']);st.caption(brief['limit'])
-    st.download_button('Download scenario comparison',rm.select_scope(review['comparison'],site).assign(planning_limit_pct=ceiling*100).to_csv(index=False),f'{site}_scenario_comparison.csv','text/csv')
+    st.download_button('Download scenario comparison',export_table(rm.select_scope(review['comparison'],site)),f'{site}_scenario_comparison.csv','text/csv')
 
 
-def production_page():
-    p=rm.production_metrics(data,site)
-    title('Fab performance','29 Jun–27 Sep 2026 · 13 simulated weeks')
-    cols=st.columns(4)
-    card(cols[0],'Completions / week',f"{p['avg_outs']:,.0f}",'Average wafers out')
-    card(cols[1],'Full-flow cycle time',f"{p['cycle_days']:.1f} d",'Completed-lot weighted')
-    card(cols[2],'Average WIP',f"{p['wip']:,.0f}",'Input-wafer equivalents')
-    card(cols[3],'Line yield',f"{p['line_yield']:.2f}%",'Completed-cohort wafer survival')
-    st.write('')
-    a,b=st.columns(2,gap='large');w=p['weekly'];dates=pd.to_datetime(w.week_start)
-    with panel(a,'Weekly wafer flow'):
-        fig=go.Figure()
-        for col,name,color in [('wafer_starts','Starts',ec.BLUE),('wafer_outs','Completions',ec.TEAL)]:
-            fig.add_bar(x=dates,y=w[col],name=name,marker_color=color,hovertemplate='%{x|%d %b}<br>%{y:,} wafers<extra>'+name+'</extra>')
-        ec.style(fig,290);fig.update_layout(barmode='group');fig.update_yaxes(title='Wafers / week')
-        fig.update_xaxes(tickmode='array',tickvals=dates.iloc[::2],tickformat='%d %b');chart(fig,'weekly_flow')
-    with panel(b,'WIP trend by fab'):
-        fig=go.Figure()
-        for s in ec.sites(site):
-            sw=data['sim_fab_weekly'].query('site==@s').sort_values('week_start')
-            fig.add_scatter(x=pd.to_datetime(sw.week_start),y=sw.wip_wafers,name=rm.SITE_LABELS[s],mode='lines+markers',line=dict(color=ec.SITE_COLORS[s],width=2),marker=dict(size=4))
-        if site=='Both':fig.add_scatter(x=dates,y=w.wip_wafers,name='Combined',mode='lines',line=dict(color='#24374f',dash='dot',width=2))
-        ec.style(fig,290);fig.update_yaxes(title='Input-wafer equivalents',rangemode='tozero')
-        fig.update_xaxes(tickmode='array',tickvals=dates.iloc[::3],tickformat='%d %b');chart(fig,'weekly_wip')
-    a,b=st.columns(2,gap='large')
-    with panel(a,'Cycle time by program and fab'):
-        fig=go.Figure();programs=[p for p in C.PROGRAM_ORDER if p!='SHORT']
-        for s in ec.sites(site):
-            frame=p['by_program'].query('site==@s').set_index('program').reindex(programs)
-            fig.add_bar(y=[ec.PROGRAM_SHORT[x] for x in programs],x=frame.cycle_days,orientation='h',name=rm.SITE_LABELS[s],marker_color=ec.SITE_COLORS[s],hovertemplate='%{y}<br>%{x:.1f} days<extra>'+rm.SITE_LABELS[s]+'</extra>')
-        ec.style(fig,315);fig.update_layout(barmode='group');fig.update_xaxes(title='Average days / completed full-flow lot');fig.update_yaxes(autorange='reversed');chart(fig,'cycle_by_program')
-    with panel(b,'Where cycle time is spent'):
-        frame=p['full'].groupby('site')[['process_days','queue_days','transport_days','hold_days']].mean()
-        fig=go.Figure()
-        for col,name,color in [('process_days','Processing',ec.BLUE),('queue_days','Queues',ec.AMBER),('transport_days','Dispatch / transport','#a6b5cc'),('hold_days','Engineering holds',ec.TEAL)]:
-            fig.add_bar(y=frame.index.map(rm.SITE_LABELS),x=frame[col],orientation='h',name=name,marker_color=color,hovertemplate='%{y}<br>%{x:.1f} days<extra>'+name+'</extra>')
-        ec.style(fig,315);fig.update_layout(barmode='stack',margin=dict(l=0,r=12,t=12,b=90),legend=dict(y=-.32));fig.update_xaxes(title='Average days / completed full-flow lot');fig.update_yaxes(autorange='reversed');chart(fig,'cycle_breakdown')
-    with st.expander('Equipment queues, definitions & source rows'):
-        q=table_view(rm.select_scope(data['sim_tool_group_q3_2026'],site)).sort_values('avg_queue_h',ascending=False)
-        st.dataframe(q[['Site','Equipment','loading_pct','avg_queue_h']].round(2),hide_index=True,width='stretch')
-        st.caption('Combined cycle time is weighted by completed full-flow lots. Yield uses output and input wafers from the same completed cohorts. WIP sums aligned weekly snapshots and uses each active lot’s original input quantity. Short loops are excluded from cycle-time KPIs. These historical results do not change when a future scenario is evaluated.')
-    st.download_button('Download weekly performance',w.to_csv(index=False),f'{site}_Q3_2026_performance.csv','text/csv')
+def lot_page():
+    title('Lot flow & cycle time',pd.Timestamp(first).strftime('%d %b')+'–'+(pd.Timestamp(last)+pd.Timedelta(days=6)).strftime('%d %b %Y')+' · lot review')
+    if not programs:st.info('Select at least one program in the sidebar.');return
+    p=em.execution(data,site,programs,priority,first,last,include_short)
+    tabs=st.tabs(['Cycle-time drivers','Lot explorer'])
+    with tabs[0]:
+        cols=st.columns(4);parts=p['breakdown'];total=parts.sum(min_count=1)
+        share=100*(parts.queue_days+parts.hold_days)/total if total>0 else float('nan')
+        card(cols[0],'Completed cycle-time lots',str(len(p['cycles'])),'Short loops included' if include_short else 'Full-flow programs')
+        card(cols[1],'90th percentile cycle time',number(p['p90_days'],1,' d'),'Completed-lot distribution')
+        card(cols[2],'Queue + hold share',number(share,1,'%'),'Share of completed-lot cycle time')
+        card(cols[3],'WIP at period end',str(len(p['wip_lots'])),'Lots active at selected cutoff')
+        st.write('')
+        a,b=st.columns(2,gap='large')
+        with panel(a,'Cycle-time components by program'):chart(pc.cycle_breakdown(p,'program'),'lot_components')
+        with panel(b,'HOT vs NORMAL cycle time'):chart(pc.priority_compare(p),'priority_compare')
+        a,b=st.columns(2,gap='large')
+        with panel(a,'Cycle-time spread'):chart(pc.cycle_distribution(p),'ct_distribution')
+        with panel(b,'Age of WIP at period end'):chart(pc.wip_age(p),'wip_age')
+        st.caption('Queue and hold shares describe elapsed time; engineering holds can be required development work. Priority comparisons show observed cohorts, not a causal improvement estimate.')
+    with tabs[1]:
+        population=st.radio('Lot population',['Completed in reporting period','WIP at period end','Started in reporting period'],horizontal=True,key='lot_population')
+        if population=='Completed in reporting period':frame=p['completed'].copy()
+        elif population=='WIP at period end':
+            frame=p['wip_lots'].copy()
+            frame[['end_time','wafers_out']]=None
+        else:frame=p['lots'][p['lots'].started.ge(p['first'])&p['lots'].started.lt(p['cutoff'])].copy()
+        frame['Program']=frame.program.map(ec.PROGRAM_SHORT);frame['Site']=frame.site.map(rm.SITE_LABELS)
+        cols=['lot_id','Site','Program','priority','start_time','end_time','wafers_in','wafers_out']
+        if population=='WIP at period end':cols+=['age_days','progress_pct']
+        else:cols+=['cycle_time_days','process_days','queue_days','transport_days','hold_days']
+        if population=='Started in reporting period':
+            # Later completions must not appear as known at an earlier review cutoff.
+            future=frame.ended.ge(p['cutoff'])|frame.ended.isna()
+            frame.loc[future,['end_time','wafers_out','cycle_time_days',*em.COMPONENTS]]=None
+        labels={'lot_id':'Lot ID','priority':'Priority','start_time':'Started','end_time':'Completed','wafers_in':'Input wafers','wafers_out':'Output wafers','cycle_time_days':'Cycle time (d)','process_days':'Processing (d)','queue_days':'Queue (d)','transport_days':'Transport (d)','hold_days':'Hold (d)','age_days':'Age at cutoff (d)','progress_pct':'Route progress (%)'}
+        st.caption(f'{len(frame):,} lots · '+population.lower())
+        if population=='WIP at period end':
+            st.caption('Age is reconstructed at the selected cutoff. Route progress is available only at the final simulation snapshot.')
+        st.dataframe(frame[cols].rename(columns=labels).round(2),hide_index=True,width='stretch')
+        st.download_button('Download filtered lots',export_table(frame[cols],labels),'filtered_lots.csv','text/csv')
 
 
-@st.cache_resource(show_spinner=False)
-def document_index(fingerprint,api_key,semantic):
-    index=rag.DocumentIndex(fd.DOCS)
-    if semantic:
-        try:
-            from openai import OpenAI
-            index.enable_semantic(OpenAI(api_key=api_key,timeout=25,max_retries=1))
-        except Exception:index.notice='Semantic indexing unavailable; keyword retrieval is being used.'
-    return index
-
-
-def copilot_page():
-    title('Ask the planning copilot',quarter+' dashboard context · tables + planning documents')
-    available=ss.get('review')
-    if available and (available['ceiling']!=ceiling or (site!='Both' and available['site']!=site)):available=None
-    if available is None:ss['copilot_use_scenario']=False
-    use=st.checkbox('Use latest reviewed scenario',disabled=available is None,key='copilot_use_scenario')
-    active=available if use and available else None
-    snapshot=rag.json_safe(rag.dashboard_snapshot(data,site,quarter,ceiling,active))
-    index=rag.DocumentIndex(fd.DOCS)
-    st.caption(f"{len(data)} structured tables · {len({c['source'] for c in index.chunks})} planning documents · "+('reviewed scenario' if active else 'requested-start baseline'))
-    examples=['Why is the most constrained equipment at risk, and what do the planning notes add?',
-              'Compare the two fabs: which constraints and documented actions matter most?',
-              'Which programs drive etch workload, and what mitigations are documented?',
-              'What do operating metrics and engineering notes suggest we investigate first?',
-              'Can NAND workload move to another qualified fab, and what happens to capacity?',
-              'How do historical requested starts compare with actual starts?',
-              'Which process-change notices affect etch or deposition, and what needs reconciliation?']
-    chosen=st.selectbox('Example question',examples,key='copilot_example')
-    question=st.text_area('Question',chosen,height=90,max_chars=4000,key='copilot_question_'+str(examples.index(chosen)))
-    with st.expander('AI connection & retrieval settings'):
-        semantic=st.checkbox('Use semantic document retrieval',value=True,key='semantic_retrieval')
-        st.caption('Add OPENAI_API_KEY and optionally OPENAI_MODEL to Streamlit app settings → Secrets. Semantic retrieval combines embeddings and keyword matches; fallback is labeled. Structured tables are queried separately.')
-    context_key=json.dumps({'snapshot':snapshot,'question':question,'semantic':semantic,'docs':rag.documents_fingerprint(fd.DOCS)},sort_keys=True)
-    a,b=st.columns(2)
-    if a.button('Ask AI',type='primary',disabled=not API_KEY,width='stretch'):
-        try:
-            with st.spinner('Reading the dashboard and retrieving evidence…'):
-                idx=document_index(rag.documents_fingerprint(fd.DOCS),API_KEY,semantic)
-                result=rag.Copilot(data,idx,site,quarter,ceiling,active).answer(question,API_KEY,MODEL)
-            ss['copilot_answer']={'context_key':context_key,'result':result}
-        except Exception as exc:ss.pop('copilot_answer',None);st.error(ai.explain_error(exc))
-    if b.button('Preview evidence',width='stretch'):
-        ss['copilot_preview']={'context_key':context_key,'docs':index.search(question,4)}
-    if not API_KEY:st.info('Add your API key to enable live answers. Evidence preview works without a key.')
-    saved=ss.get('copilot_answer')
-    if saved and saved['context_key']==context_key:
-        out=saved['result'];st.subheader('AI insight');st.markdown(out['answer'])
-        st.caption('AI-generated · '+out['retrieval_mode']+' · verify against sources')
-        if out.get('retrieval_notice'):st.caption(out['retrieval_notice'])
-        with st.expander(f"Evidence · {len(out['sources'])} sources"):
-            selected=st.selectbox('Source',range(len(out['sources'])),format_func=lambda i:'['+out['sources'][i]['id']+'] '+out['sources'][i].get('source',out['sources'][i].get('title','')),key='copilot_source')
-            source=out['sources'][selected]
-            if source['kind']=='document':st.text(source['text'])
-            else:
-                if source.get('sql'):st.code(source['sql'],language='sql')
-                st.json(source['data'],expanded=False)
-        with st.expander('What the AI read and calculated'):
-            for step in out['trace']:st.write(step['step']+' · '+', '.join(step.get('sources',[])))
-        st.download_button('Download answer and evidence',json.dumps(out,indent=2,default=str),f'{site}_{quarter}_AI_evidence.json','application/json')
-    elif saved:st.caption('Context changed. Ask AI again to refresh its evidence.')
-    preview=ss.get('copilot_preview')
-    with st.expander('Dashboard & document preview',expanded=bool(preview and preview['context_key']==context_key)):
-        t=table_view(pd.DataFrame(snapshot['capacity']))
-        st.dataframe(t[['Site','Equipment','loading_pct','required_h_wk','available_h_wk']].round(1),hide_index=True,width='stretch')
-        if preview and preview['context_key']==context_key:
-            for doc in preview['docs']:st.markdown('**'+doc['source']+'**');st.text(doc['text'])
-
-
-if page=='Capacity plan':capacity_page()
-elif page=='Scenario review':scenario_page()
-elif page=='Fab performance':production_page()
-else:copilot_page()
-with st.expander('Model notes'):
-    st.caption('Synthetic, aggregate quarterly model. Capacity is checked per site and equipment group. No lot-level due-date prediction, real-time status, savings or ROI is claimed. Data and document retrieval support the AI; source notes do not automatically change the baseline.')
-st.markdown('<div class="footer"><span>TD Planning · stakeholder review</span><span>Synthetic data · v3.0</span></div>',unsafe_allow_html=True)
+if page=='Fab performance':performance_page()
+elif page=='Capacity & scenarios':
+    title('Capacity & scenarios',quarter+' review · requested 2027 plan')
+    tabs=st.tabs(['Capacity outlook','Scenario comparison'])
+    with tabs[0]:capacity_outlook()
+    with tabs[1]:scenario_page()
+else:lot_page()
+with st.expander('Data scope & model notes'):
+    st.caption('Independent synthetic interview prototype. The source contains 5 program routes; there are no product/SKU, process-step event or individual-machine records in the fab simulation. Lot and priority are the finest execution detail. Capacity is a quarter-average screen, checked separately by fab and equipment group; it does not predict scenario cycle time, due dates, costs or ROI. Machine OEE uses a separate worked example or uploaded records.')
+st.markdown('<div class="footer"><span>TD Fab · stakeholder review</span><span>Synthetic data · v4.0</span></div>',unsafe_allow_html=True)

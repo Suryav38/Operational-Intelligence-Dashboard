@@ -1,32 +1,9 @@
-# AI and data methodology
+# Data and deferred AI integration — v4
 
-The copilot uses the original structured-data-plus-document approach, now integrated with the stakeholder dashboard.
+AI features are paused in the stakeholder dashboard. `code/apprag.py` imports neither `assistant.py` nor `planning_copilot.py`, reads no API key and makes no external AI calls. There is no AI page, request parser, explanation button, connection status or document-preview panel in the UI.
 
-| Evidence | How it is read | Example insight |
-|---|---|---|
-| Current dashboard | Selected site, quarter, limit, baseline/scenario and computed equipment rows | Identify the current constrained fab/equipment combination |
-| Structured tables | Read-only SQLite queries and deterministic capacity/forecast functions | Compare requested vs actual starts or examine lot cycle-time components |
-| Unstructured planning files | Chunking, embeddings, keyword matching and retrieved passages with filenames | Explain documented engineering use, equipment release plans or process-change context |
+The legacy modules and their automated tests remain in the repository for future integration. A later "Ask about this view" interface can reuse structured table queries, document retrieval, typed request extraction and the deterministic capacity/scenario engine. It should declare the selected scope and period, expose proposed changes, calculate through the model and cite supporting notes. A document's historical route change must be reconciled with the baseline before applying it again.
 
-The language model synthesizes the evidence. Sources marked S are structured calculations or query results; sources marked D are document passages. Citation and numeric checks reject some unsupported output, while the user reviews the meaning and relevance of the evidence.
+The existing 11 structured tables and 15 text documents remain unchanged. The current UI uses deterministic functions and the original data. Family labels are a display mapping over the five existing programs, not additional product data.
 
-## What to demonstrate
-
-- “Compare the two fabs: which constraints and documented actions matter most?”
-- “Which programs drive etch workload, and what mitigations are documented?”
-- “What do operating metrics and engineering notes suggest we investigate first?”
-- “Can NAND workload move to another qualified fab, and what happens to capacity?”
-- “How do historical requested starts compare with actual starts?”
-- “Which process-change notices affect etch or deposition, and what needs reconciliation?”
-
-## What is available now
-
-Eleven structured CSV/SQLite tables and fifteen TXT planning documents are already supplied. No additional data is required for this demo. The document index reads TXT and Markdown files in `data/fab/documents`; the current supplied files are TXT. Regenerate the index automatically by changing the document content. New table content must remain consistent between CSVs, model configuration and SQLite.
-
-With a valid configured API key, document embeddings use `text-embedding-3-small` and the chat model uses `OPENAI_MODEL` (default `gpt-4o-mini`). This corpus is small enough for an in-memory vector index. Keyword retrieval remains an identified fallback. The dashboard and evidence preview work offline.
-
-SQL is read-only and bounded. Hypothetical scenario tools operate on a copy of the plan. Neither tool commits a change or modifies source files.
-
-## What remains outside scope
-
-This prototype does not claim real-time ingestion, PDF/Word upload processing, real-fab accuracy, autonomous approval, exact scheduling, cost savings or ROI. AI interpretation can still be wrong even when a number occurs in cited evidence; inspect the source association and the operating assumptions.
+Machine OEE is a separate calculator: its example or uploaded records do not join the fab simulation and do not alter historical metrics or future capacity. Its required schema and definitions are documented in README.md and in `templates/machine_oee_template.csv`.
