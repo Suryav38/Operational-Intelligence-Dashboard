@@ -1,41 +1,38 @@
-# Five-minute interview walkthrough
+# Five-minute stakeholder walkthrough
 
-Describe this as a **self-directed prototype using synthetic data**. Its value is the decision workflow and explainable calculations.
+Present this as a self-directed prototype using synthetic data.
 
-## 0:00–1:30 — Capacity plan
+## 1. Compare the network — about one minute
 
-Start with Fab A, 2027Q2 and the 85% planning limit. Explain the selected quarter and requested-start basis. Point to the number of equipment exceptions, then the three focus groups. The headline count checks all equipment, including groups hidden from the focus chart.
+Start with Combined, 2027Q2 and the 85% policy. Show the four KPIs, the quarterly heatmap and the equipment comparison. Describe the constraint in each fab. Use wafer-start mix and workload contribution to explain the program drivers. The Combined view retains site-specific capacity constraints; it does not pool all equipment into one utilization figure.
 
-Select EUV in the workload explanation. Trace starts/week into visits and processing hours, then compare required hours with available hours and the planning budget. Explain that programs revisit equipment throughout their routes.
+## 2. Test one request — about two minutes
 
-## 1:30–3:30 — Scenario review
+Open Scenario review. Read or enter a request for DRAM Node B, +10%, at Fab A, during 2027Q2 only. If live AI is enabled, use the visible AI request reader and review the extracted fields. Otherwise use the manual controls and state that live AI is disabled.
 
-Use the guided controls: DRAM Node B, +10%, 2027Q2 through 2027Q2. Select Compare scenario. Inspect 2027Q2, show the equipment loading change, and read the decision brief. Inspect another quarter to show that a one-quarter request leaves other periods unchanged.
+Select Compare scenario. Show baseline and scenario equipment loading, then the horizon-wide risk chart. Explain which constraints are new and which already existed. Optionally test recovered availability, treating it as an assumption requiring Operations confirmation.
 
-If your own AI connection is enabled, open the planning-note panel and use: “Increase DRAM Node B wafer starts by 10% at Fab A during 2027Q2 only.” Show the extracted fields and source quote. Copy the reviewed request, then explicitly compare it. Be clear that AI extracts text; Python calculates capacity.
+Select Explain results with AI if configured. Its interpretation supplements the computed evidence; it is not an approval.
 
-Optionally test five percentage points of EUV availability recovery. This means 70% becomes 75%, not a 5% relative increase. It is an operational assumption requiring confirmation, not a promised improvement.
+## 3. Connect an operating observation — about one minute
 
-## 3:30–4:30 — Fab performance
+Open Fab performance. Keep Combined selected. Compare the two fabs' WIP and cycle time. Explain that overall cycle time is weighted by completed full-flow lots and line yield uses matching completed cohorts. Avoid treating this historical simulation as a forecast of the proposed plan.
 
-Explain that this is a separate historical simulation window in Q3 2026. Show wafer starts and completions, then cycle-time composition. Explain why engineering holds or dispatch delays can dominate elapsed time even when equipment loading appears manageable. A future scenario does not modify this historical view.
+## 4. Show one cited AI insight — about one minute
 
-## 4:30–5:00 — Close with the decision
+Open AI copilot and select Use latest reviewed scenario. Ask:
 
-State the constrained equipment, affected quarter, assumptions requiring review, and the next validation needed before committing a plan. Offer the export as review evidence.
+> Why is the most constrained equipment at risk, and what do the planning notes add?
 
-## Be ready for these questions
+Show the cited answer, open one source, and show what the AI read or calculated. Distinguish current model values from historical equipment notes. A document provides engineering context; it does not establish a causal explanation by itself.
 
-- **Where did the data come from?** Synthetic requests and configuration, plus a SimPy simulation. It is not Micron data.
-- **Why 85%?** A demo planning buffer for variability. The correct operating limit depends on equipment, variability and service requirements.
-- **What is loading?** Required equipment hours divided by production-available equipment hours.
-- **Is the view omitting workload?** No. Only the chart is focused; the model includes all programs and equipment.
-- **What does the AI do?** Extracts one request into typed fields and exposes missing information for review.
-- **Can it predict lateness or savings?** The current demo screens aggregate capacity; those claims require scheduling, milestones and cost data.
-- **Is line yield die yield?** No. It is wafer survival for completed lots.
-- **What is WIP here?** Average weekly snapshots expressed using each active lot's original input quantity.
-- **Is it ready for a real fab?** It demonstrates a workflow. Production use requires real event data, tool/recipe qualifications, calibration, refresh controls and operational validation.
+If no API key is configured, show Preview evidence and explain the retrieval workflow. Do not present a mock response as a live AI result.
 
-## What to study
+## Questions to be ready for
 
-Master the starts → visits → processing hours → availability → loading chain. Learn one-sentence definitions for lithography, etch and deposition. The complete simulation, ten tool groups and historical regression can remain supporting material.
+- Where did the data come from? Synthetic configuration, request history and a SimPy simulation.
+- What does the AI read? The same selected model results as the dashboard, structured tables through read-only queries, and retrieved passages from the planning documents.
+- Why 85%? A demo planning buffer; the correct policy depends on actual equipment behavior and service requirements.
+- Why can one fab's spare capacity not cancel another's constraint? Work needs compatible, qualified equipment at a particular site.
+- What can this model claim? Aggregate capacity risk and comparisons. Exact lot lateness, ROI and implemented savings require more data and validation.
+- What does the AI add? Natural-language access, evidence retrieval, comparison and interpretation, with sources that a planner can inspect.

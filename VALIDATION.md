@@ -1,15 +1,17 @@
-# Validation record
+# v3 validation record
 
-Validated on Python 3.12 with the pinned application dependencies.
+Validated on Python 3.12 with the pinned dependencies.
 
-- **18 automated tests passed.** Coverage includes known EUV arithmetic, complete workload preservation behind display filters, quarter-scoped scenarios, baseline immutability, qualification rules, percentage-point availability recovery, completed-cohort production metrics, AI extraction with a mock client, and Streamlit interactions.
-- **Offline self-check passed.** Capacity, scenario and production calculations run without an API key.
-- **Desktop browser review completed at 1512 × 1100.** All three pages were exercised, including a scenario calculation. Chart labels, legends, tables and lower-page content were visually inspected.
-- **Mobile browser review completed at 390 × 844.** No horizontal document overflow was detected. No JavaScript page errors were observed in the reviewed flows.
-- **Capacity download exercised in the browser.** The exported Fab A review contains all 10 equipment groups across all four quarters (40 rows), with requested-demand basis and the selected 85% planning limit.
-- **Original data preserved.** All 27 source data files (11 CSV tables, 15 text documents and the SQLite database) match the uploaded ZIP byte-for-byte.
-- **Python source compilation passed.**
+- **35 automated tests passed.** Checks cover capacity arithmetic, unchanged baselines, quarter boundaries, qualifications, availability recovery, Combined views, completed-cohort metrics, typed AI request reading, grounded scenario explanations, document retrieval, embeddings with a mock client, read-only SQL, evidence validation, hypothetical calculations and Streamlit interactions.
+- **Combined capacity is site-specific.** The default quarter includes 19 installed fab/equipment combinations. The Combined view sums starts and counts each site's exceptions; it never offsets a constrained group with unrelated spare capacity.
+- **Combined production is correctly weighted.** Counts and aligned WIP snapshots are summed; full-flow cycle time is weighted by completed lots; wafer-survival yield uses the matching completed cohorts.
+- **Offline model self-check passed.**
+- **Desktop review completed at 1512 × 1100.** All four views, a calculated scenario, source-document preview, and the lower chart rows were exercised. No JavaScript page errors or horizontal document overflow were observed.
+- **Mobile review completed at 390 × 844.** No horizontal document overflow was detected.
+- **Browser export verified.** The Combined capacity download contains 76 rows: 19 fab/equipment combinations across four quarters, with the selected planning limit.
+- **Read-only SQL was exercised against the actual supplied database.** Rejected write/extension attempts did not modify its bytes.
+- **Original data preserved.** The 11 CSV tables, 15 TXT documents and SQLite database match the uploaded archive byte-for-byte.
 
-The live OpenAI service was not called: no user API credentials were supplied. Its typed extraction contract, source-quote validation and review/copy workflow were tested offline. A user's own valid API key and compatible model are required to verify live extraction.
+Live OpenAI calls were not made because no user API credentials were supplied. Tests use mock responses for text generation, tool selection and embeddings, together with real local calculations, SQL and keyword document retrieval. A user's own API key is required to verify live extraction, semantic retrieval and generated answers.
 
-This validation establishes the behavior of the synthetic prototype. It does not establish suitability or accuracy for a real semiconductor fab.
+Citation and numeric checks catch some unsupported output but do not establish that every interpretation or source association is correct. Human review remains necessary. This validates the synthetic prototype's behavior, not accuracy or deployment readiness for a real fab.

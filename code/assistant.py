@@ -1,5 +1,11 @@
-"""Optional AI note reader. The LLM extracts fields; Python calculates capacity."""
+"""Optional AI note reader and evidence-grounded scenario explanation.
+
+The LLM extracts requests and interprets results; Python calculates capacity.
+Numeric output in explanations is substituted from verified fact references.
+"""
 from __future__ import annotations
+import json
+import re
 from typing import Literal
 from pydantic import BaseModel, ConfigDict
 import fab_config as C
@@ -81,3 +87,74 @@ def explain_error(exc):
     if isinstance(exc, ValueError):
         return str(exc)
     return 'The AI request failed. Use the guided controls and check the app logs.'
+
+
+class ScenarioExplanation(BaseModel):
+    model_config = ConfigDict(extra='forbid')
+    summary: str
+    operating_implication: str
+    suggested_checks: list[str]
+    evidence_groups: list[Literal['EUV','DUV','ETCH','DEP','PVD','CMP','WET','FURN','IMPL','METRO']]
+
+
+EXPLANATION_PROMPT = """Explain a synthetic development-fab capacity scenario for an IE planning review.
+Use ONLY the supplied scope, computed conclusion, equipment rows and limitations.
+Explain what changed, the operating consequence, and the questions to check next.
+Never approve a request or contradict the computed conclusion. A scenario that
+exceeds available capacity needs revision; a scenario above the planning limit
+still needs an operating response. Existing constraints must not be presented as
+new, cleared or solved unless the provided comparison supports that statement.
+If quarter_is_affected is false, say the request does not change this quarter.
+Suggested actions are checks to confirm or options to test, not implemented changes.
+Do not invent cycle times, due dates, yield impacts, savings, costs, ROI or additional
+equipment qualifications. Do not imply that the historical simulation was rerun.
+
+CRITICAL NUMERIC RULE: output NO literal digits or numerical values. To mention any
+quantity, quarter, or digit-containing program name, use a reference from facts in
+double braces, for example {{quarter}}, {{euv_before}}, {{euv_after}} or {{program}}.
+The app substitutes these references using verified model values after generation.
+Use reference keys exactly as provided. Values already include units; do not add
+another percent sign or unit. Do not invent references or calculate new values.
+You may state equipment names in words. evidence_groups must list the equipment
+codes for the rows supporting your explanation, including any other exceptions
+you discuss. Write a short summary, one operating implication and at most four
+specific suggested checks. This is AI interpretation for review, not an approval.
+"""
+
+
+def render_grounded_text(text, facts):
+    """Reject model-invented quantities and substitute only known source facts."""
+    refs = re.findall(r'\{\{([a-z_]+)\}\}', text)
+    unknown = set(refs) - set(facts)
+    if unknown:
+        raise ValueError('The AI explanation cited an unknown model fact. Generate it again.')
+    remaining = re.sub(r'\{\{([a-z_]+)\}\}', '', text)
+    if re.search(r'\d|[{}]', remaining):
+        raise ValueError('The AI explanation included an unverified quantity. Generate it again.')
+    if not text.strip():
+        raise ValueError('The AI explanation was empty. Generate it again.')
+    return re.sub(r'\{\{([a-z_]+)\}\}', lambda m: str(facts[m.group(1)]), text)
+
+
+def explain_scenario(context, api_key, model='gpt-4o-mini', client=None):
+    if client is None:
+        from openai import OpenAI
+        client = OpenAI(api_key=api_key, timeout=30.0, max_retries=1)
+    completion = client.chat.completions.parse(
+        model=model, messages=[{'role':'system','content':EXPLANATION_PROMPT},
+                              {'role':'user','content':json.dumps(context,allow_nan=False)}],
+        response_format=ScenarioExplanation, store=False)
+    message = completion.choices[0].message
+    if message.refusal or message.parsed is None:
+        raise ValueError('An AI explanation could not be generated. The calculated brief remains available.')
+    parsed = message.parsed
+    present = {row['code'] for row in context['equipment']}
+    if not parsed.evidence_groups or not set(parsed.evidence_groups).issubset(present):
+        raise ValueError('The AI explanation cited equipment outside this review. Generate it again.')
+    if not 1 <= len(parsed.suggested_checks) <= 4:
+        raise ValueError('The AI explanation did not return a concise set of checks. Generate it again.')
+    facts = context['facts']
+    return {'summary':render_grounded_text(parsed.summary,facts),
+            'operating_implication':render_grounded_text(parsed.operating_implication,facts),
+            'suggested_checks':[render_grounded_text(s,facts) for s in parsed.suggested_checks],
+            'evidence_groups':list(dict.fromkeys(parsed.evidence_groups))}

@@ -97,3 +97,44 @@ def test_decision_brief_accounts_for_existing_constraints(data):
     assert b['after']['starts']==pytest.approx(b['before']['starts']+78)
     assert b['after']['at_risk']>=b['before']['at_risk']
     assert 'due dates' in b['limit']
+
+def test_ai_context_has_exact_model_facts_and_period(data):
+    r=rm.run_review(data,'FAB_A','DRAM_B',10,'2027Q2','2027Q2')
+    c=rm.ai_review_context(r,'2027Q2')
+    assert c['facts']['euv_before']=='98.2%'
+    assert c['facts']['euv_after']=='106.0%'
+    assert c['facts']['dep_after']=='85.3%'
+    assert c['facts']['starts_after']=='1,998 wafers/week'
+    assert len(c['equipment'])==10
+    assert c['quarter_is_affected'] is True
+    assert rm.ai_review_context(r,'2027Q3')['quarter_is_affected'] is False
+
+def test_ai_text_allows_only_source_fact_references():
+    assert ai.render_grounded_text('Load changes to {{load}}.',{'load':'106.0%'})=='Load changes to 106.0%.'
+    with pytest.raises(ValueError,match='unknown model fact'):
+        ai.render_grounded_text('Load is {{invented}}.',{})
+    with pytest.raises(ValueError,match='unverified quantity'):
+        ai.render_grounded_text('This will save 200 hours.',{})
+    with pytest.raises(ValueError,match='unverified quantity'):
+        ai.render_grounded_text('Load is {load}.',{'load':'106%'})
+
+def test_ai_scenario_explanation_is_grounded_and_typed(data):
+    context=rm.ai_review_context(rm.run_review(data,'FAB_A','DRAM_B',10,'2027Q2','2027Q2'),'2027Q2')
+    response=ai.ScenarioExplanation(
+        summary='EUV loading moves from {{euv_before}} to {{euv_after}} in {{quarter}}.',
+        operating_implication='Deposition also exceeds the {{planning_limit}} planning limit at {{dep_after}}.',
+        suggested_checks=['Confirm experiment timing with Engineering.','Check recoverable availability with Operations.'],
+        evidence_groups=['EUV','DEP'])
+    captured={}
+    def parse(**kwargs):
+        captured.update(kwargs)
+        return SimpleNamespace(choices=[SimpleNamespace(message=SimpleNamespace(refusal=None,parsed=response))])
+    client=SimpleNamespace(chat=SimpleNamespace(completions=SimpleNamespace(parse=parse)))
+    out=ai.explain_scenario(context,'mock',client=client)
+    assert '98.2% to 106.0%' in out['summary']
+    assert '85.3%' in out['operating_implication']
+    assert captured['response_format'] is ai.ScenarioExplanation
+    assert captured['store'] is False
+    context['equipment']=[x for x in context['equipment'] if x['code']!='EUV']
+    with pytest.raises(ValueError,match='outside this review'):
+        ai.explain_scenario(context,'mock',client=client)

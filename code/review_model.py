@@ -7,13 +7,13 @@ import fab_capacity as fc
 import fab_config as C
 
 FOCUS_GROUPS = ["EUV", "ETCH", "DEP"]
-SITE_LABELS = {"FAB_A": "Fab A", "FAB_B": "Fab B"}
+SITE_LABELS = {"FAB_A": "Fab A", "FAB_B": "Fab B", "Both":"Combined"}
 GROUP_LABELS = {"EUV": "EUV lithography", "DUV": "DUV lithography", "ETCH": "Etch",
                 "DEP": "Deposition", "PVD": "Metal deposition", "CMP": "Planarization",
                 "WET": "Wet clean", "FURN": "Furnace", "IMPL": "Ion implant", "METRO": "Inspection"}
 
 def select_scope(table, site, quarter=None):
-    out = table[table["site"] == site]
+    out = table if site=='Both' else table[table["site"] == site]
     return out[out["quarter"] == quarter].copy() if quarter is not None else out.copy()
 
 def risk_label(load, ceiling=0.85):
@@ -27,10 +27,11 @@ def capacity_summary(table, state, site, quarter, ceiling=0.85):
     t = select_scope(table, site, quarter)
     i = C.PLAN_QUARTERS.index(quarter)
     worst = t.assign(_sort=t["loading_pct"].fillna(float("inf"))).sort_values("_sort", ascending=False).iloc[0]
-    return {"starts": sum(state["wspw"][site][p][i] for p in C.PROGRAM_ORDER),
+    sites=list(C.SITES) if site=='Both' else [site]
+    return {"starts": sum(state["wspw"][s][p][i] for s in sites for p in C.PROGRAM_ORDER),
             "at_risk": int((t["loading_pct"].isna() | (t["loading_pct"] >= ceiling * 100)).sum()),
             "over_capacity": int((t["loading_pct"].isna() | (t["loading_pct"] > 100)).sum()),
-            "groups": len(t), "worst_group": worst["tool_group"], "worst_load": worst["loading_pct"]}
+            "groups": len(t), "worst_group": worst["tool_group"], "worst_site":worst['site'], "worst_load": worst["loading_pct"]}
 
 def program_workload(state, site, group, quarter):
     i = C.PLAN_QUARTERS.index(quarter)
@@ -52,7 +53,7 @@ def program_workload(state, site, group, quarter):
     return result.sort_values("Required h / week", ascending=False).reset_index(drop=True)
 
 def compare_tables(baseline, scenario, ceiling=0.85):
-    t = baseline.merge(scenario, on=["site", "tool_group", "quarter"], suffixes=("_base", "_scenario"))
+    t = baseline.merge(scenario, on=["site", "tool_group", "quarter"], how='outer', suffixes=("_base", "_scenario"))
     t["change_pp"] = t["loading_pct_scenario"] - t["loading_pct_base"]
     t["status"] = t["loading_pct_scenario"].map(lambda x: risk_label(x, ceiling))
     return t
@@ -89,12 +90,16 @@ def run_review(data, site, program, pct, first_quarter, last_quarter, ceiling=0.
 
 def production_metrics(data, site):
     """Fixed 13-week window; completed-cohort yield; full-flow CT excludes SHORT."""
-    weekly = data["sim_fab_weekly"].query("site == @site").sort_values("week_start").copy()
-    lots = data["sim_lots"].query("site == @site").copy()
+    sites=list(C.SITES) if site=='Both' else [site]
+    weekly = data["sim_fab_weekly"][data['sim_fab_weekly'].site.isin(sites)].sort_values("week_start").copy()
+    if site=='Both':
+        weekly=weekly.groupby('week_start',as_index=False)[['wafer_starts','wafer_outs','wip_wafers','moves_per_day']].sum()
+        weekly['site']='Both'
+    lots = data["sim_lots"][data['sim_lots'].site.isin(sites)].copy()
     completed = lots[lots["status"] == "COMPLETE"]
     full = completed[completed["program"] != "SHORT"]
     breakdown = full[["process_days", "queue_days", "transport_days", "hold_days"]].mean()
-    by_program = completed.groupby("program").agg(
+    by_program = completed.groupby(["site","program"]).agg(
         completed_lots=("lot_id", "size"), cycle_days=("cycle_time_days", "mean"),
         process_days=("process_days", "mean"), queue_days=("queue_days", "mean"),
         transport_days=("transport_days", "mean"), hold_days=("hold_days", "mean")).reset_index()
@@ -106,8 +111,8 @@ def production_metrics(data, site):
             "window_start": pd.to_datetime(weekly["week_start"].min()).date(),
             "window_end": pd.to_datetime(weekly["week_start"].max()).date() + timedelta(days=6)}
 
-def decision_brief(review, quarter):
-    site, ceiling = review["site"], review["ceiling"]
+def decision_brief(review, quarter, scope=None):
+    site, ceiling = scope or review["site"], review["ceiling"]
     before = capacity_summary(review["baseline"], review["base_state"], site, quarter, ceiling)
     after = capacity_summary(review["scenario"], review["scenario_state"], site, quarter, ceiling)
     changed = select_scope(review["comparison"], site, quarter)
@@ -122,3 +127,40 @@ def decision_brief(review, quarter):
             "biggest": biggest.to_dict(),
             "owners": "Engineering: experiment timing · Operations: availability assumption · IE: loading review",
             "limit": "Quarter-average capacity screen. Lot due dates, queue-time impacts and cost savings are not predicted."}
+
+
+def ai_review_context(review, quarter, scope=None):
+    """Bounded, serializable evidence for an explanation; no raw user note or key."""
+    selected=scope or review['site']
+    brief = decision_brief(review, quarter, selected)
+    before, after = brief['before'], brief['after']
+    comparison = select_scope(review['comparison'], selected, quarter)
+    equipment = []
+    facts = {'site':SITE_LABELS[selected], 'request_site':SITE_LABELS[review['site']], 'quarter':quarter,
+             'program':C.PROGRAMS[review['program']]['name'],
+             'request_change':f"{review['pct']:+g}%",
+             'planning_limit':f"{review['ceiling']*100:.0f}%",
+             'starts_before':f"{before['starts']:,.0f} wafers/week",
+             'starts_after':f"{after['starts']:,.0f} wafers/week",
+             'exceptions_before':str(before['at_risk']),
+             'exceptions_after':str(after['at_risk']),
+             'over_capacity_after':str(after['over_capacity'])}
+    for row in comparison.itertuples():
+        code = row.tool_group
+        equipment.append({'code':code,'site':row.site,'name':GROUP_LABELS[code],
+                          'baseline_loading_pct':None if pd.isna(row.loading_pct_base) else float(row.loading_pct_base),
+                          'scenario_loading_pct':None if pd.isna(row.loading_pct_scenario) else float(row.loading_pct_scenario),
+                          'change_pp':None if pd.isna(row.change_pp) else round(float(row.change_pp),1),
+                          'status':row.status})
+        for suffix,value in [('before',row.loading_pct_base),('after',row.loading_pct_scenario)]:
+            fact_value='no available capacity' if pd.isna(value) else f'{value:.1f}%'
+            facts[f'{row.site.lower()}_{code.lower()}_{suffix}']=fact_value
+            if selected!='Both':facts[f'{code.lower()}_{suffix}']=fact_value
+        change='not defined' if pd.isna(row.change_pp) else f'{row.change_pp:+.1f} percentage points'
+        facts[f'{row.site.lower()}_{code.lower()}_change']=change
+        if selected!='Both':facts[f'{code.lower()}_change']=change
+    affected = C.PLAN_QUARTERS.index(review['first_quarter']) <= C.PLAN_QUARTERS.index(quarter) <= C.PLAN_QUARTERS.index(review['last_quarter'])
+    return {'scope':{'site':selected,'quarter':quarter,'basis':'requested starts'},
+            'quarter_is_affected':affected,'computed_conclusion':brief['recommendation'],
+            'equipment':equipment,'facts':facts,'applied_assumptions':review['applied'],
+            'limitations':[brief['limit'],'Synthetic data. No real fab validation or implementation is claimed.']}
