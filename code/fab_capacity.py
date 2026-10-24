@@ -198,7 +198,7 @@ def loading_table(state, ceiling=C.LOADING_CEILING) -> pd.DataFrame:
 
 def constraints(table, ceiling=C.LOADING_CEILING) -> pd.DataFrame:
     t = table[(table["loading_pct"].isna()) | (table["loading_pct"] >= ceiling * 100)].copy()
-    t["status"] = t["loading_pct"].apply(lambda v: "Cannot run (over 100%)" if v is None or v > 100 else "At risk (above ceiling)")
+    t["status"] = t["loading_pct"].apply(lambda v: "Cannot run (over 100%)" if pd.isna(v) or v > 100 else "At risk (above ceiling)")
     return t.sort_values(["site", "tool_group", "quarter"]).reset_index(drop=True)
 
 
