@@ -82,41 +82,5 @@ def test_weekly_run_preserves_source_plan(data):
 def app():return AppTest.from_file(str(Path(__file__).resolve().parents[1]/'code'/'apprag.py'),default_timeout=40).run()
 
 
-def test_week_ui_names_fab_equipment_and_hot_without_capacity_change():
-    at=app();at.radio(key='page').set_value('Capacity & scenarios').run();select_view(at,2,'Scenario comparison')
-    at.radio(key='scenario_timing').set_value('Week range').run()
-    at.selectbox(key='scenario_start_week').set_value('2027-04-05').run()
-    at.selectbox(key='scenario_end_week').set_value('2027-04-05').run()
-    next(b for b in at.button if b.label=='Compare scenario').click().run()
-    before=at.session_state['review']['weekly_scenario'].copy()
-    at.selectbox(key='scenario_priority').set_value('HOT').run()
-    assert any('Inputs changed' in i.value for i in at.info)
-    next(b for b in at.button if b.label=='Compare scenario').click().run()
-    assert not at.exception
-    assert at.session_state['review']['request_priority']=='HOT'
-    pd.testing.assert_frame_equal(before,at.session_state['review']['weekly_scenario'])
-    assert any('Fab A' in s.value and 'HOT request' in s.value for s in at.subheader)
-    risk=next(m.value for m in at.markdown if m.value.startswith('**At-risk equipment:**'))
-    assert 'EUV' in risk and 'Deposition' in risk and 'Fab B' not in risk
-    assert any('Priority changes dispatch order' in i.value for i in at.info)
-    assert not at.checkbox(key='scenario_include_other').value
 
 
-def test_quarter_results_default_to_affected_fab_with_other_fab_optional():
-    at=app();at.radio(key='page').set_value('Capacity & scenarios').run();select_view(at,2,'Scenario comparison')
-    next(b for b in at.button if b.label=='Compare scenario').click().run()
-    assert not at.exception
-    assert any('Results: Fab A only' in c.value for c in at.caption)
-    at.checkbox(key='scenario_include_other').set_value(True).run()
-    assert not at.exception
-    assert any('Combined fab comparison' in c.value for c in at.caption)
-
-
-def test_week_ui_validates_date_order():
-    at=app();at.radio(key='page').set_value('Capacity & scenarios').run();select_view(at,2,'Scenario comparison')
-    at.radio(key='scenario_timing').set_value('Week range').run()
-    at.selectbox(key='scenario_start_week').set_value('2027-10-04').run()
-    at.selectbox(key='scenario_end_week').set_value('2027-01-04').run()
-    next(b for b in at.button if b.label=='Compare scenario').click().run()
-    assert not at.exception
-    assert any('end week' in e.value for e in at.error)

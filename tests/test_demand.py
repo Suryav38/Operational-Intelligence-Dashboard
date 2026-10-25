@@ -74,33 +74,6 @@ def test_all_chart_breakdowns_preserve_selected_quarter_totals(data):
     assert len(demand.ramp_chart(frame,'Requested plan','2027Q2').data[0].y)==3
 
 
-def test_demand_page_filters_and_quarter_scope():
-    app=Path(__file__).resolve().parents[1]/'code'/'apprag.py'
-    at=AppTest.from_file(str(app),default_timeout=40).run()
-    at.radio(key='page').set_value('Demand outlook').run()
-    assert not at.exception
-    assert at.title[0].value=='2027 demand outlook'
-    assert at.select_slider(key='demand_period').value==('2026Q1','2027Q4')
-    at.selectbox(key='family').set_value('DRAM').run()
-    at.multiselect(key='programs').set_value(['DRAM_B']).run()
-    at.selectbox(key='quarter').set_value('2027Q4').run()
-    at.radio(key='demand_measure').set_value('Expected starts').run()
-    at.selectbox(key='demand_breakdown').set_value('Route technology').run()
-    assert not at.exception
-    select_view(at,1,'Program & fab detail')
-    assert len(at.dataframe[0].value)==4
-    at.radio(key='page').set_value('Capacity & scenarios').run()
-    assert not at.exception
-    assert at.selectbox(key='quarter').value=='2027Q4'
-
-
-def test_demand_empty_selection_is_explained():
-    app=Path(__file__).resolve().parents[1]/'code'/'apprag.py'
-    at=AppTest.from_file(str(app),default_timeout=40).run()
-    at.radio(key='page').set_value('Demand outlook').run()
-    at.multiselect(key='programs').set_value([]).run()
-    assert not at.exception
-    assert any('at least one program' in info.value for info in at.info)
 
 
 def test_previous_year_reference_retains_decline_without_inventing_actuals(data):

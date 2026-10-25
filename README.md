@@ -1,53 +1,25 @@
-# TD Fab — Performance, Resilience & Planning (v8)
+# TD Capacity Plan 2027 (v9)
 
-Independent interview prototype for a fictional two-fab Technology Development network. **All operating data, routes, equipment counts, targets and notes are synthetic.** No Micron MES data or internal screen is reproduced.
+An independent interview prototype for a fictional two-fab Technology Development network. **All operating data, routes, tool counts, targets and notes are synthetic.** No company data and no internal screens are used.
 
-The decision story is: **Can we accommodate unexpected DRAM growth or loss of equipment, and can qualified work move between fabs without creating another constraint?** One explicit pilot introduction adds a controlled WIP/completion study.
+The dashboard answers one question: **what tools does the 2027 plan need, by when, and what could we do instead of buying them?**
 
-## Dashboard layout and filters (v8)
+| Page | Question it answers |
+|---|---|
+| **Capital plan** | Net-new tools and pull-ins by fab, tool group and need-by quarter, with a drill-down into which programs drive each group |
+| **Demand** | Requested vs. expected 2027 starts, and how much of a request historically gets run |
+| **Levers** | Planning to expected starts, raising the loading limit, and an optimized rebalancing of qualified work, each shown with its risk |
+| **Scenarios** | Live demand, tool-outage and transfer tests, plus the precomputed EUV-pilot lot simulation (WIP and delay) |
+| **2026 baseline** | Checks the capacity model against the lot simulation, request attainment and cycle time |
 
-The sidebar now contains navigation only. Use the filter bar directly below the page title for site, reporting/chart period, program family and searchable programs. **More filters** contains lot priority, the short-loop option, planning case, focus quarter and planning limit when relevant. **Reset filters** restores the defaults. Valid program subsets and reporting selections survive page changes; hidden tabs do not execute their charts.
+Three global assumptions sit in the grey bar: **Fab**, **Plan case** and **Planning limit**. Every other control sits next to the chart it changes. **VIEW_GUIDE.md** explains every view and calculation.
 
-- **Fab performance:** four KPIs and two overview charts. Switch the operating trend between WIP and cycle time. Program breakdown, scorecard and metric definitions are collapsed. Equipment health, historical attainment and qualified routes have their own tabs and relevant controls.
-- **Demand overview:** four KPIs, one demand comparison and one mix chart. **Chart view** switches among historical/outlook, 2026 vs 2027 and requested vs expected. The shared program filter updates both charts and KPI cards; there are no separate in-chart program dropdowns to leave totals out of sync. **Program & fab detail** contains the ramp heatmap, fab comparison and source rows. **Forecast validation** uses the fixed historical holdout, clearly labeled separately from the planning chart period.
-- **Capacity:** equipment-group and risk filters focus the display; summary cards retain all equipment and all product workload. **Detail view** switches between loading, program contribution (including other programs) and requested starts. Model/trace details remain accessible. Scenarios and the pilot study run only when their tab is active.
-- **Lot flow:** two driver charts, selectable WIP aging/distribution/priority analysis, and a separate Lot explorer with ID search and minimum/maximum age or cycle time. Filtered exports match displayed lots; unknown in-progress cycle times are not inferred.
-- Cached capacity and execution calculations, larger chart labels, compact KPI cards and shorter visible notes improve the review flow. The synthetic data and core capacity/DES models are unchanged.
-
-## Existing planning features
-
-- **Demand comparison:** 2026 vs 2027 by matching quarter, plus an eight-quarter history/outlook graph. The Q1 2027 change from Q4 2026 is separate from the same-quarter year-over-year change.
-- **Q4 planning reference:** the user-supplied 2,950 WSPW total is separate from observed synthetic history. Its fab/program split is assumed from baseline 2027Q1 shares; no Q4 actuals are invented and it does not enter model training. Q1 2027 remains 2,800, a 150 WSPW / 5.1% decrease.
-- **Shared on-screen filtering:** site/program selections apply to demand totals and both displayed charts. Legend clicks hide series in that chart only. Exports retain period and source/allocation basis.
-- Machine OEE removed. Equipment Health displays quantities by fab, actual simulated time states, weekly queues and furnace batch fill.
-- **52 reporting weeks:** 29 September 2025–27 September 2026, with lot/program/priority detail, weekly wafer balances and dated issue records.
-- **DRAM-heavy baseline:** DRAM technology, including HBM test vehicles, targets 75% of wafer starts; NAND 15%; experiments 10%. This is a user-selected synthetic start-mix assumption, not inferred from Micron revenue share. Weekly actual starts are approximately 75% after lot rounding.
-- **2027 plan:** 2,800 / 3,000 / 3,300 / 3,600 WSPW. Fab A DRAM Node B grows 750 → 1,125 WSPW. Other types are reduced relative to the previous prototype.
-- Six explicit ordered route definitions: five established programs and **DRAM_P / DRAM EUV pilot**, qualified only at Fab A.
-- Pilot starts **17 May 2027**, week 7 of a 16-week study. Baseline, introduction and slower-ramp cases use the same starting WIP and matched existing-lot inputs across five seeds.
-- Live scenarios cover **demand growth, temporary tool unavailability and qualified load transfers**, by quarter or start/end weeks, including the selected pilot loading.
-- Embedded AI panels in Fab Performance and Capacity & Scenarios read current values, query deployed data, retrieve dated notes and call capacity models. Evidence preview works without an API key.
-
-## Four views
-
-1. **Fab performance** opens first: weekly flow, WIP, cycle time, program starts, equipment inventory/health, historical request attainment and route inspection.
-2. **Demand outlook:** 2026 comparison, Q4-to-Q1 transition and full 2027 ramp by technology family, named program, route technology and fab. Requested plan, historical actuals and model expectations are labelled separately. A pilot has no history, so no fitted forecast is invented for it.
-3. **Capacity & scenarios:** capacity heatmap, workload drivers, resource gaps, three disruption/response types, and a **Program introduction** tab with precomputed DES comparisons.
-4. **Lot flow & cycle time:** observed cycle-time components, HOT/NORMAL cohorts, distributions, WIP age and downloadable lot detail.
-
-Keep **Pilot case = Pre-pilot baseline** for the baseline view. Switch to **Pilot introduction** or **Slower pilot ramp** to include its requested demand in planning screens. Historical performance remains the historical simulation. Program-introduction flow results always identify their future study period and Fab A scope.
-
-## Run
-
-Python 3.11 or 3.12:
-
-```bash
-python -m pip install -r requirements.txt
-python code/self_check.py
-python -m streamlit run code/apprag.py
-```
-
-Streamlit Cloud entry point: **code/apprag.py**. All data is already supplied; startup does not regenerate the simulations.
+### What changed in v9
+- The equipment-health, lot-explorer and route pages were removed. They covered daily operations, not capital decisions.
+- New `capital_model.py` provides the buy list (net-new vs. pull-in), lever steps, a transfer optimizer, and the model-vs-simulation check.
+- New `plan_charts.py` and `dashboard.css` give one restrained visual system: IBM Plex, a single accent colour, and colour used only for limit and over-capacity status.
+- The program/family filters and the "More filters" popover were removed. The sidebar was replaced by a top tab rail.
+- The AI assistant now appears only on Capital plan and Scenarios.
 
 ## AI setup and data path
 
@@ -118,15 +90,15 @@ This deliberately overwrites the generated tables, notes and database. A full ru
 
 ## Update your Mac/GitHub project
 
-Download **td-fab-planner-v8.zip** into Downloads, then run in Cursor:
+Download **td-fab-planner-v9.zip** into Downloads, then run in Cursor:
 
 ```bash
-unzip -q -o "$HOME/Downloads/td-fab-planner-v8.zip" -d "$HOME/Downloads/td-planner-v8"
-ditto "$HOME/Downloads/td-planner-v8/td-fab-planner-update" "$HOME/Desktop/Operational-Intelligence-Dashboard"
+unzip -q -o "$HOME/Downloads/td-fab-planner-v9.zip" -d "$HOME/Downloads/td-planner-v9"
+ditto "$HOME/Downloads/td-planner-v9/td-fab-planner-update" "$HOME/Desktop/Operational-Intelligence-Dashboard"
 cd "$HOME/Desktop/Operational-Intelligence-Dashboard"
-git rm --ignore-unmatch code/oee_model.py templates/machine_oee_template.csv
+git rm --ignore-unmatch tests/test_dashboard.py tests/test_dashboard_v8.py
 git add -A
-git commit -m "Simplify dashboard and add shared on-screen filters"
+git commit -m "Refocus dashboard on 2027 capital planning"
 git push origin main
 ```
 

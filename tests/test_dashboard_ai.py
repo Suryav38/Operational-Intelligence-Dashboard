@@ -65,59 +65,6 @@ def test_dated_unstructured_notes_and_archives_are_retrievable():
 def app():return AppTest.from_file(str(Path(__file__).resolve().parents[1]/'code'/'apprag.py'),default_timeout=45).run()
 
 
-def test_oee_removed_inventory_and_six_routes_visible():
-    at=app();assert not at.exception
-    assert [t.label for t in at.tabs]==['Production overview','Equipment health','Historical attainment','Program routes']
-    assert 'Machine OEE' not in str(at)
-    select_view(at,0,'Equipment health')
-    assert any('Equipment states'==s.value for s in at.subheader)
-    select_view(at,0,'Program routes')
-    assert set(at.selectbox(key='route_program').options)==set(D.NAMES.values())
-    at.selectbox(key='route_program').set_value(D.PILOT).run()
-    assert not at.exception
-    assert any('Ordered visits' in s.value for s in at.subheader)
 
 
-def test_ai_evidence_preview_obeys_actual_performance_filters():
-    at=app();at.selectbox(key='family').set_value('DRAM').run()
-    at.multiselect(key='programs').set_value(['DRAM_B']).run()
-    at.selectbox(key='priority').set_value('HOT').run()
-    at.button(key='ai_performance_preview').click().run()
-    assert not at.exception
-    evidence=at.session_state['ai_performance_evidence']
-    assert evidence['context']['programs']==['DRAM_B'] and evidence['context']['priority']=='HOT'
-    assert len(evidence['context']['weekly'])==52
-    assert at.button(key='ai_performance_ask').disabled
 
-
-def test_live_ui_binding_uses_new_view_copilot_without_network(monkeypatch):
-    monkeypatch.setenv('OPENAI_API_KEY','unit-test-only')
-    seen={}
-    def answer(self,question,key,model):
-        seen.update(self.context)
-        return dict(answer='Review the displayed weekly flow and operating records [S1].',sources=[dict(id='S1',kind='structured',title='Selected view',data=self.context)],trace=[dict(step='Read selected view',sources=['S1'])],retrieval_mode='keyword',retrieval_notice=None)
-    monkeypatch.setattr(DA.ViewCopilot,'answer',answer)
-    at=app();at.checkbox(key='ai_performance_semantic').set_value(False).run()
-    at.button(key='ai_performance_ask').click().run()
-    assert not at.exception
-    assert seen['view']=='Historical fab performance' and len(seen['weekly'])==52
-    assert at.session_state['ai_performance_answer']['result']['sources'][0]['id']=='S1'
-
-
-def test_pilot_overlay_new_program_and_unknown_forecast_are_explicit():
-    at=app();at.radio(key='page').set_value('Demand outlook').run()
-    at.selectbox(key='pilot_case').set_value('introduction').run()
-    assert not at.exception
-    assert D.PILOT in at.multiselect(key='programs').value
-    assert at.radio(key='demand_measure').disabled
-    assert any('no realization history' in c.value for c in at.caption)
-    at.radio(key='page').set_value('Capacity & scenarios').run()
-    assert not at.exception
-    assert any(t.label=='Program introduction' for t in at.tabs)
-    select_view(at,2,'Program introduction')
-    assert any('Pilot impact detail'==s.value for s in at.subheader)
-    select_view(at,2,'Scenario comparison')
-    at.selectbox(key='scenario_operation').set_value('Tool unavailability').run()
-    next(b for b in at.button if b.label=='Compare scenario').click().run()
-    assert not at.exception
-    assert any('No capacity' in m.value for m in at.markdown)

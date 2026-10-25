@@ -5,20 +5,23 @@ import fab_config as C
 import review_model as rm
 import fab_demo as D
 
-BLUE,TEAL,AMBER,RED='#185adb','#27877f','#b97520','#bd4343'
-SITE_COLORS={'FAB_A':BLUE,'FAB_B':TEAL,'Both':'#24374f'}
+BLUE,TEAL,AMBER,RED='#2f5d8a','#6f8f7a','#c4841d','#b8412f'
+INK,MUTED,GRID='#1d2329','#6b737c','#eceef0'
+FONT='IBM Plex Sans, Helvetica Neue, Arial, sans-serif'
+SITE_COLORS={'FAB_A':BLUE,'FAB_B':'#9db4c9','Both':INK}
 PROGRAM_SHORT=dict(D.NAMES)
-PROGRAM_COLORS=['#185adb','#56a1cb','#27877f','#9b8cb9','#b8c4d3','#b97520']
+# Order follows fab_config.PROGRAM_ORDER + pilot: DRAM A, DRAM B, NAND, HBM, short loops, pilot
+PROGRAM_COLORS=['#2f5d8a','#7fa1c3','#6f8f7a','#b08d4a','#c9ced4','#8a5a83']
 
 def style(fig,height=300,title_x=None):
     fig.update_layout(template='plotly_white',height=height,
-        font=dict(family='Arial, sans-serif',size=12,color='#24374f'),
+        font=dict(family=FONT,size=12,color=INK),
         paper_bgcolor='rgba(0,0,0,0)',plot_bgcolor='rgba(0,0,0,0)',
-        margin=dict(l=0,r=12,t=15,b=55),
-        legend=dict(orientation='h',y=-.23,yanchor='top',x=0,font=dict(size=11),traceorder='normal'),
-        hoverlabel=dict(bgcolor='white',font_size=12))
-    fig.update_xaxes(gridcolor='#e8edf4',zeroline=False)
-    fig.update_yaxes(gridcolor='#e8edf4',zeroline=False)
+        margin=dict(l=0,r=12,t=10,b=40),
+        legend=dict(orientation='h',y=1.02,yanchor='bottom',x=0,font=dict(size=11,color=MUTED),traceorder='normal',title_text=''),
+        hoverlabel=dict(bgcolor='white',bordercolor=GRID,font=dict(family=FONT,size=12,color=INK)),bargap=.28)
+    fig.update_xaxes(gridcolor=GRID,zeroline=False,linecolor='#d5d9dd',tickfont=dict(color=MUTED,size=11),title_font=dict(color=MUTED,size=11))
+    fig.update_yaxes(gridcolor=GRID,zeroline=False,tickfont=dict(color=MUTED,size=11),title_font=dict(color=MUTED,size=11))
     return fig
 
 def sites(scope):return list(C.SITES) if scope=='Both' else [scope]
