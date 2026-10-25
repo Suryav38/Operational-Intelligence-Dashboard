@@ -1,3 +1,4 @@
+from ui_helpers import select_view
 import pandas as pd
 import pytest
 import fab_capacity as fc
@@ -82,7 +83,7 @@ def app():return AppTest.from_file(str(Path(__file__).resolve().parents[1]/'code
 
 
 def test_week_ui_names_fab_equipment_and_hot_without_capacity_change():
-    at=app();at.radio(key='page').set_value('Capacity & scenarios').run()
+    at=app();at.radio(key='page').set_value('Capacity & scenarios').run();select_view(at,2,'Scenario comparison')
     at.radio(key='scenario_timing').set_value('Week range').run()
     at.selectbox(key='scenario_start_week').set_value('2027-04-05').run()
     at.selectbox(key='scenario_end_week').set_value('2027-04-05').run()
@@ -102,7 +103,7 @@ def test_week_ui_names_fab_equipment_and_hot_without_capacity_change():
 
 
 def test_quarter_results_default_to_affected_fab_with_other_fab_optional():
-    at=app();at.radio(key='page').set_value('Capacity & scenarios').run()
+    at=app();at.radio(key='page').set_value('Capacity & scenarios').run();select_view(at,2,'Scenario comparison')
     next(b for b in at.button if b.label=='Compare scenario').click().run()
     assert not at.exception
     assert any('Results: Fab A only' in c.value for c in at.caption)
@@ -112,7 +113,7 @@ def test_quarter_results_default_to_affected_fab_with_other_fab_optional():
 
 
 def test_week_ui_validates_date_order():
-    at=app();at.radio(key='page').set_value('Capacity & scenarios').run()
+    at=app();at.radio(key='page').set_value('Capacity & scenarios').run();select_view(at,2,'Scenario comparison')
     at.radio(key='scenario_timing').set_value('Week range').run()
     at.selectbox(key='scenario_start_week').set_value('2027-10-04').run()
     at.selectbox(key='scenario_end_week').set_value('2027-01-04').run()

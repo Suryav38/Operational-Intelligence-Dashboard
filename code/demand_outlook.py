@@ -58,9 +58,12 @@ def comparison_changes(frame,quarter):
     prior=totals.loc[previous,'requested_wspw'];current=totals.loc[quarter,'requested_wspw']
     end=totals.loc['2026Q4','requested_wspw'];start=totals.loc['2027Q1','requested_wspw']
     pct=lambda a,b:float(100*(a/b-1)) if pd.notna(b) and b>0 and pd.notna(a) else np.nan
+    prior_qoq=str(pd.Period(quarter,freq='Q')-1)
+    prior_qoq_requested=totals.loc[prior_qoq,'requested_wspw']
     return dict(prior_quarter=previous,prior_requested=prior,current_requested=current,
         yoy_pct=pct(current,prior),prior_q4_requested=end,next_q1_requested=start,
-        transition_delta=start-end,transition_pct=pct(start,end))
+        transition_delta=start-end,transition_pct=pct(start,end),qoq_quarter=prior_qoq,
+        qoq_requested=prior_qoq_requested,qoq_pct=pct(current,prior_qoq_requested))
 
 
 def _chart_scopes(frame):
@@ -83,7 +86,7 @@ def _chart_filter(fig,frame,series):
     return fig
 
 
-def year_comparison_chart(frame):
+def year_comparison_chart(frame,chart_filters=True):
     def series(rows):
         t=comparison_totals(rows)
         return [t.loc[[f'{year}Q{q}' for q in range(1,5)],'requested_wspw'].tolist() for year in (2026,2027)]
@@ -95,10 +98,10 @@ def year_comparison_chart(frame):
             hovertemplate=str(year)+'%{x}<br>%{y:,.1f} WSPW<br>%{customdata}<extra></extra>')
     ec.style(fig,390);fig.update_layout(barmode='group')
     fig.update_yaxes(title='Requested wafer starts / week',rangemode='tozero')
-    return _chart_filter(fig,frame,series)
+    return _chart_filter(fig,frame,series) if chart_filters else fig
 
 
-def history_outlook_chart(frame):
+def history_outlook_chart(frame,chart_filters=True):
     def series(rows):
         t=comparison_totals(rows)
         return [t[col].tolist() for col in ('requested_wspw','actual_wspw','expected_wspw')]
@@ -111,7 +114,7 @@ def history_outlook_chart(frame):
     ec.style(fig,390);fig.update_yaxes(title='Wafer starts / week',rangemode='tozero')
     fig.update_xaxes(type='category',tickangle=-35,categoryorder='array',categoryarray=COMPARISON_QUARTERS)
     fig.add_shape(type='line',xref='x',yref='paper',x0=3.5,x1=3.5,y0=0,y1=1,line=dict(color='#b8c4d3',dash='dot'))
-    return _chart_filter(fig,frame,series)
+    return _chart_filter(fig,frame,series) if chart_filters else fig
 
 def plan(data,site='Both',programs=None,pilot_case='baseline'):
     model=fm.fit(data['wafer_start_history'])
@@ -155,7 +158,8 @@ def validation(data,site='Both',programs=None):
 
 def mix_chart(frame,group,measure):
     dimension=BREAKDOWNS[group];col=MEASURES[measure]
-    pivot=frame.pivot_table(index='quarter',columns=dimension,values=col,aggfunc='sum',fill_value=0).reindex(C.PLAN_QUARTERS,fill_value=0)
+    quarters=[q for q in C.PLAN_QUARTERS if q in set(frame.quarter)]
+    pivot=frame.pivot_table(index='quarter',columns=dimension,values=col,aggfunc='sum',fill_value=0).reindex(quarters,fill_value=0)
     orders={'program':list(D.PROGRAMS),'family':['DRAM','NAND','HBM','Experiments'],'technology_family':['DRAM','NAND','Experiments'],'route_technology':['Includes EUV','DUV only']}
     pivot=pivot.reindex(columns=[name for name in orders[dimension] if name in pivot.columns])
     colors={p:color for p,color in zip(D.PROGRAMS,ec.PROGRAM_COLORS)} if dimension=='program' else (
@@ -173,7 +177,7 @@ def fab_chart(frame,measure):
     for site in C.SITES:
         rows=frame[frame.site==site]
         if rows.empty:continue
-        totals=rows.groupby('quarter')[col].sum().reindex(C.PLAN_QUARTERS,fill_value=0)
+        totals=rows.groupby('quarter')[col].sum().reindex([q for q in C.PLAN_QUARTERS if q in set(frame.quarter)],fill_value=0)
         fig.add_bar(x=totals.index,y=totals,name=rm.SITE_LABELS[site],marker_color=ec.SITE_COLORS[site],
             text=totals.map(lambda x:f'{x:,.0f}'),textposition='outside')
     ec.style(fig,335);fig.update_layout(barmode='group');fig.update_yaxes(title='Wafer starts / week',rangemode='tozero');return fig
@@ -181,7 +185,8 @@ def fab_chart(frame,measure):
 def ramp_chart(frame,measure,quarter):
     col=MEASURES[measure];frame=frame.copy()
     frame['label']=frame.site.map(rm.SITE_LABELS)+' · '+frame.program.map(ec.PROGRAM_SHORT)
-    pivot=frame.pivot_table(index='label',columns='quarter',values=col,aggfunc='sum',fill_value=0).reindex(columns=C.PLAN_QUARTERS,fill_value=0)
+    quarters=[q for q in C.PLAN_QUARTERS if q in set(frame.quarter)]
+    pivot=frame.pivot_table(index='label',columns='quarter',values=col,aggfunc='sum',fill_value=0).reindex(columns=quarters,fill_value=0)
     order=[rm.SITE_LABELS[s]+' · '+ec.PROGRAM_SHORT[p] for s in C.SITES for p in D.PROGRAMS]
     pivot=pivot.reindex([x for x in order if x in pivot.index])
     fig=go.Figure(go.Heatmap(x=pivot.columns,y=pivot.index,z=pivot.values,
@@ -189,8 +194,9 @@ def ramp_chart(frame,measure,quarter):
         colorscale=[[0,'#edf3fa'],[1,'#2867c8']],showscale=False,xgap=3,ygap=3,
         hovertemplate='%{y} · %{x}<br>%{z:,.0f} wafers/week<extra></extra>'))
     ec.style(fig,max(300,len(pivot)*32+80));fig.update_xaxes(side='top',showgrid=False);fig.update_yaxes(autorange='reversed',showgrid=False)
-    i=C.PLAN_QUARTERS.index(quarter)
-    fig.add_shape(type='rect',xref='x',yref='paper',x0=i-.49,x1=i+.49,y0=0,y1=1,line=dict(color='#17375d',width=2),fillcolor='rgba(0,0,0,0)')
+    if quarter in quarters:
+        i=quarters.index(quarter)
+        fig.add_shape(type='rect',xref='x',yref='paper',x0=i-.49,x1=i+.49,y0=0,y1=1,line=dict(color='#17375d',width=2),fillcolor='rgba(0,0,0,0)')
     return fig
 
 def plan_comparison(frame):

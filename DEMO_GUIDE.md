@@ -1,4 +1,6 @@
-# A focused stakeholder demonstration — v7
+# A focused stakeholder demonstration — v8
+
+Use the filter bar below each page title. Advanced settings are under **More filters**. Tabs load only the selected view. Demand ramp and source rows are in **Program & fab detail**; equipment and lot analysis have selectors instead of repeated chart rows.
 
 Use a six-to-eight-minute main story. All inputs and outputs are synthetic; this is a prototype of a planning workflow, not Micron internal data.
 
@@ -16,7 +18,7 @@ Open **Demand Outlook**, baseline. The requested network rate grows 2,800 → 3,
 
 Select Q1. Explain the two comparisons: 2,950 → 2,800 is a **5.1% decrease from the prior-quarter planning reference**, while 2,727 → 2,800 is a **2.7% increase over the matching prior-year quarter**. The Q4 reference total was user-supplied; its program allocation is assumed and it has no actual starts. Do not describe the whole transition as uninterrupted growth.
 
-Use a graph's dropdown to inspect DRAM including HBM, NAND, HBM alone or a named program. Use its legend to hide/show series. These controls affect that plot; sidebar filters change all demand plots and summary cards. The historical actual line ends at Q3 2026; the future expected line is a model estimate.
+Use the on-screen Program family and Programs filters to inspect DRAM, NAND, HBM or a named program. Change Chart view to compare years, history/outlook or requested/expected starts. Shared filters update charts and cards together; legend clicks hide series only in their own chart. The historical actual line ends at Q3 2026; the future expected line is a model estimate.
 
 In **Capacity & Scenarios → Capacity Outlook**, Q2 Fab A EUV is at 99.2%. Explain required hours divided by available hours. Follow the horizon to the resource exposure in Q3 and the planned second EUV scanner in Q4. Resource gaps at the planning limit already present in the baseline must not all be blamed on a new program.
 

@@ -23,6 +23,7 @@ import fab_data as fd
 import review_model as rm
 import demand_outlook as demand
 import weekly_scenarios as weekly
+import dashboard_ui as ui
 load_dotenv(fd.ROOT/'.env')
 
 st.set_page_config(page_title='TD Fab | Performance & Planning',page_icon='◫',layout='wide')
@@ -38,13 +39,22 @@ def card(col,label,value,sub='',tone=''):
 def number(value,decimals=1,suffix=''):
     return '—' if pd.isna(value) else f'{value:,.{decimals}f}'+suffix
 
-def chart(fig,key):st.plotly_chart(fig,width='stretch',config={'displayModeBar':False},key=key)
+def chart(fig,key):st.plotly_chart(fig,width='stretch',config={'displayModeBar':False,'scrollZoom':False},key=key)
 def panel(col,name):
     box=col.container(border=True);box.subheader(name);return box
 
-def title(name,period):
+def title(name,period=''):
     st.markdown('<div class="topline"><div class="eyebrow">TD / STRATEGY & OPERATIONS</div><span class="badge">SYNTHETIC DEMO</span></div>',unsafe_allow_html=True)
-    st.title(name);st.caption(rm.SITE_LABELS[site]+' · '+period)
+    st.title(name)
+    if period:st.caption(period)
+
+@st.cache_data(show_spinner=False)
+def cached_capacity(fingerprint,case,limit):
+    return L.capacity(load_data(fingerprint),case,limit)
+
+@st.cache_data(show_spinner=False)
+def cached_execution(fingerprint,scope,selected,priority,first,last,include_short):
+    return em.execution(load_data(fingerprint),scope,list(selected),priority,first,last,include_short)
 def table_view(frame):
     out=frame.copy();out['Site']=out.site.map(rm.SITE_LABELS);out['Equipment']=out.tool_group.map(rm.GROUP_LABELS);return out
 
@@ -111,7 +121,10 @@ def ai_panel(label,key,context,examples):
 
 
 def route_page():
-    catalog=data['program_catalog'];program=st.selectbox('Route program',list(catalog.program),format_func=D.NAMES.get,key='route_program')
+    catalog=data['program_catalog'];eligible=[p for p in catalog.program if p in programs]
+    if not eligible:st.info('Select at least one qualified program above.');return
+    if ss.get('route_program') not in eligible:ss['route_program']=eligible[0]
+    program=st.selectbox('Inspect route',eligible,format_func=D.NAMES.get,key='route_program')
     definition=catalog[catalog.program==program].iloc[0];route=data['route_steps'].query('program==@program')
     a,b,c,d=st.columns(4)
     card(a,'Technology family',definition.technology_family,'HBM belongs to DRAM technology')
@@ -141,38 +154,34 @@ def program_introduction():
     card(c,'90th percentile shift',number(summary['p90_delay_days'],2,' d'),'Matched initial-WIP lots')
     card(d,'Pilot lots completed',number(summary['pilot_completed_lots_mean'],1),'Mean per run by study end')
     st.caption(f"Matched existing lot instances across five runs: {summary['matched_lots']:,} / {summary['initial_lots']:,}; unfinished at study end: {summary['unfinished_lots']:,}. Completion shifts exclude unfinished comparisons and are not customer lateness.")
-    tabs=st.tabs(['WIP & existing work','Demand & capacity'])
-    with tabs[0]:
-        a,b=st.columns(2,gap='large')
-        with panel(a,'WIP · baseline, introduction and slower ramp'):chart(LC.wip(data,case),'launch_wip')
-        with panel(b,'Existing lots · completion shift by program'):chart(LC.existing_delays(data,case),'launch_delays')
-        a,b=st.columns(2,gap='large')
-        with panel(a,'Post-release equipment queues'):chart(LC.queues(data,case),'launch_queues')
-        with panel(b,'Pilot releases and completions'):chart(LC.pilot_flow(data,case),'pilot_flow')
-        st.caption('Lines show replicate means; shading spans the selected case’s simulated minimum and maximum. This is model randomness, not a real-fab prediction interval. HOT and NORMAL use the same processing, move and hold distributions; priority changes non-preemptive queue order.')
-    with tabs[1]:
-        _,base=L.capacity(data,'baseline',ceiling);_,proposed=L.capacity(data,case,ceiling)
-        comp=rm.compare_tables(base,proposed,ceiling);current=rm.select_scope(comp,'FAB_A',quarter)
-        a,b=st.columns(2,gap='large')
-        with panel(a,quarter+' · route-aware capacity change'):chart(weekly.equipment_chart(current,'FAB_A',ceiling),'pilot_capacity')
-        with panel(b,'2027 · requested Fab A demand'):
-            fig=go.Figure()
-            for key,name,color in [('baseline','Pre-pilot','#aebfd6'),(case,D.CASES[case],ec.BLUE)]:
-                ps=L.planning_state(data,key);values=[sum(ps['wspw']['FAB_A'][p][i] for p in ps['wspw']['FAB_A']) for i in range(4)]
-                fig.add_bar(x=C.PLAN_QUARTERS,y=values,name=name,marker_color=color)
-            ec.style(fig,330);fig.update_layout(barmode='group');fig.update_yaxes(title='Quarter-average requested WSPW');chart(fig,'pilot_requested')
-        risk=current[current.loading_pct_scenario.ge(ceiling*100)|current.loading_pct_scenario.isna()].copy()
-        st.dataframe(table_view(risk)[['Site','Equipment','loading_pct_base','loading_pct_scenario','tool_gap_base','tool_gap_scenario']].rename(columns={'loading_pct_base':'Pre-pilot loading (%)','loading_pct_scenario':'Case loading (%)','tool_gap_base':'Pre-pilot tool gap','tool_gap_scenario':'Case tool gap'}).round(1),hide_index=True,width='stretch')
-        group=st.selectbox('Inspect weekly forward loading',C.TOOL_GROUP_ORDER,format_func=rm.GROUP_LABELS.get,key='pilot_weekly_equipment')
-        with st.container(border=True):
-            st.subheader('Weekly loading · exact pilot ramp and tool release dates')
-            chart(LC.weekly_loading(data,case,group,ceiling),'pilot_weekly_loading')
-        st.caption('Quarter charts average the launch across the quarter. This weekly screen exposes the full ramp after release; it is requested-route loading, not simulated utilization.')
-        st.caption('The capacity screen identifies required tools at the planning limit; it does not supply prices, ROI or approve a purchase. A slower ramp can reduce WIP impact while leaving equipment above the planning limit. EUV routes cannot transfer to Fab B under the declared qualifications.')
+    _,base=cached_capacity(fd.fingerprint(),'baseline',ceiling)
+    _,proposed=cached_capacity(fd.fingerprint(),case,ceiling)
+    current=rm.select_scope(rm.compare_tables(base,proposed,ceiling),'FAB_A',quarter)
+    study_tabs=st.tabs(['WIP & existing work','Demand & capacity'],key='pilot_study_view',on_change='rerun')
+    if study_tabs[0].open:
+        with study_tabs[0]:
+            a,b=st.columns(2,gap='large')
+            with panel(a,'WIP · matched simulation cases'):chart(LC.wip(data,case),'launch_wip')
+            with panel(b,'Pilot impact detail'):
+                detail=st.selectbox('Impact view',['Existing-lot completion shift','Equipment queues','Pilot starts & completions'],key='pilot_impact_view')
+                if detail=='Existing-lot completion shift':chart(LC.existing_delays(data,case),'launch_delays')
+                elif detail=='Equipment queues':chart(LC.queues(data,case),'launch_queues')
+                else:chart(LC.pilot_flow(data,case),'pilot_flow')
+            st.caption('Fixed Fab A study cohort · all existing programs. Completion shifts are relative to matched baseline lots, not customer lateness.')
+    else:
+        with study_tabs[1]:
+            a,b=st.columns(2,gap='large')
+            with panel(a,quarter+' · route-aware capacity change'):chart(weekly.equipment_chart(current,'FAB_A',ceiling),'pilot_capacity')
+            with panel(b,'Weekly loading · exact release dates'):
+                group=st.selectbox('Equipment group',C.TOOL_GROUP_ORDER,format_func=rm.GROUP_LABELS.get,key='pilot_weekly_equipment')
+                chart(LC.weekly_loading(data,case,group,ceiling),'pilot_weekly_loading')
+            risk=current[current.loading_pct_scenario.ge(ceiling*100)|current.loading_pct_scenario.isna()].copy()
+            st.dataframe(table_view(risk)[['Site','Equipment','loading_pct_base','loading_pct_scenario','tool_gap_base','tool_gap_scenario']].rename(columns={'loading_pct_base':'Pre-pilot loading (%)','loading_pct_scenario':'Case loading (%)','tool_gap_base':'Pre-pilot tool gap','tool_gap_scenario':'Case tool gap'}).round(1),hide_index=True,width='stretch')
+            st.caption('Quarter charts average the pilot ramp; weekly loading uses exact release dates. This capacity screen does not rerun the DES.')
     with st.expander('Starting WIP, paired lots and study assumptions'):
         initial=data['launch_initial_wip'];seed=st.selectbox('Inspect simulation seed',sorted(initial.seed.unique()),key='launch_seed')
         st.dataframe(initial[initial.seed==seed].head(150),hide_index=True,width='stretch')
-        st.caption('Every case has the same pre-release WIP, existing release calendar and per-lot random inputs for a given seed. Initial state includes route position, queue/processing/hold status and remaining in-flight time. Targets are explicitly illustrative. Resources, batching, stochastic holds and sampled metrology are declared in MODEL_GUIDE.md.')
+        st.caption('Every case uses the same initial WIP, release calendar and per-lot random inputs for a seed. Initial state includes route position, queue/processing/hold state and remaining in-flight time. Lines show replicate means; shading is the selected case’s minimum–maximum range, not a real-fab prediction interval. HOT and NORMAL change non-preemptive dispatch order, not equipment hours. Equipment requirements exclude prices and ROI. EUV routes are not qualified at Fab B. See MODEL_GUIDE.md.')
         st.download_button('Download paired existing-lot comparisons',export_table(data['launch_lot_comparison'].query('case==@case')),'paired_existing_lots.csv','text/csv')
     ai_panel('Ask AI about this program introduction','ai_launch',dict(view='Pilot introduction DES',site='FAB_A',quarter=quarter,pilot_case=case,planning_limit=ceiling,summary=summary,
         displayed_mean_delay_days=number(summary['mean_delay_days'],2),displayed_p90_delay_days=number(summary['p90_delay_days'],2),displayed_average_wip=number(summary['post_launch_wip'],0),capacity_comparison=current.round(3).to_dict('records'),new_program=D.NAMES[D.PILOT],release_date=D.LAUNCH_DATE),[
@@ -182,39 +191,27 @@ def program_introduction():
 
 
 st.sidebar.markdown('<div class="brand"><div class="brand-mark">TD</div><div><div class="brand-title">Fab performance & planning</div><div class="brand-sub">Stakeholder review</div></div></div>',unsafe_allow_html=True)
-PAGES=['Fab performance','Demand outlook','Capacity & scenarios','Lot flow & cycle time']
+PAGES=list(ui.PAGE_VIEWS)
 if ss.get('page') not in PAGES:ss['page']=PAGES[0]
 page=st.sidebar.radio('Workspace',PAGES,key='page')
-st.sidebar.divider()
-site=st.sidebar.selectbox('Site',['Both','FAB_A','FAB_B'],format_func=rm.SITE_LABELS.get,key='site')
-planning_page=page in ['Demand outlook','Capacity & scenarios']
-pilot_case=st.sidebar.selectbox('Pilot case',list(D.CASES),format_func=D.CASES.get,key='pilot_case') if planning_page else 'baseline'
-family=st.sidebar.selectbox('Program family',['All families','DRAM','NAND','HBM','Experiments'],key='family')
-options=em.program_options(site,family,include_pilot=planning_page and pilot_case!='baseline')
-if ss.get('_program_scope')!=(site,family,planning_page,pilot_case):
-    ss['_program_scope']=(site,family,planning_page,pilot_case);ss['programs']=options
-programs=st.sidebar.multiselect('Program names',options,format_func=D.NAMES.get,key='programs')
-if not options:st.sidebar.caption('This family has no qualified program at this fab.')
-if page in ['Capacity & scenarios','Demand outlook']:
-    ss.setdefault('quarter',ss.get('_planning_quarter','2027Q2'))
-    quarter=st.sidebar.selectbox('Review quarter',C.PLAN_QUARTERS,key='quarter');ss['_planning_quarter']=quarter
-    ceiling=ss.get('ceiling_pct',85)/100
-    if page=='Capacity & scenarios':
-        with st.sidebar.expander('Planning assumptions'):
-            ceiling=st.slider('Planning limit (%)',75,95,85,5,key='ceiling_pct')/100
-            st.caption('85% is a demo planning policy. Equipment releases contribute from the start of their stated quarter.')
-    priority='All priorities';first=last=None;include_short=False
-else:
-    quarter=ss.get('_planning_quarter','2027Q2');ceiling=ss.get('ceiling_pct',85)/100
-    priority=st.sidebar.selectbox('Lot priority',['All priorities','HOT','NORMAL'],key='priority')
-    weeks=sorted(data['sim_fab_weekly'].week_start.unique())
-    first,last=st.sidebar.select_slider('Reporting weeks',weeks,value=(weeks[0],weeks[-1]),format_func=lambda w:pd.Timestamp(w).strftime('%d %b %Y'),key='report_weeks')
-    include_short=st.sidebar.checkbox('Include short loops in cycle time',value=False,key='include_short')
-    st.sidebar.caption('Weeks begin Monday. WIP is measured at each week end.')
-st.sidebar.divider()
-st.sidebar.caption('DRAM technology target: 75% of starts, including HBM. Synthetic assumption.')
-st.sidebar.caption('52 historical weeks · 2027 plan · one mid-horizon pilot')
-state,capacity=L.capacity(data,pilot_case,ceiling)
+st.sidebar.caption('52 historical weeks · 2027 requested plan')
+st.sidebar.caption('Independent synthetic planning demo · v8.0')
+title('2027 demand outlook' if page=='Demand outlook' else page)
+filter_slot=st.container()
+tab_key='view_'+str(PAGES.index(page))
+view_memory=ss.setdefault('_view_memory',{})
+if tab_key not in ss and page in view_memory:ss[tab_key]=view_memory[page]
+tabs=st.tabs(ui.PAGE_VIEWS[page],key=tab_key,on_change='rerun')
+active_index=next((i for i,t in enumerate(tabs) if t.open),0)
+active_view=ui.PAGE_VIEWS[page][active_index]
+view_memory[page]=active_view
+with filter_slot:
+    filters=ui.render_filters(data,page,active_view)
+site=filters['site'];programs=filters['programs'];family=filters['family']
+quarter=filters['quarter'];pilot_case=filters['pilot_case'];ceiling=filters['ceiling']
+priority=filters['priority'];first=filters['first'];last=filters['last'];include_short=filters['include_short']
+state=capacity=None
+if page=='Capacity & scenarios':state,capacity=cached_capacity(fd.fingerprint(),pilot_case,ceiling)
 
 
 def overview(p):
@@ -226,11 +223,11 @@ def overview(p):
     st.write('')
     a,b=st.columns(2,gap='large')
     with panel(a,'Weekly wafer flow'):chart(pc.weekly_flow(p),'weekly_flow')
-    with panel(b,'WIP by fab'):chart(pc.weekly_trend(p,'wip_wafers'),'weekly_wip')
-    a,b=st.columns(2,gap='large')
-    with panel(a,'Weekly cycle time'):chart(pc.weekly_trend(p,'avg_cycle_time_days'),'weekly_ct')
-    with panel(b,'Weekly starts by program'):
-        frame=data['weekly_program_flow'];frame=rm.select_scope(frame,site)
+    with panel(b,'Operating trend'):
+        trend=st.radio('Trend metric',['WIP','Cycle time'],horizontal=True,key='overview_trend')
+        chart(pc.weekly_trend(p,'wip_wafers' if trend=='WIP' else 'avg_cycle_time_days'),'weekly_operating_trend')
+    with st.expander('Program breakdown & scorecard'):
+        frame=rm.select_scope(data['weekly_program_flow'],site)
         frame=frame[frame.program.isin(programs)&frame.week_start.between(first,last)]
         if priority!='All priorities':frame=frame[frame.priority==priority]
         fig=go.Figure()
@@ -238,14 +235,16 @@ def overview(p):
             if program not in programs:continue
             values=frame[frame.program==program].groupby('week_start').wafer_starts.sum()
             fig.add_bar(x=values.index,y=values,name=D.NAMES[program],marker_color=ec.PROGRAM_COLORS[idx])
-        ec.style(fig,310);fig.update_layout(barmode='stack',legend=dict(y=-.3),margin=dict(b=95));fig.update_xaxes(type='date',tickformat='%b %Y');fig.update_yaxes(title='Wafers / week');chart(fig,'cycle_program')
-    with st.expander('Program scorecard & metric definitions'):
+        ec.style(fig,340);fig.update_layout(barmode='stack',legend=dict(y=-.3),margin=dict(b=110))
+        fig.update_xaxes(type='date',tickformat='%b %Y');fig.update_yaxes(title='Starts / week')
+        chart(fig,'cycle_program')
         summary=p['completed'].groupby(['site','program']).agg(completed_lots=('lot_id','size'),wafers_in=('wafers_in','sum'),wafers_out=('wafers_out','sum'),mean_cycle_days=('cycle_time_days','mean')).reset_index()
         summary['Yield (%)']=100*summary.wafers_out/summary.wafers_in
         summary['Site']=summary.site.map(rm.SITE_LABELS);summary['Program']=summary.program.map(ec.PROGRAM_SHORT)
         st.dataframe(summary[['Site','Program','completed_lots','wafers_out','mean_cycle_days','Yield (%)']].rename(columns={'completed_lots':'Completed lots','wafers_out':'Wafers out','mean_cycle_days':'Mean cycle time (d)'}).round(2),hide_index=True,width='stretch')
-        st.caption('Flow, WIP and yield include all selected programs. Cycle-time charts follow the short-loop checkbox. Cycle time is completed-lot weighted; yield uses input and output from the same completed cohorts. Scorecard cycle times include each listed program. Filtered WIP is reconstructed from lot timestamps and original input quantities. Empty cohorts display —.')
-        st.caption('Little’s Law is a diagnostic relationship, not an enforced equality between these finite-window KPIs. The weekly snapshots and completed cohorts have different boundary effects.')
+    with st.expander('Metric definitions'):
+        st.caption('Completions, WIP and yield follow all selected programs. The short-loop option applies to cycle-time charts. Cycle time is completed-lot weighted; yield uses input and output from the same completed cohorts. WIP is reconstructed at each week end from lot timestamps and original input quantities. Empty cohorts display —.')
+        st.caption('Scorecard cycle times include every listed program. Little’s Law is a diagnostic; finite-window completed cohorts and weekly WIP snapshots have different boundary effects.')
     st.download_button('Download filtered weekly performance',export_table(p['weekly']),'filtered_weekly_performance.csv','text/csv')
     context=dict(view='Historical fab performance',site=site,quarter=quarter,planning_limit=ceiling,period=[str(p['first']),str(p['cutoff'])],
         programs=programs,priority=priority,include_short_in_cycle_time=include_short,
@@ -260,31 +259,28 @@ def overview(p):
 
 
 def equipment_page():
-    st.caption('Fleet counts as of 27 Sep 2026 · equipment states follow selected reporting weeks and fab; shared-tool states do not follow program or lot-priority filters.')
-    a,b=st.columns([.8,1.2],gap='large')
-    with panel(a,'Installed tools by fab'):
-        chart(LC.inventory(data,site),'fleet_inventory')
-    with b:
-        available=[g for g in C.TOOL_GROUP_ORDER if any(C.INSTALLED_TOOLS[s][g] for s in ec.sites(site))]
-        selected=st.multiselect('Equipment groups to investigate',available,default=[g for g in rm.FOCUS_GROUPS if g in available],format_func=rm.GROUP_LABELS.get,key='health_groups_'+site)
-        if not selected:st.info('Select equipment to compare states and queues.');return
-        frame=em.equipment_health(data,site,selected,first,last)
-        chart(pc.equipment_states(frame),'equipment_states')
+    st.caption('Shared equipment activity · all programs and priorities · selected site and reporting weeks')
+    available=[g for g in C.TOOL_GROUP_ORDER if any(C.INSTALLED_TOOLS[s][g] for s in ec.sites(site))]
+    selected=st.multiselect('Equipment groups to investigate',available,default=[g for g in rm.FOCUS_GROUPS if g in available],format_func=rm.GROUP_LABELS.get,key='health_groups_'+site)
+    if not selected:st.info('Select equipment to compare states and queues.');return
+    frame=em.equipment_health(data,site,selected,first,last)
+    fleet=rm.select_scope(data['installed_tools'],site)
     cols=st.columns(4);worst=frame.sort_values('loading_pct',ascending=False).iloc[0]
-    fleet=data['installed_tools'];fleet=rm.select_scope(fleet,site)
-    card(cols[0],'Installed fleet',number(fleet.tools.sum(),0),'All equipment groups in selected fab(s)')
+    card(cols[0],'Installed fleet',number(fleet.tools.sum(),0),'All groups · fleet as of 27 Sep 2026')
     card(cols[1],'Peak production loading',number(worst.loading_pct,1,'%'),rm.SITE_LABELS[worst.site]+' · '+rm.GROUP_LABELS[worst.tool_group])
-    card(cols[2],'Longest equipment queue',number(frame.avg_queue_h.max(),2,' h'),'Selected weeks · mean per visit')
+    card(cols[2],'Longest equipment queue',number(frame.avg_queue_h.max(),2,' h'),'Selected equipment · mean per visit')
     furnace=em.equipment_health(data,site,['FURN'],first,last)
-    card(cols[3],'Furnace batch fill',number(furnace.batch_lots.sum()/furnace.batch_count.sum() if furnace.batch_count.sum() else float('nan'),2),'Mean lots / batch · maximum 3')
-    st.write('')
-    with st.container(border=True):
-        st.subheader('Weekly equipment queues');chart(pc.queue_trend(data,site,selected,first,last),'equipment_queues')
-    with st.expander('Equipment quantities, states and source values'):
+    card(cols[3],'Furnace batch fill',number(furnace.batch_lots.sum()/furnace.batch_count.sum() if furnace.batch_count.sum() else float('nan'),2),'All selected fabs · maximum 3 lots')
+    a,b=st.columns(2,gap='large')
+    with panel(a,'Equipment states'):chart(pc.equipment_states(frame),'equipment_states')
+    with panel(b,'Weekly equipment queues'):chart(pc.queue_trend(data,site,selected,first,last),'equipment_queues')
+    with st.expander('Installed tools & equipment detail'):
+        chart(LC.inventory(data,site),'fleet_inventory')
         st.dataframe(table_view(fleet)[['Site','Equipment','tools']].rename(columns={'tools':'Installed tools'}),hide_index=True,width='stretch')
-        view=table_view(frame);cols=['Site','Equipment','tools','productive_pct','standby_pct','engineering_pct','sched_down_pct','unsched_down_pct','loading_pct','avg_queue_h']
+        view=table_view(frame)
+        cols=['Site','Equipment','tools','productive_pct','standby_pct','engineering_pct','sched_down_pct','unsched_down_pct','loading_pct','avg_queue_h']
         st.dataframe(view[cols].rename(columns={'tools':'Tools','productive_pct':'Productive (%)','standby_pct':'Standby (%)','engineering_pct':'Engineering (%)','sched_down_pct':'Scheduled down (%)','unsched_down_pct':'Unscheduled down (%)','loading_pct':'Production loading (%)','avg_queue_h':'Queue / visit (h)'}).round(2),hide_index=True,width='stretch')
-        st.caption('Tool groups pool identical qualified tools. Furnace lots form compatible recipe batches and share one machine cycle. Engineering work and capacity holds reduce production time; they are not automatically classified as waste. State percentages use calendar hours; loading uses time available after engineering and downtime. Zero EUV tools at Fab B means EUV routes are not qualified there.')
+        st.caption('State percentages use calendar hours; production loading excludes engineering and downtime from available hours. Engineering work is not automatically waste. Identical qualified tools are pooled. Furnace recipes share one batch cycle. Zero EUV tools at Fab B means EUV routes are not qualified there.')
     st.download_button('Download equipment health',export_table(frame),'selected_equipment_health.csv','text/csv')
     ai_panel('Ask AI about equipment and operating notes','ai_equipment',dict(view='Historical equipment health',site=site,quarter=quarter,planning_limit=ceiling,
         period=[first,last],equipment_groups=selected,filter_scope='fab, equipment and reporting weeks; shared states retain all programs/priorities',
@@ -294,8 +290,9 @@ def equipment_page():
         'Which equipment quantities and route qualifications matter if we consolidate work between fabs?'])
 
 def attainment_page():
-    st.caption('2024Q1–2026Q3 · historical weekly start rates by quarter · site and program filters apply; lot priority and reporting-week filters do not.')
+    st.caption('Historical requested and actual starts · selected quarters, site and programs')
     frame=em.historical_attainment(data,site,programs)
+    lo,hi=ss['attainment_period'];frame=frame[frame.quarter.between(lo,hi)]
     if frame.empty:st.info('No historical starts for this selection.');return
     latest=frame.iloc[-1];cols=st.columns(4)
     card(cols[0],'Latest requested WSPW',number(latest.requested_wspw,0),latest.quarter)
@@ -315,16 +312,15 @@ def attainment_page():
 
 
 def performance_page():
-    title('Fab performance',pd.Timestamp(first).strftime('%d %b %Y')+'–'+(pd.Timestamp(last)+pd.Timedelta(days=6)).strftime('%d %b %Y')+' · execution review')
-    tabs=st.tabs(['Production overview','Equipment health','Historical attainment','Program routes'])
-    with tabs[0]:
-        if not programs:st.info('Select at least one program in the sidebar.')
+    # Only the active workspace tab builds charts and calculates its cohorts.
+    if active_index==0:
+        if not programs:st.info('Select at least one program above.')
         else:
-            p=em.execution(data,site,programs,priority,first,last,include_short)
+            p=cached_execution(fd.fingerprint(),site,tuple(programs),priority,first,last,include_short)
             overview(p)
-    with tabs[1]:equipment_page()
-    with tabs[2]:attainment_page()
-    with tabs[3]:route_page()
+    elif active_index==1:equipment_page()
+    elif active_index==2:attainment_page()
+    else:route_page()
 
 
 def capacity_outlook():
@@ -333,16 +329,29 @@ def capacity_outlook():
     card(cols[1],'At-risk equipment',f"{m['at_risk']} / {m['groups']}",f'At or above {ceiling*100:.0f}%','alert' if m['at_risk'] else '')
     card(cols[2],'Peak equipment load',number(m['worst_load'],1,'%'),rm.SITE_LABELS[m['worst_site']]+' · '+rm.GROUP_LABELS[m['worst_group']],'danger' if m['worst_load']>100 else 'alert')
     card(cols[3],'Additional tools at limit',str(int(rm.select_scope(capacity,site,quarter).tool_gap.sum())),'Model requirement · before qualification / cost review')
-    st.write('');a,b=st.columns([1.25,1],gap='large')
-    with panel(a,'Loading across quarters'):
-        all_groups=st.toggle('Show all equipment groups',value=False,key='all_groups')
-        chart(ec.loading_heatmap(capacity,site,quarter,ceiling,all_groups),'capacity_heatmap')
-    with panel(b,quarter+' · equipment comparison'):chart(ec.equipment_compare(capacity,site,quarter,ceiling),'equipment_comparison')
-    st.caption(f'Green <{ceiling*100:.0f}% · amber {ceiling*100:.0f}–100% · red >100%. Network loading retains all programs; program filters focus the charts below.')
-    if programs:
-        a,b=st.columns(2,gap='large')
-        with panel(a,'Requested starts · selected programs'):chart(ec.starts_mix(state,site,quarter,programs),'starts_mix')
-        with panel(b,'Share of equipment workload'):chart(LC.workload(data,pilot_case,site,quarter,rm.select_scope(capacity,site,quarter),ceiling,programs),'load_drivers')
+    st.caption('Summary cards retain all equipment and all programs in the selected fab(s). Filters below focus the charts.')
+    c1,c2=st.columns([2,1])
+    default_groups=[g for g in rm.FOCUS_GROUPS if g in set(capacity.tool_group)]
+    ss.setdefault('capacity_groups',default_groups)
+    groups=c1.multiselect('Equipment groups',C.TOOL_GROUP_ORDER,format_func=rm.GROUP_LABELS.get,key='capacity_groups')
+    status=c2.selectbox('Equipment status',['All equipment','Above planning limit','Over capacity','Within planning limit'],key='capacity_risk')
+    display=rm.select_scope(capacity,site)
+    selected_q=display[display.quarter.eq(quarter)&display.tool_group.isin(groups)]
+    if status=='Above planning limit':selected_q=selected_q[selected_q.loading_pct.ge(ceiling*100)|selected_q.loading_pct.isna()]
+    elif status=='Over capacity':selected_q=selected_q[selected_q.loading_pct.gt(100)|selected_q.loading_pct.isna()]
+    elif status=='Within planning limit':selected_q=selected_q[selected_q.loading_pct.lt(ceiling*100)]
+    pairs=set(zip(selected_q.site,selected_q.tool_group))
+    display=display[[pair in pairs for pair in zip(display.site,display.tool_group)]]
+    if display.empty:st.info('No equipment matches these chart filters. Summary cards still show the complete fab workload.')
+    else:
+        a,b=st.columns([1.2,1],gap='large')
+        with panel(a,'Loading across quarters'):chart(ec.loading_heatmap(display,site,quarter,ceiling,True),'capacity_heatmap')
+        with panel(b,quarter+' · equipment detail'):
+            detail=st.selectbox('Detail view',['Equipment loading','Program contribution','Requested starts'],key='capacity_detail')
+            if detail=='Equipment loading':chart(ec.equipment_compare(display,site,quarter,ceiling,True),'equipment_comparison')
+            elif detail=='Program contribution':chart(LC.workload(data,pilot_case,site,quarter,selected_q,ceiling,programs,True),'load_drivers')
+            else:chart(ec.starts_mix(state,site,quarter,programs),'starts_mix')
+    st.caption(f'Green <{ceiling*100:.0f}% · amber {ceiling*100:.0f}–100% · red >100%. Program contribution retains other programs as a separate segment.')
     with st.expander('Equipment gaps, releases & calculation details'):
         current=table_view(rm.select_scope(capacity,site,quarter));current['Status']=current.loading_pct.map(lambda x:rm.risk_label(x,ceiling))
         st.dataframe(current[['Site','Equipment','tools','tools_needed_at_ceiling','tool_gap','loading_pct','required_h_wk','available_h_wk','Status']].rename(columns={'tools':'Installed / released','tools_needed_at_ceiling':'Needed at limit','tool_gap':'Additional tools','loading_pct':'Loading (%)','required_h_wk':'Required h/week','available_h_wk':'Available h/week'}).round(1),hide_index=True,width='stretch')
@@ -351,7 +360,7 @@ def capacity_outlook():
         selected=st.selectbox('Trace equipment',choices,format_func=lambda k:rm.SITE_LABELS[k[0]]+' · '+rm.GROUP_LABELS[k[1]],key='trace_equipment')
         st.dataframe(L.workload(data,pilot_case,*selected,quarter).round(2),hide_index=True,width='stretch')
         st.caption('Required h/week = Σ starts × passes × minutes/pass × sampling ÷ 60. Available h/week = resources × 168 × production availability. This is an aggregate capacity screen; capital costs and ROI are not included.')
-    st.download_button('Download capacity review',export_table(rm.select_scope(capacity,site).assign(planning_limit_pct=ceiling*100,demand_basis='requested')),f'{site}_2027_capacity_review.csv','text/csv')
+    st.download_button('Download filtered equipment review',export_table(display.assign(planning_limit_pct=ceiling*100,demand_basis='requested')),f'{site}_2027_capacity_review.csv','text/csv')
     ai_panel('Ask AI about this capacity plan','ai_capacity',dict(view='2027 capacity outlook',site=site,quarter=quarter,pilot_case=pilot_case,planning_limit=ceiling,
         program_focus=programs,summary=m,displayed_starts_per_week=number(m['starts'],0),equipment=rm.select_scope(capacity,site,quarter).round(3).to_dict('records')),[
         'Which equipment constrains the requested DRAM-heavy plan, and what routes or notes explain the workload?',
@@ -361,52 +370,70 @@ def capacity_outlook():
 
 
 def demand_page():
-    title('2027 demand outlook','2027Q1–Q4 · '+quarter+' focus · wafer-start planning')
-    if not programs:st.info('Select at least one program in the sidebar.');return
-    frame=demand.plan(data,site,programs,pilot_case);totals=demand.quarterly(frame)
+    if not programs:st.info('Select at least one program above.');return
+    frame=demand.plan(data,site,programs,pilot_case)
     comparison=demand.comparison_frame(data,site,programs,pilot_case)
-    changes=demand.comparison_changes(comparison,quarter)
     if frame.empty:st.info('No 2027 demand for the selected fab and programs.');return
-    tabs=st.tabs(['2026–2027 demand','Forecast validation'])
-    with tabs[0]:
+    totals=demand.quarterly(frame);changes=demand.comparison_changes(comparison,quarter)
+    lo,hi=filters['demand_period']
+    visible=comparison[comparison.quarter.between(lo,hi)]
+    plan_visible=frame[frame.quarter.between(lo,hi)]
+    if active_index==0:
         current=totals.loc[quarter];cols=st.columns(4)
-        card(cols[0],quarter+' requested WSPW',number(current.requested_wspw,0),'Selected fab(s) & programs')
-        card(cols[1],'Vs '+changes['prior_quarter']+' requested',number(changes['yoy_pct'],1,'%'),number(changes['prior_requested'],0)+' → '+number(changes['current_requested'],0)+' WSPW')
-        card(cols[2],'2027Q1 vs 2026Q4 request',number(changes['transition_pct'],1,'%'),number(changes['prior_q4_requested'],0)+' → '+number(changes['next_q1_requested'],0)+' WSPW', 'danger' if changes['transition_pct']<0 else '')
-        card(cols[3],quarter+' expected WSPW',number(current.expected_wspw,0),'Historical request-realization model')
-        st.write('');a,b=st.columns(2,gap='large')
-        with panel(a,'2026 vs 2027 · requested starts'):chart(demand.year_comparison_chart(comparison),'demand_year_comparison')
-        with panel(b,'2026 history → 2027 outlook'):chart(demand.history_outlook_chart(comparison),'demand_history_outlook')
-        st.caption('Inside each graph: choose a program/type from the dropdown; click a legend to hide a series. These controls affect that graph. Sidebar filters apply to page totals and all charts.')
-        st.caption('Hatched 2026Q4 bar / diamond: planning reference of 2,950 WSPW. Fab/program shares are assumed from baseline 2027Q1; actuals are available only through 2026Q3.')
-        st.write('');a,b=st.columns(2)
-        breakdown=a.selectbox('Break down demand by',list(demand.BREAKDOWNS),key='demand_breakdown')
-        if pilot_case!='baseline':ss['demand_measure']='Requested plan'
-        measure=b.radio('Chart basis',list(demand.MEASURES),horizontal=True,key='demand_measure',disabled=pilot_case!='baseline')
-        if pilot_case!='baseline':st.caption('The new pilot has no realization history; its expected starts are not estimated. Requested ramp is included in the charts; missing portfolio estimates display —.')
-        st.caption('Network baseline mix target: DRAM technology 75% (including HBM), NAND 15%, experiments 10%. Wafer-start assumption, not revenue share. Each quarter shows a weekly start rate. Expected starts calibrate requests using historical program realization; capacity commitments continue to use the requested plan.')
-        a,b=st.columns([1.15,1],gap='large')
-        with panel(a,'2027 · '+measure.lower()+' mix'):chart(demand.mix_chart(frame,breakdown,measure),'demand_mix')
-        with panel(b,'2027 · demand by fab'):chart(demand.fab_chart(frame,measure),'demand_fabs')
-        a,b=st.columns([1.15,1],gap='large')
-        with panel(a,'Quarterly ramp · fab & program'):chart(demand.ramp_chart(frame,measure,quarter),'demand_ramp')
-        with panel(b,'Requested plan vs expected starts' if pilot_case=='baseline' else 'Pre-pilot plan vs selected case'):
-            if pilot_case=='baseline':chart(demand.plan_comparison(frame),'demand_comparison')
+        card(cols[0],'Requested starts / week',number(current.requested_wspw,0),quarter+' · selected programs')
+        card(cols[1],'Expected starts / week',number(current.expected_wspw,0),quarter+' · historical realization model')
+        card(cols[2],'Year-on-year request',number(changes['yoy_pct'],1,'%'),changes['prior_quarter']+' → '+quarter)
+        card(cols[3],'Quarter-on-quarter request',number(changes['qoq_pct'],1,'%'),changes['qoq_quarter']+' → '+quarter)
+        a,b=st.columns([1.25,1],gap='large')
+        with panel(a,'Demand comparison'):
+            chart_view=st.selectbox('Chart view',['Historical → outlook','2026 vs 2027','Requested vs expected'],key='demand_chart_view')
+            if chart_view=='2026 vs 2027':
+                fig=demand.year_comparison_chart(visible,chart_filters=False)
+                quarters=[f'Q{q}' for q in range(1,5) if any(f'{y}Q{q}' in set(visible.quarter) for y in (2026,2027))]
+                fig.update_xaxes(categoryorder='array',categoryarray=quarters)
+                if quarters:
+                    indices=[int(q[1])-1 for q in quarters]
+                    fig.update_xaxes(range=[min(indices)-.5,max(indices)+.5])
             else:
-                base=demand.quarterly(demand.plan(data,site,programs,'baseline'));fig=go.Figure()
-                for values,label,color in [(base.requested_wspw,'Pre-pilot requested',ec.TEAL),(totals.requested_wspw,D.CASES[pilot_case],ec.BLUE)]:
-                    fig.add_scatter(x=C.PLAN_QUARTERS,y=values,name=label,mode='lines+markers',line=dict(color=color,width=2))
-                ec.style(fig,335);fig.update_yaxes(title='Quarter-average requested WSPW',rangemode='tozero');chart(fig,'demand_comparison')
-        with st.expander('Quarter / fab / program detail & assumptions'):
-            view=frame.copy();view['Fab']=view.site.map(rm.SITE_LABELS);view['Program']=view.program.map(ec.PROGRAM_SHORT)
-            st.dataframe(view[['quarter','Fab','family','Program','route_technology','requested_wspw','expected_wspw','realization_rate']].rename(columns={'quarter':'Quarter','family':'Family','route_technology':'Route technology','requested_wspw':'Requested WSPW','expected_wspw':'Expected WSPW','realization_rate':'Realization factor'}),hide_index=True,width='stretch')
-            st.caption('Expected WSPW = requested WSPW × program realization factor, rounded per fab/program/quarter. The model fits actual = factor × requested using history through 2026Q3 and pools the two fabs for each program. This estimates start realization conditional on the supplied plan; it does not independently forecast market demand or future orders. Factors above 1 are allowed when history shows under-requesting.')
-            st.caption('Route technology is derived from the configured EUV pass count. It is not a physical wafer specification. Diameter, substrate, wafer grade, product SKU and detailed recipe history are absent from the source files. No confidence interval or annual wafer-volume total is inferred from quarterly weekly rates.')
-            st.caption('The comparison uses 2026 reporting-quarter requests/actuals, a separate 2026Q4 planning reference and calendar-quarter 2027 requests/model estimates. The Q4 reference never enters model training or backtest data. Missing actuals and unsupported pilot estimates remain gaps, not zero production.')
-        export=frame.assign(program_name=frame.program.map(ec.PROGRAM_SHORT),estimate_basis='historical program request realization; pooled fabs')
-        st.download_button('Download 2027 demand outlook',export_table(export),'2027_demand_outlook.csv','text/csv')
-        st.download_button('Download 2026–2027 demand comparison',export_table(comparison),'2026_2027_demand_comparison.csv','text/csv')
-    with tabs[1]:
+                if chart_view=='Requested vs expected':
+                    rows=visible[visible.quarter.str.startswith('2027')]
+                    if rows.empty:st.info('Choose a chart period that includes 2027 to compare requests and estimates.')
+                    fig=demand.history_outlook_chart(rows,chart_filters=False)
+                    fig.data[1].visible=False
+                    positions=[demand.COMPARISON_QUARTERS.index(q) for q in C.PLAN_QUARTERS if lo<=q<=hi]
+                    fig.update_xaxes(range=[min(positions)-.5,max(positions)+.5] if positions else [3.5,7.5])
+                else:
+                    fig=demand.history_outlook_chart(visible,chart_filters=False)
+                    positions=[demand.COMPARISON_QUARTERS.index(q) for q in demand.COMPARISON_QUARTERS if lo<=q<=hi]
+                    fig.update_xaxes(range=[min(positions)-.5,max(positions)+.5])
+            fig.update_layout(height=390,legend=dict(y=-.28),margin=dict(t=20,b=110))
+            chart(fig,'demand_main')
+        with panel(b,'2027 demand mix'):
+            breakdown=st.selectbox('Break down demand by',list(demand.BREAKDOWNS),key='demand_breakdown')
+            if pilot_case!='baseline':ss['demand_measure']='Requested plan'
+            measure=st.radio('Chart basis',list(demand.MEASURES),horizontal=True,key='demand_measure',disabled=pilot_case!='baseline')
+            if plan_visible.empty:st.info('Include a 2027 quarter in Chart period to see the planned mix.')
+            else:
+                fig=demand.mix_chart(plan_visible,breakdown,measure)
+                fig.update_xaxes(categoryorder='array',categoryarray=[q for q in C.PLAN_QUARTERS if lo<=q<=hi])
+                fig.update_layout(height=335)
+                chart(fig,'demand_mix')
+        st.caption('KPI cards use '+quarter+'; both charts follow the selected chart period and programs.')
+        if lo<='2026Q4' and hi>='2027Q1':
+            st.caption('2026Q4 → 2027Q1 requested: '+number(changes['prior_q4_requested'],0)+' → '+number(changes['next_q1_requested'],0)+' WSPW ('+number(changes['transition_pct'],1,'%)')+'. Q4 is a planning reference, not an actual.')
+        if pilot_case!='baseline':st.caption('Pilot expected starts remain unknown because the new program has no realization history.')
+    elif active_index==1:
+        st.caption('2027 detail · requested and expected start rates · selected site and programs')
+        if pilot_case!='baseline':ss['demand_detail_measure']='Requested plan'
+        measure=st.radio('Detail basis',list(demand.MEASURES),horizontal=True,key='demand_detail_measure',disabled=pilot_case!='baseline')
+        if plan_visible.empty:st.info('Include a 2027 quarter in Chart period to see planning detail.')
+        else:
+            a,b=st.columns([1,1.3],gap='large')
+            with panel(a,'Demand by fab'):chart(demand.fab_chart(plan_visible,measure),'demand_fabs')
+            with panel(b,'Quarterly ramp · fab & program'):chart(demand.ramp_chart(plan_visible,measure,quarter),'demand_ramp')
+            view=plan_visible.copy();view['Fab']=view.site.map(rm.SITE_LABELS);view['Program']=view.program.map(ec.PROGRAM_SHORT)
+            st.dataframe(view[['quarter','Fab','family','Program','route_technology','requested_wspw','expected_wspw','realization_rate']].rename(columns={'quarter':'Quarter','family':'Family','route_technology':'Route technology','requested_wspw':'Requested WSPW','expected_wspw':'Expected WSPW','realization_rate':'Realization factor'}).round(2),hide_index=True,width='stretch')
+    else:
         held,metrics=demand.validation(data,site,programs)
         st.caption('Fit: 2024Q1–2025Q4 · held-out evaluation: 2026Q1–Q3 · site and program filters apply.')
         cols=st.columns(3)
@@ -426,6 +453,14 @@ def demand_page():
         with st.expander('Held-out source rows'):
             st.dataframe(held.round(2),hide_index=True,width='stretch')
             st.caption('MAPE is the mean absolute percentage error across individual fab/program/quarter records; the chart sums those records for visual comparison. All data is synthetic, with limited history. Backtest performance does not establish future forecasting accuracy.')
+    if active_index!=2:
+        with st.expander('Definitions & assumptions'):
+            st.caption('WSPW = wafer starts per week. Quarter values are average weekly rates, not total quarterly wafers. Requested is the supplied plan; expected = requested × a program realization factor fitted to history through 2026Q3, pooled across fabs. Capacity uses requested demand.')
+            st.caption('Historical actuals end at 2026Q3. The hatched/diamond 2026Q4 reference is 2,950 WSPW for the full network; fab/program shares are assumed from baseline 2027Q1. It does not train the model. Future actuals and unsupported pilot estimates remain missing.')
+            st.caption('Mix assumption: 75% DRAM technology including HBM, 15% NAND, 10% experiments. This is wafer-start mix, not revenue. Route technology means EUV inclusion, not wafer diameter, grade or SKU.')
+        with st.popover('Export data'):
+            st.download_button('Download 2027 demand outlook',export_table(plan_visible.assign(program_name=plan_visible.program.map(ec.PROGRAM_SHORT))),'2027_demand_outlook.csv','text/csv')
+            st.download_button('Download 2026–2027 comparison',export_table(visible),'2026_2027_demand_comparison.csv','text/csv')
 
 
 def scenario_page():
@@ -528,11 +563,9 @@ def scenario_page():
         'What is the difference between this capacity calculation and the pilot WIP/completion simulation?'])
 
 def lot_page():
-    title('Lot flow & cycle time',pd.Timestamp(first).strftime('%d %b %Y')+'–'+(pd.Timestamp(last)+pd.Timedelta(days=6)).strftime('%d %b %Y')+' · lot review')
-    if not programs:st.info('Select at least one program in the sidebar.');return
-    p=em.execution(data,site,programs,priority,first,last,include_short)
-    tabs=st.tabs(['Cycle-time drivers','Lot explorer'])
-    with tabs[0]:
+    if not programs:st.info('Select at least one program above.');return
+    p=cached_execution(fd.fingerprint(),site,tuple(programs),priority,first,last,include_short)
+    if active_index==0:
         cols=st.columns(4);parts=p['breakdown'];total=parts.sum(min_count=1)
         share=100*(parts.queue_days+parts.hold_days)/total if total>0 else float('nan')
         card(cols[0],'Completed cycle-time lots',str(len(p['cycles'])),'Short loops included' if include_short else 'Full-flow programs')
@@ -542,12 +575,13 @@ def lot_page():
         st.write('')
         a,b=st.columns(2,gap='large')
         with panel(a,'Cycle-time components by program'):chart(pc.cycle_breakdown(p,'program'),'lot_components')
-        with panel(b,'HOT vs NORMAL cycle time'):chart(pc.priority_compare(p),'priority_compare')
-        a,b=st.columns(2,gap='large')
-        with panel(a,'Cycle-time spread'):chart(pc.cycle_distribution(p),'ct_distribution')
-        with panel(b,'Age of WIP at period end'):chart(pc.wip_age(p),'wip_age')
+        with panel(b,'Lot analysis'):
+            detail=st.selectbox('Analysis view',['WIP aging','Cycle-time spread','HOT vs NORMAL'],key='lot_analysis')
+            if detail=='WIP aging':chart(pc.wip_age(p),'wip_age')
+            elif detail=='Cycle-time spread':chart(pc.cycle_distribution(p),'ct_distribution')
+            else:chart(pc.priority_compare(p),'priority_compare')
         st.caption('Queue and hold shares describe elapsed time; engineering holds can be required development work. Priority comparisons show observed cohorts, not a causal improvement estimate.')
-    with tabs[1]:
+    else:
         population=st.radio('Lot population',['Completed in reporting period','WIP at period end','Started in reporting period'],horizontal=True,key='lot_population')
         if population=='Completed in reporting period':frame=p['completed'].copy()
         elif population=='WIP at period end':
@@ -562,23 +596,35 @@ def lot_page():
             # Later completions must not appear as known at an earlier review cutoff.
             future=frame.ended.ge(p['cutoff'])|frame.ended.isna()
             frame.loc[future,['end_time','wafers_out','cycle_time_days',*em.COMPONENTS]]=None
+        count_before=len(frame)
+        c1,c2,c3=st.columns([2,1,1])
+        search=c1.text_input('Search lot ID',key='lot_search',placeholder='Enter all or part of a lot ID')
+        metric='age_days' if population=='WIP at period end' else 'cycle_time_days'
+        minimum=c2.number_input('Minimum '+('age' if metric=='age_days' else 'cycle time')+' (days)',min_value=0.,value=0.,step=1.,key='lot_min_days')
+        maximum=c3.number_input('Maximum days (0 = any)',min_value=0.,value=0.,step=1.,key='lot_max_days')
+        if search:frame=frame[frame.lot_id.astype(str).str.contains(search.strip(),case=False,regex=False)]
+        if maximum and maximum<minimum:st.info('Maximum days must be at least the minimum.');return
+        if minimum>0:frame=frame[frame[metric].ge(minimum)]
+        if maximum>0:frame=frame[frame[metric].le(maximum)]
+        if population=='Started in reporting period' and (minimum>0 or maximum>0):
+            st.caption('Cycle-time limits include only lots completed by the reporting cutoff; unfinished cycle times remain unknown.')
         labels={'lot_id':'Lot ID','priority':'Priority','start_time':'Started','end_time':'Completed','wafers_in':'Input wafers','wafers_out':'Output wafers','cycle_time_days':'Cycle time (d)','process_days':'Processing (d)','queue_days':'Queue (d)','transport_days':'Transport (d)','hold_days':'Hold (d)','age_days':'Age at cutoff (d)','progress_pct':'Route progress (%)'}
-        st.caption(f'{len(frame):,} lots · '+population.lower())
+        st.caption(f'{len(frame):,} of {count_before:,} lots · '+population.lower())
         if population=='WIP at period end':
             st.caption('Age is reconstructed at the selected cutoff. Route progress is available only at the final simulation snapshot.')
         st.dataframe(frame[cols].rename(columns=labels).round(2),hide_index=True,width='stretch')
         st.download_button('Download filtered lots',export_table(frame[cols],labels),'filtered_lots.csv','text/csv')
 
 
-if page=='Fab performance':performance_page()
-elif page=='Demand outlook':demand_page()
-elif page=='Capacity & scenarios':
-    title('Capacity & scenarios',quarter+' review · requested 2027 plan')
-    tabs=st.tabs(['Capacity outlook','Scenario comparison','Program introduction'])
-    with tabs[0]:capacity_outlook()
-    with tabs[1]:scenario_page()
-    with tabs[2]:program_introduction()
-else:lot_page()
+with tabs[active_index]:
+    if page=='Fab performance':performance_page()
+    elif page=='Demand outlook':demand_page()
+    elif page=='Capacity & scenarios':
+        if active_index==0:capacity_outlook()
+        elif active_index==1:scenario_page()
+        else:program_introduction()
+    else:lot_page()
+ui.remember_filters()
 with st.expander('Data scope & model notes'):
-    st.caption('Independent synthetic interview prototype. History is simulated through 27 Sep 2026. Calendar 2027 is a requested plan, not actual production. Six explicit synthetic routes include one new pilot. The live capacity screen calculates average hours; the separate precomputed DES estimates WIP and matched-lot completion shifts under declared assumptions. All data and notes are synthetic, with no real-fab validation, customer promises or financial ROI.')
-st.markdown('<div class="footer"><span>TD Fab · stakeholder review</span><span>Synthetic data · v6.0</span></div>',unsafe_allow_html=True)
+    st.caption('Independent synthetic interview prototype. History is simulated through 27 Sep 2026. Calendar 2027 is a requested plan. Capacity calculates requested-route hours; the separate precomputed DES estimates WIP and matched-lot completion shifts. All data and notes are synthetic.')
+st.markdown('<div class="footer"><span>TD Fab · stakeholder review</span><span>Synthetic data · v8.0</span></div>',unsafe_allow_html=True)

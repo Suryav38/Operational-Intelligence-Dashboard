@@ -1,3 +1,4 @@
+from ui_helpers import select_view
 from pathlib import Path
 from streamlit.testing.v1 import AppTest
 
@@ -13,8 +14,9 @@ def test_performance_is_first_with_embedded_ai_and_routes():
     assert at.radio(key='page').options==['Fab performance','Demand outlook','Capacity & scenarios','Lot flow & cycle time']
     assert any(b.label=='Ask AI' and b.disabled for b in at.button)
     assert any('Program routes'==t.label for t in at.tabs)
-    assert any('Weekly cycle time'==s.value for s in at.subheader)
-    assert any('Installed tools by fab'==s.value for s in at.subheader)
+    assert any('Operating trend'==s.value for s in at.subheader)
+    assert not any('Equipment states'==s.value for s in at.subheader)
+    assert 'route_program' not in [v.key for v in at.selectbox]
 
 
 def test_named_program_filters_and_empty_qualified_family():
@@ -36,6 +38,7 @@ def test_lot_drill_down_and_earlier_week_filters():
     at=app();at.radio(key='page').set_value('Lot flow & cycle time').run()
     assert not at.exception
     at.select_slider(key='report_weeks').set_range('2026-07-06','2026-08-03').run()
+    select_view(at,3,'Lot explorer')
     at.radio(key='lot_population').set_value('WIP at period end').run()
     assert not at.exception
     frame=at.dataframe[-1].value
@@ -46,7 +49,7 @@ def test_lot_drill_down_and_earlier_week_filters():
 
 
 def test_scenario_recalculates_and_hides_stale_results():
-    at=app();at.radio(key='page').set_value('Capacity & scenarios').run()
+    at=app();at.radio(key='page').set_value('Capacity & scenarios').run();select_view(at,2,'Scenario comparison')
     assert not at.exception
     next(b for b in at.button if b.label=='Compare scenario').click().run()
     assert not at.exception
@@ -62,7 +65,7 @@ def test_scenario_recalculates_and_hides_stale_results():
 
 
 def test_target_and_reversed_period_validation():
-    at=app();at.radio(key='page').set_value('Capacity & scenarios').run()
+    at=app();at.radio(key='page').set_value('Capacity & scenarios').run();select_view(at,2,'Scenario comparison')
     at.radio(key='demand_mode').set_value('Target WSPW').run()
     at.number_input(key='target_FAB_A_DRAM_B_2027Q2').set_value(1000).run()
     next(b for b in at.button if b.label=='Compare scenario').click().run()
@@ -82,6 +85,6 @@ def test_capacity_focus_retains_all_program_risk():
     at.multiselect(key='programs').set_value(['SHORT']).run()
     assert not at.exception
     assert risk()==before
-    at.toggle(key='all_groups').set_value(True).run()
+    at.multiselect(key='capacity_groups').set_value(['EUV','ETCH','DEP']).run()
     assert not at.exception
 

@@ -1,3 +1,4 @@
+from ui_helpers import select_view
 import pandas as pd
 import numpy as np
 import pytest
@@ -79,13 +80,14 @@ def test_demand_page_filters_and_quarter_scope():
     at.radio(key='page').set_value('Demand outlook').run()
     assert not at.exception
     assert at.title[0].value=='2027 demand outlook'
-    assert not at.select_slider
+    assert at.select_slider(key='demand_period').value==('2026Q1','2027Q4')
     at.selectbox(key='family').set_value('DRAM').run()
     at.multiselect(key='programs').set_value(['DRAM_B']).run()
     at.selectbox(key='quarter').set_value('2027Q4').run()
     at.radio(key='demand_measure').set_value('Expected starts').run()
     at.selectbox(key='demand_breakdown').set_value('Route technology').run()
     assert not at.exception
+    select_view(at,1,'Program & fab detail')
     assert len(at.dataframe[0].value)==4
     at.radio(key='page').set_value('Capacity & scenarios').run()
     assert not at.exception

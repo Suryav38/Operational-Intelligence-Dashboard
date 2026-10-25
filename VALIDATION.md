@@ -1,8 +1,10 @@
-# Validation — v7
+# Validation — v8
+
+V8 verification: the full 92-test suite and offline self-check passed on Python 3.12. Desktop browser checks exercised all four workspaces, Demand detail/validation, scenario calculation, nested pilot capacity and lot-ID search. No JavaScript page errors were observed. New browser layout checks used 1512×1100 and 390×844 viewports. Earlier model and download checks below describe the retained v7 baseline; the in-chart dropdown interaction was replaced by shared on-screen filtering in v8.
 
 ## Completed checks
 
-- **85 automated tests passed** under Python 3.12. Coverage includes capacity arithmetic, demand estimates, prior-year comparisons and missing values, weekly calendar overlap, route qualifications, synthetic flow, paired pilot comparisons, retrieval and dashboard interactions. AI response generation is mocked; SQL, note retrieval and mathematical model tools use the actual project data.
+- **92 automated tests passed** under Python 3.12. Coverage includes capacity arithmetic, demand estimates, prior-year comparisons and missing values, weekly calendar overlap, route qualifications, synthetic flow, paired pilot comparisons, retrieval and dashboard interactions. AI response generation is mocked; SQL, note retrieval and mathematical model tools use the actual project data.
 - `python code/self_check.py` passes. Python sources compile successfully.
 - The baseline 2027 requested rates are **2,800 / 3,000 / 3,300 / 3,600 WSPW**. DRAM technology, including HBM test vehicles, represents 75% in every quarter. This is an explicit synthetic wafer-start assumption, not a conversion from Micron revenue.
 - The data contains 52 reporting weeks for both fabs. Weekly surviving-wafer balances reconcile: opening WIP + starts − completions − scrap = closing WIP. Program and priority partitions reconcile to total flow.
@@ -23,7 +25,7 @@
 - Browser checks cover performance, equipment, routes, AI evidence preview, baseline/pilot demand, pilot WIP/capacity, outages and qualified transfers. No JavaScript page errors were observed. Desktop (1512×1100) and mobile (390×844) have no document-level horizontal overflow; mobile tabs scroll and cards stack.
 - Actual browser downloads were checked: 402 route operations, 36 pilot-inclusive demand rows, 1,613 paired lot instances and 76 transfer equipment-quarter rows across both fabs. Transfer workload is conserved across the network; positive pilot demand retains missing expected starts rather than inventing an estimate.
 - The separate Q4 2026 reference totals 2,950 WSPW with no actuals. The baseline Q1 2027 change is exactly -150 WSPW / -5.0847%; same-quarter growth over Q1 2026 is approximately +2.677%. Q4 allocation changes do not alter the historical model fit. An absent pilot prior-year history remains missing rather than zero.
-- Browser checks exercised native Plotly program dropdowns on both new comparison graphs, an HBM selection and legend toggling. DRAM B's displayed 2027 request series changed to 750 / 830 / 975 / 1,125. Global NAND filtering updated page totals; its real comparison download contained 16 rows and no Q4/future actuals. The updated demand page passed desktop/mobile layout checks without page errors or horizontal overflow.
+- V8 shared-filter regressions cover on-page controls, inactive tabs remaining unbuilt, selection/window persistence, reset behavior, demand chart reconciliation, limited chart periods, quarter-on-quarter arithmetic, capacity retaining other-product workload, equipment filter empty states, and lot search/age limits. Missing historical/future actuals remain unknown.
 
 ## Model limits
 

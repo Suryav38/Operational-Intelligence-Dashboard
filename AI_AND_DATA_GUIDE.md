@@ -1,4 +1,4 @@
-# AI and evidence — v7
+# AI and evidence — v8
 
 ## Where AI appears
 
@@ -14,7 +14,7 @@ No API call runs merely from opening the dashboard or changing a filter. **Ask A
 4. Read-only SQL queries retrieve additional structured facts. Notes are searched independently with keyword retrieval and optional embeddings.
 5. Explicit model tools calculate capacity scenarios or read the precomputed pilot study. The assistant explains the returned evidence and cites **S1/S2/D1** source IDs.
 
-It does not continually fetch live GitHub files. Updates enter through the deployment. Changes to a sidebar filter are reflected in the next question's context. Equipment-state context follows fab/equipment/weeks, because shared tool states are not attributed to the selected program or priority.
+It does not continually fetch live GitHub files. Updates enter through the deployment. Changes to an on-screen filter are reflected in the next question's context. Equipment-state context follows fab/equipment/weeks, because shared tool states are not attributed to the selected program or priority.
 
 ## Structured data
 

@@ -1,3 +1,4 @@
+from ui_helpers import select_view
 from types import SimpleNamespace
 from pathlib import Path
 import json
@@ -68,7 +69,9 @@ def test_oee_removed_inventory_and_six_routes_visible():
     at=app();assert not at.exception
     assert [t.label for t in at.tabs]==['Production overview','Equipment health','Historical attainment','Program routes']
     assert 'Machine OEE' not in str(at)
-    assert any('Installed tools by fab'==s.value for s in at.subheader)
+    select_view(at,0,'Equipment health')
+    assert any('Equipment states'==s.value for s in at.subheader)
+    select_view(at,0,'Program routes')
     assert set(at.selectbox(key='route_program').options)==set(D.NAMES.values())
     at.selectbox(key='route_program').set_value(D.PILOT).run()
     assert not at.exception
@@ -111,7 +114,9 @@ def test_pilot_overlay_new_program_and_unknown_forecast_are_explicit():
     at.radio(key='page').set_value('Capacity & scenarios').run()
     assert not at.exception
     assert any(t.label=='Program introduction' for t in at.tabs)
-    assert any('completion shift' in s.value for s in at.subheader)
+    select_view(at,2,'Program introduction')
+    assert any('Pilot impact detail'==s.value for s in at.subheader)
+    select_view(at,2,'Scenario comparison')
     at.selectbox(key='scenario_operation').set_value('Tool unavailability').run()
     next(b for b in at.button if b.label=='Compare scenario').click().run()
     assert not at.exception

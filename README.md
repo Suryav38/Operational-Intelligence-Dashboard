@@ -1,14 +1,24 @@
-# TD Fab — Performance, Resilience & Planning (v7)
+# TD Fab — Performance, Resilience & Planning (v8)
 
 Independent interview prototype for a fictional two-fab Technology Development network. **All operating data, routes, equipment counts, targets and notes are synthetic.** No Micron MES data or internal screen is reproduced.
 
 The decision story is: **Can we accommodate unexpected DRAM growth or loss of equipment, and can qualified work move between fabs without creating another constraint?** One explicit pilot introduction adds a controlled WIP/completion study.
 
-## What changed
+## Dashboard layout and filters (v8)
+
+The sidebar now contains navigation only. Use the filter bar directly below the page title for site, reporting/chart period, program family and searchable programs. **More filters** contains lot priority, the short-loop option, planning case, focus quarter and planning limit when relevant. **Reset filters** restores the defaults. Valid program subsets and reporting selections survive page changes; hidden tabs do not execute their charts.
+
+- **Fab performance:** four KPIs and two overview charts. Switch the operating trend between WIP and cycle time. Program breakdown, scorecard and metric definitions are collapsed. Equipment health, historical attainment and qualified routes have their own tabs and relevant controls.
+- **Demand overview:** four KPIs, one demand comparison and one mix chart. **Chart view** switches among historical/outlook, 2026 vs 2027 and requested vs expected. The shared program filter updates both charts and KPI cards; there are no separate in-chart program dropdowns to leave totals out of sync. **Program & fab detail** contains the ramp heatmap, fab comparison and source rows. **Forecast validation** uses the fixed historical holdout, clearly labeled separately from the planning chart period.
+- **Capacity:** equipment-group and risk filters focus the display; summary cards retain all equipment and all product workload. **Detail view** switches between loading, program contribution (including other programs) and requested starts. Model/trace details remain accessible. Scenarios and the pilot study run only when their tab is active.
+- **Lot flow:** two driver charts, selectable WIP aging/distribution/priority analysis, and a separate Lot explorer with ID search and minimum/maximum age or cycle time. Filtered exports match displayed lots; unknown in-progress cycle times are not inferred.
+- Cached capacity and execution calculations, larger chart labels, compact KPI cards and shorter visible notes improve the review flow. The synthetic data and core capacity/DES models are unchanged.
+
+## Existing planning features
 
 - **Demand comparison:** 2026 vs 2027 by matching quarter, plus an eight-quarter history/outlook graph. The Q1 2027 change from Q4 2026 is separate from the same-quarter year-over-year change.
 - **Q4 planning reference:** the user-supplied 2,950 WSPW total is separate from observed synthetic history. Its fab/program split is assumed from baseline 2027Q1 shares; no Q4 actuals are invented and it does not enter model training. Q1 2027 remains 2,800, a 150 WSPW / 5.1% decrease.
-- **Filters within both comparison charts:** dropdowns for program/type, plus clickable legends. These affect their own graph; sidebar fab/program filters apply to all page totals and views. Export includes periods and source/allocation basis.
+- **Shared on-screen filtering:** site/program selections apply to demand totals and both displayed charts. Legend clicks hide series in that chart only. Exports retain period and source/allocation basis.
 - Machine OEE removed. Equipment Health displays quantities by fab, actual simulated time states, weekly queues and furnace batch fill.
 - **52 reporting weeks:** 29 September 2025–27 September 2026, with lot/program/priority detail, weekly wafer balances and dated issue records.
 - **DRAM-heavy baseline:** DRAM technology, including HBM test vehicles, targets 75% of wafer starts; NAND 15%; experiments 10%. This is a user-selected synthetic start-mix assumption, not inferred from Micron revenue share. Weekly actual starts are approximately 75% after lot rounding.
@@ -108,15 +118,15 @@ This deliberately overwrites the generated tables, notes and database. A full ru
 
 ## Update your Mac/GitHub project
 
-Download **td-fab-planner-v7.zip** into Downloads, then run in Cursor:
+Download **td-fab-planner-v8.zip** into Downloads, then run in Cursor:
 
 ```bash
-unzip -q -o "$HOME/Downloads/td-fab-planner-v7.zip" -d "$HOME/Downloads/td-planner-v7"
-ditto "$HOME/Downloads/td-planner-v7/td-fab-planner-update" "$HOME/Desktop/Operational-Intelligence-Dashboard"
+unzip -q -o "$HOME/Downloads/td-fab-planner-v8.zip" -d "$HOME/Downloads/td-planner-v8"
+ditto "$HOME/Downloads/td-planner-v8/td-fab-planner-update" "$HOME/Desktop/Operational-Intelligence-Dashboard"
 cd "$HOME/Desktop/Operational-Intelligence-Dashboard"
 git rm --ignore-unmatch code/oee_model.py templates/machine_oee_template.csv
 git add -A
-git commit -m "Add prior-year demand comparison and chart filters"
+git commit -m "Simplify dashboard and add shared on-screen filters"
 git push origin main
 ```
 

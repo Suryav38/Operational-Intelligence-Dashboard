@@ -57,8 +57,8 @@ def pilot_flow(data,case):
         fig.add_bar(x=totals.index,y=totals[col],name=name,marker_color=color)
     ec.style(fig,335);fig.update_layout(barmode='group');mark_launch(fig);fig.update_xaxes(type='date',tickformat='%d %b');fig.update_yaxes(title='Mean wafers / week',rangemode='tozero');return fig
 
-def workload(data,case,site,quarter,table,ceiling,programs):
-    selected=ec.focus_table(table,site,ceiling);groups=list(dict.fromkeys(zip(selected.site,selected.tool_group)))
+def workload(data,case,site,quarter,table,ceiling,programs,all_groups=False):
+    selected=ec.focus_table(table,site,ceiling,all_groups);groups=list(dict.fromkeys(zip(selected.site,selected.tool_group)))
     records=[L.workload(data,case,s,g,quarter) for s,g in groups];fig=go.Figure()
     labels=[rm.SITE_LABELS[s]+' · '+rm.GROUP_LABELS[g] for s,g in groups]
     visible=list(programs)

@@ -12,10 +12,10 @@ PROGRAM_COLORS=['#185adb','#56a1cb','#27877f','#9b8cb9','#b8c4d3','#b97520']
 
 def style(fig,height=300,title_x=None):
     fig.update_layout(template='plotly_white',height=height,
-        font=dict(family='Arial, sans-serif',size=11,color='#24374f'),
+        font=dict(family='Arial, sans-serif',size=12,color='#24374f'),
         paper_bgcolor='rgba(0,0,0,0)',plot_bgcolor='rgba(0,0,0,0)',
         margin=dict(l=0,r=12,t=15,b=55),
-        legend=dict(orientation='h',y=-.23,yanchor='top',x=0,font=dict(size=10),traceorder='normal'),
+        legend=dict(orientation='h',y=-.23,yanchor='top',x=0,font=dict(size=11),traceorder='normal'),
         hoverlabel=dict(bgcolor='white',font_size=12))
     fig.update_xaxes(gridcolor='#e8edf4',zeroline=False)
     fig.update_yaxes(gridcolor='#e8edf4',zeroline=False)
@@ -47,8 +47,8 @@ def loading_heatmap(table,scope,quarter,ceiling,all_groups=False):
     fig.update_yaxes(autorange='reversed',showgrid=False)
     return fig
 
-def equipment_compare(table,scope,quarter,ceiling):
-    selected=focus_table(table,scope,ceiling)
+def equipment_compare(table,scope,quarter,ceiling,all_groups=False):
+    selected=focus_table(table,scope,ceiling,all_groups)
     groups=[g for g in C.TOOL_GROUP_ORDER if g in set(selected.tool_group)]
     t=rm.select_scope(table,scope,quarter)
     t=t[t.tool_group.isin(groups)]
