@@ -39,5 +39,13 @@
     "Non-preemptive capacity holds",
     "Targets are illustrative, not customer promises",
     "Replicate ranges quantify model randomness, not real-world predictive accuracy"
-  ]
+  ],
+  "prior_year_bridge": {
+    "quarter": "2026Q4",
+    "requested_wspw": 2950.0,
+    "source": "User-provided planning reference",
+    "allocation": "Proportional to baseline 2027Q1 fab/program requests",
+    "actuals_available": false,
+    "used_for_training": false
+  }
 }

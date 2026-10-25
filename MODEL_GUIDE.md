@@ -87,3 +87,12 @@ Demonstration fleet quantities and the 75% DRAM technology mix are explicit assu
 ## A concise explanation to the hiring manager
 
 The capacity screen converts program routes and starts into equipment hours. The flow study then follows lots through shared, re-entrant resources to show how one pilot changes WIP and existing-lot completion time. Baseline and response cases use matched starting conditions, and the dashboard exposes assumptions, sources and incomplete cohorts. AI helps retrieve and explain the evidence; the numerical models calculate it.
+
+
+## Demand comparison and the year boundary
+
+The 2026 comparison contains Q1–Q3 synthetic reporting-quarter requests/actuals plus a separate Q4 planning reference. The user supplied the Q4 combined rate of 2,950 WSPW. Its fab/program allocation is assumed in proportion to the baseline 2027Q1 requests, not measured history. Q4 actuals are missing and this reference is excluded from both model training and backtesting.
+
+The 2027Q1 requested baseline is still 2,800 WSPW. Its prior-quarter change is (2,800 / 2,950 − 1) × 100 = **−5.1%**, or −150 WSPW. Its same-quarter year-over-year change uses 2026Q1's 2,727 WSPW: (2,800 / 2,727 − 1) × 100 = **+2.7%**. A later 2027 ramp does not remove the initial decrease.
+
+Charts compare weekly rates, not quarter-volume totals. The history uses reporting-quarter blocks; the future plan uses calendar quarters. Unknown Q4 actuals and unsupported pilot expectations are gaps, not zero output. Graph dropdowns and legends change their plot only; sidebar fab/program filters change the entire demand view. Missing prior history produces no growth percentage.

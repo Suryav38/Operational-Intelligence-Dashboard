@@ -33,6 +33,7 @@ def plans(seeds=D.SEEDS):
         for p,values in programs.items():
             for q,w in zip(C.PLAN_QUARTERS,values):rows.append(dict(site=site,program=p,quarter=q,requested_wspw=w))
     frame=pd.DataFrame(rows);save('plan_2027',frame);save('wafer_start_history',quarter_history())
+    save('demand_bridge_2026q4',D.demand_bridge())
     save('installed_tools',pd.DataFrame([dict(site=s,tool_group=g,tools=n) for s,groups in C.INSTALLED_TOOLS.items() for g,n in groups.items()]))
     save('tool_arrivals',pd.DataFrame(C.TOOL_ARRIVALS,columns=['site','tool_group','quarter','tools']))
     route=D.route_steps();save('route_steps',route)
@@ -54,6 +55,7 @@ def plans(seeds=D.SEEDS):
     save('pilot_plan_quarterly',pd.DataFrame(quarterly));save('pilot_plan_weekly',pd.DataFrame(weekly))
     specification=dict(schema_version='v6',provenance='Entirely synthetic, independent of Micron',historical_period=[D.HISTORY_START,'2026-09-27'],planning_horizon='2027',technology_start_mix={'DRAM_including_HBM':.75,'NAND':.15,'experiments':.10},
         notes='75% wafer-start share is a demo assumption, not inferred from revenue. Fleet is illustrative and sized for the declared workload.',
+        prior_year_bridge=dict(quarter='2026Q4',requested_wspw=D.PRIOR_Q4_REQUEST_WSPW,source='User-provided planning reference',allocation='Proportional to baseline 2027Q1 fab/program requests',actuals_available=False,used_for_training=False),
         study=dict(site='FAB_A',start=D.STUDY_START,weeks=D.STUDY_WEEKS,launch_date=D.LAUNCH_DATE,pilot=D.PILOT,seeds=list(seeds),cases=D.CASES),
         dispatch='Non-preemptive HOT before NORMAL; same process, move and hold distributions for both priorities',
         batching='FURN: compatible recipe only, at most 3 lots, 2 h maximum formation wait, fixed 6 h machine cycle',
@@ -148,6 +150,13 @@ def notes():
         if 'v6_records' not in p.parts and not p.read_text().startswith('ARCHIVED PROTOTYPE NOTE'):
             p.write_text('ARCHIVED PROTOTYPE NOTE — earlier synthetic assumptions. Do not substitute its counts or loading for the v6 tables.\n\n'+p.read_text())
     target=DOCS/'v6_records';target.mkdir(exist_ok=True)
+    (target/'v7-demand-comparison-policy.txt').write_text('''SYNTHETIC DEMAND COMPARISON — SYN-V7-1
+The user supplied a 2026Q4 combined requested rate of 2,950 WSPW as a planning reference. It was not present in the v6 historical tables.
+The assumed fab/program split is proportional to the baseline 2027Q1 request mix. This allocation is not measured program-level Q4 history. No 2026Q4 actuals are supplied.
+The Q4 reference is stored separately in demand_bridge_2026q4.csv and excluded from the realization model's training and backtest data.
+The 2027Q1 baseline remains 2,800 WSPW: a decline of 150 WSPW, or approximately 5.1%, from the Q4 planning reference. Later 2027 ramp growth is a separate comparison.
+Demand-chart dropdowns and legends affect only their own plot. Sidebar filters apply to page totals and all views. WSPW is a weekly rate, not a quarterly wafer-volume total.
+''')
     events=pd.read_csv(TABLES/'operating_events.csv')
     for r in events.to_dict('records'):
         text=f'''SYNTHETIC OPERATING RECORD {r['event_id']}

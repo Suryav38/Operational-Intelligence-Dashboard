@@ -1,0 +1,9 @@
+quarter,site,program,requested_wspw,actual_wspw,record_kind,period_basis,allocation_basis
+2026Q4,FAB_A,DRAM_A,579.464285714,,planning_bridge,User-provided synthetic planning reference; actuals unavailable,Assumed fab/program split proportional to baseline 2027Q1 requested starts
+2026Q4,FAB_A,DRAM_B,790.178571429,,planning_bridge,User-provided synthetic planning reference; actuals unavailable,Assumed fab/program split proportional to baseline 2027Q1 requested starts
+2026Q4,FAB_A,NAND_C,316.071428571,,planning_bridge,User-provided synthetic planning reference; actuals unavailable,Assumed fab/program split proportional to baseline 2027Q1 requested starts
+2026Q4,FAB_A,HBM_TV,158.035714286,,planning_bridge,User-provided synthetic planning reference; actuals unavailable,Assumed fab/program split proportional to baseline 2027Q1 requested starts
+2026Q4,FAB_A,SHORT,158.035714286,,planning_bridge,User-provided synthetic planning reference; actuals unavailable,Assumed fab/program split proportional to baseline 2027Q1 requested starts
+2026Q4,FAB_B,DRAM_A,684.821428571,,planning_bridge,User-provided synthetic planning reference; actuals unavailable,Assumed fab/program split proportional to baseline 2027Q1 requested starts
+2026Q4,FAB_B,NAND_C,126.428571429,,planning_bridge,User-provided synthetic planning reference; actuals unavailable,Assumed fab/program split proportional to baseline 2027Q1 requested starts
+2026Q4,FAB_B,SHORT,136.964285714,,planning_bridge,User-provided synthetic planning reference; actuals unavailable,Assumed fab/program split proportional to baseline 2027Q1 requested starts

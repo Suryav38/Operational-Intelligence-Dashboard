@@ -17,7 +17,22 @@ STUDY_START='2027-04-05'
 STUDY_WEEKS=16
 LAUNCH_DATE='2027-05-17'  # seventh reporting week, after the same simulated prefix
 SEEDS=[7,17,27,37,47]
+PRIOR_Q4_REQUEST_WSPW=2950.
 TARGET_DAYS={'DRAM_A':38,'DRAM_B':45,'NAND_C':42,'HBM_TV':48,'SHORT':12,PILOT:48}
+
+def demand_bridge():
+    """User-provided Q4 total; assumed allocation, with no invented actuals.
+
+    Keep this outside training history: it is a planning reference, not an
+    observed reporting quarter. The program mix is an explicit allocation rule.
+    """
+    import pandas as pd
+    total=sum(v[0] for groups in C.REQUESTED_WSPW_2027.values() for v in groups.values())
+    return pd.DataFrame([dict(quarter='2026Q4',site=site,program=p,
+        requested_wspw=PRIOR_Q4_REQUEST_WSPW*values[0]/total,actual_wspw=float('nan'),
+        record_kind='planning_bridge',period_basis='User-provided synthetic planning reference; actuals unavailable',
+        allocation_basis='Assumed fab/program split proportional to baseline 2027Q1 requested starts')
+        for site,groups in C.REQUESTED_WSPW_2027.items() for p,values in groups.items()])
 
 def pilot_rate(date,case):
     import pandas as pd

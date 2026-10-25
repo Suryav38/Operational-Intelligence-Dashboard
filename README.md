@@ -1,4 +1,4 @@
-# TD Fab — Performance, Resilience & Planning (v6)
+# TD Fab — Performance, Resilience & Planning (v7)
 
 Independent interview prototype for a fictional two-fab Technology Development network. **All operating data, routes, equipment counts, targets and notes are synthetic.** No Micron MES data or internal screen is reproduced.
 
@@ -6,6 +6,9 @@ The decision story is: **Can we accommodate unexpected DRAM growth or loss of eq
 
 ## What changed
 
+- **Demand comparison:** 2026 vs 2027 by matching quarter, plus an eight-quarter history/outlook graph. The Q1 2027 change from Q4 2026 is separate from the same-quarter year-over-year change.
+- **Q4 planning reference:** the user-supplied 2,950 WSPW total is separate from observed synthetic history. Its fab/program split is assumed from baseline 2027Q1 shares; no Q4 actuals are invented and it does not enter model training. Q1 2027 remains 2,800, a 150 WSPW / 5.1% decrease.
+- **Filters within both comparison charts:** dropdowns for program/type, plus clickable legends. These affect their own graph; sidebar fab/program filters apply to all page totals and views. Export includes periods and source/allocation basis.
 - Machine OEE removed. Equipment Health displays quantities by fab, actual simulated time states, weekly queues and furnace batch fill.
 - **52 reporting weeks:** 29 September 2025–27 September 2026, with lot/program/priority detail, weekly wafer balances and dated issue records.
 - **DRAM-heavy baseline:** DRAM technology, including HBM test vehicles, targets 75% of wafer starts; NAND 15%; experiments 10%. This is a user-selected synthetic start-mix assumption, not inferred from Micron revenue share. Weekly actual starts are approximately 75% after lot rounding.
@@ -18,7 +21,7 @@ The decision story is: **Can we accommodate unexpected DRAM growth or loss of eq
 ## Four views
 
 1. **Fab performance** opens first: weekly flow, WIP, cycle time, program starts, equipment inventory/health, historical request attainment and route inspection.
-2. **Demand outlook:** full 2027 ramp by technology family, named program, route technology and fab. Requested plan and historically adjusted starts are labelled separately. A pilot has no history, so no fitted forecast is invented for it.
+2. **Demand outlook:** 2026 comparison, Q4-to-Q1 transition and full 2027 ramp by technology family, named program, route technology and fab. Requested plan, historical actuals and model expectations are labelled separately. A pilot has no history, so no fitted forecast is invented for it.
 3. **Capacity & scenarios:** capacity heatmap, workload drivers, resource gaps, three disruption/response types, and a **Program introduction** tab with precomputed DES comparisons.
 4. **Lot flow & cycle time:** observed cycle-time components, HOT/NORMAL cohorts, distributions, WIP age and downloadable lot detail.
 
@@ -105,15 +108,15 @@ This deliberately overwrites the generated tables, notes and database. A full ru
 
 ## Update your Mac/GitHub project
 
-Download **td-fab-planner-v6.zip** into Downloads, then run in Cursor:
+Download **td-fab-planner-v7.zip** into Downloads, then run in Cursor:
 
 ```bash
-unzip -q -o "$HOME/Downloads/td-fab-planner-v6.zip" -d "$HOME/Downloads/td-planner-v6"
-ditto "$HOME/Downloads/td-planner-v6/td-fab-planner-update" "$HOME/Desktop/Operational-Intelligence-Dashboard"
+unzip -q -o "$HOME/Downloads/td-fab-planner-v7.zip" -d "$HOME/Downloads/td-planner-v7"
+ditto "$HOME/Downloads/td-planner-v7/td-fab-planner-update" "$HOME/Desktop/Operational-Intelligence-Dashboard"
 cd "$HOME/Desktop/Operational-Intelligence-Dashboard"
 git rm --ignore-unmatch code/oee_model.py templates/machine_oee_template.csv
 git add -A
-git commit -m "Add DRAM-heavy fab resilience planning and grounded AI"
+git commit -m "Add prior-year demand comparison and chart filters"
 git push origin main
 ```
 

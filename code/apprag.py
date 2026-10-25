@@ -364,15 +364,21 @@ def demand_page():
     title('2027 demand outlook','2027Q1–Q4 · '+quarter+' focus · wafer-start planning')
     if not programs:st.info('Select at least one program in the sidebar.');return
     frame=demand.plan(data,site,programs,pilot_case);totals=demand.quarterly(frame)
+    comparison=demand.comparison_frame(data,site,programs,pilot_case)
+    changes=demand.comparison_changes(comparison,quarter)
     if frame.empty:st.info('No 2027 demand for the selected fab and programs.');return
-    tabs=st.tabs(['Next-year demand','Forecast validation'])
+    tabs=st.tabs(['2026–2027 demand','Forecast validation'])
     with tabs[0]:
-        current=totals.loc[quarter];q1=totals.loc['2027Q1','requested_wspw'];q4=totals.loc['2027Q4','requested_wspw']
-        growth=100*(q4/q1-1) if q1 else float('nan');cols=st.columns(4)
+        current=totals.loc[quarter];cols=st.columns(4)
         card(cols[0],quarter+' requested WSPW',number(current.requested_wspw,0),'Selected fab(s) & programs')
-        card(cols[1],quarter+' expected WSPW',number(current.expected_wspw,0),'Historical request-realization model')
-        card(cols[2],'2027 average request / week',number(totals.requested_wspw.mean(),0),'Mean of four quarterly weekly rates')
-        card(cols[3],'Q4 vs Q1 requested growth',number(growth,1,'%'),number(q1,0)+' → '+number(q4,0)+' WSPW')
+        card(cols[1],'Vs '+changes['prior_quarter']+' requested',number(changes['yoy_pct'],1,'%'),number(changes['prior_requested'],0)+' → '+number(changes['current_requested'],0)+' WSPW')
+        card(cols[2],'2027Q1 vs 2026Q4 request',number(changes['transition_pct'],1,'%'),number(changes['prior_q4_requested'],0)+' → '+number(changes['next_q1_requested'],0)+' WSPW', 'danger' if changes['transition_pct']<0 else '')
+        card(cols[3],quarter+' expected WSPW',number(current.expected_wspw,0),'Historical request-realization model')
+        st.write('');a,b=st.columns(2,gap='large')
+        with panel(a,'2026 vs 2027 · requested starts'):chart(demand.year_comparison_chart(comparison),'demand_year_comparison')
+        with panel(b,'2026 history → 2027 outlook'):chart(demand.history_outlook_chart(comparison),'demand_history_outlook')
+        st.caption('Inside each graph: choose a program/type from the dropdown; click a legend to hide a series. These controls affect that graph. Sidebar filters apply to page totals and all charts.')
+        st.caption('Hatched 2026Q4 bar / diamond: planning reference of 2,950 WSPW. Fab/program shares are assumed from baseline 2027Q1; actuals are available only through 2026Q3.')
         st.write('');a,b=st.columns(2)
         breakdown=a.selectbox('Break down demand by',list(demand.BREAKDOWNS),key='demand_breakdown')
         if pilot_case!='baseline':ss['demand_measure']='Requested plan'
@@ -396,8 +402,10 @@ def demand_page():
             st.dataframe(view[['quarter','Fab','family','Program','route_technology','requested_wspw','expected_wspw','realization_rate']].rename(columns={'quarter':'Quarter','family':'Family','route_technology':'Route technology','requested_wspw':'Requested WSPW','expected_wspw':'Expected WSPW','realization_rate':'Realization factor'}),hide_index=True,width='stretch')
             st.caption('Expected WSPW = requested WSPW × program realization factor, rounded per fab/program/quarter. The model fits actual = factor × requested using history through 2026Q3 and pools the two fabs for each program. This estimates start realization conditional on the supplied plan; it does not independently forecast market demand or future orders. Factors above 1 are allowed when history shows under-requesting.')
             st.caption('Route technology is derived from the configured EUV pass count. It is not a physical wafer specification. Diameter, substrate, wafer grade, product SKU and detailed recipe history are absent from the source files. No confidence interval or annual wafer-volume total is inferred from quarterly weekly rates.')
+            st.caption('The comparison uses 2026 reporting-quarter requests/actuals, a separate 2026Q4 planning reference and calendar-quarter 2027 requests/model estimates. The Q4 reference never enters model training or backtest data. Missing actuals and unsupported pilot estimates remain gaps, not zero production.')
         export=frame.assign(program_name=frame.program.map(ec.PROGRAM_SHORT),estimate_basis='historical program request realization; pooled fabs')
         st.download_button('Download 2027 demand outlook',export_table(export),'2027_demand_outlook.csv','text/csv')
+        st.download_button('Download 2026–2027 demand comparison',export_table(comparison),'2026_2027_demand_comparison.csv','text/csv')
     with tabs[1]:
         held,metrics=demand.validation(data,site,programs)
         st.caption('Fit: 2024Q1–2025Q4 · held-out evaluation: 2026Q1–Q3 · site and program filters apply.')

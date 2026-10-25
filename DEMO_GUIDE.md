@@ -1,4 +1,4 @@
-# A focused stakeholder demonstration — v6
+# A focused stakeholder demonstration — v7
 
 Use a six-to-eight-minute main story. All inputs and outputs are synthetic; this is a prototype of a planning workflow, not Micron internal data.
 
@@ -13,6 +13,10 @@ If asked about routes, open **Program Routes**. Show a program's qualified fab, 
 ## 2. Show demand and resource exposure
 
 Open **Demand Outlook**, baseline. The requested network rate grows 2,800 → 3,600 WSPW over 2027. Fab A DRAM B rises 750 → 1,125 WSPW. Requested demand, fitted realization and a new program's unestimated ramp are labelled separately.
+
+Select Q1. Explain the two comparisons: 2,950 → 2,800 is a **5.1% decrease from the prior-quarter planning reference**, while 2,727 → 2,800 is a **2.7% increase over the matching prior-year quarter**. The Q4 reference total was user-supplied; its program allocation is assumed and it has no actual starts. Do not describe the whole transition as uninterrupted growth.
+
+Use a graph's dropdown to inspect DRAM including HBM, NAND, HBM alone or a named program. Use its legend to hide/show series. These controls affect that plot; sidebar filters change all demand plots and summary cards. The historical actual line ends at Q3 2026; the future expected line is a model estimate.
 
 In **Capacity & Scenarios → Capacity Outlook**, Q2 Fab A EUV is at 99.2%. Explain required hours divided by available hours. Follow the horizon to the resource exposure in Q3 and the planned second EUV scanner in Q4. Resource gaps at the planning limit already present in the baseline must not all be blamed on a new program.
 

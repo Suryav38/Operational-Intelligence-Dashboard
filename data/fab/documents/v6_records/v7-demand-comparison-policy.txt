@@ -1,0 +1,6 @@
+SYNTHETIC DEMAND COMPARISON — SYN-V7-1
+The user supplied a 2026Q4 combined requested rate of 2,950 WSPW as a planning reference. It was not present in the v6 historical tables.
+The assumed fab/program split is proportional to the baseline 2027Q1 request mix. This allocation is not measured program-level Q4 history. No 2026Q4 actuals are supplied.
+The Q4 reference is stored separately in demand_bridge_2026q4.csv and excluded from the realization model's training and backtest data.
+The 2027Q1 baseline remains 2,800 WSPW: a decline of 150 WSPW, or approximately 5.1%, from the Q4 planning reference. Later 2027 ramp growth is a separate comparison.
+Demand-chart dropdowns and legends affect only their own plot. Sidebar filters apply to page totals and all views. WSPW is a weekly rate, not a quarterly wafer-volume total.

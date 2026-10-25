@@ -1,8 +1,8 @@
-# Validation — v6
+# Validation — v7
 
 ## Completed checks
 
-- **81 automated tests passed** under Python 3.12. Coverage includes capacity arithmetic, demand estimates, weekly calendar overlap, route qualifications, synthetic flow, paired pilot comparisons, retrieval and dashboard interactions. AI response generation is mocked; SQL, note retrieval and mathematical model tools use the actual project data.
+- **85 automated tests passed** under Python 3.12. Coverage includes capacity arithmetic, demand estimates, prior-year comparisons and missing values, weekly calendar overlap, route qualifications, synthetic flow, paired pilot comparisons, retrieval and dashboard interactions. AI response generation is mocked; SQL, note retrieval and mathematical model tools use the actual project data.
 - `python code/self_check.py` passes. Python sources compile successfully.
 - The baseline 2027 requested rates are **2,800 / 3,000 / 3,300 / 3,600 WSPW**. DRAM technology, including HBM test vehicles, represents 75% in every quarter. This is an explicit synthetic wafer-start assumption, not a conversion from Micron revenue.
 - The data contains 52 reporting weeks for both fabs. Weekly surviving-wafer balances reconcile: opening WIP + starts − completions − scrap = closing WIP. Program and priority partitions reconcile to total flow.
@@ -19,9 +19,11 @@
 - Held-out realization estimates preserve training separation. This regression estimates requested-to-actual start conversion; it does not forecast external market demand.
 - AI evidence binds to current filters, period, displayed values and active pilot case. Its SQL tool is read-only, notes carry dates and provenance, archived notes cannot override current assumptions, and model tools calculate scenario values. Citation and numeric checks are covered by tests.
 - Machine OEE is removed from the application and its calculator/template are excluded from this package.
-- All 27 CSV tables match the SQLite query copies. Realized DRAM share across the stochastic weekly history is 75.157%, consistent with the 75% release target after random variation and lot rounding.
+- All 28 CSV tables match the SQLite query copies (within export precision). Realized DRAM share across the stochastic weekly history is 75.157%, consistent with the 75% release target after random variation and lot rounding.
 - Browser checks cover performance, equipment, routes, AI evidence preview, baseline/pilot demand, pilot WIP/capacity, outages and qualified transfers. No JavaScript page errors were observed. Desktop (1512×1100) and mobile (390×844) have no document-level horizontal overflow; mobile tabs scroll and cards stack.
 - Actual browser downloads were checked: 402 route operations, 36 pilot-inclusive demand rows, 1,613 paired lot instances and 76 transfer equipment-quarter rows across both fabs. Transfer workload is conserved across the network; positive pilot demand retains missing expected starts rather than inventing an estimate.
+- The separate Q4 2026 reference totals 2,950 WSPW with no actuals. The baseline Q1 2027 change is exactly -150 WSPW / -5.0847%; same-quarter growth over Q1 2026 is approximately +2.677%. Q4 allocation changes do not alter the historical model fit. An absent pilot prior-year history remains missing rather than zero.
+- Browser checks exercised native Plotly program dropdowns on both new comparison graphs, an HBM selection and legend toggling. DRAM B's displayed 2027 request series changed to 750 / 830 / 975 / 1,125. Global NAND filtering updated page totals; its real comparison download contained 16 rows and no Q4/future actuals. The updated demand page passed desktop/mobile layout checks without page errors or horizontal overflow.
 
 ## Model limits
 

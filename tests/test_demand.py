@@ -4,6 +4,7 @@ import pytest
 import demand_outlook as demand
 import fab_capacity as fc
 import forecast_model as fm
+import fab_config as C
 from streamlit.testing.v1 import AppTest
 from pathlib import Path
 
@@ -98,3 +99,54 @@ def test_demand_empty_selection_is_explained():
     at.multiselect(key='programs').set_value([]).run()
     assert not at.exception
     assert any('at least one program' in info.value for info in at.info)
+
+
+def test_previous_year_reference_retains_decline_without_inventing_actuals(data):
+    rows=demand.comparison_frame(data)
+    totals=demand.comparison_totals(rows)
+    assert totals.loc['2026Q4','requested_wspw']==pytest.approx(2950)
+    assert totals.loc['2027Q1','requested_wspw']==2800
+    changes=demand.comparison_changes(rows,'2027Q1')
+    assert changes['transition_delta']==pytest.approx(-150)
+    assert changes['transition_pct']==pytest.approx(-150/2950*100)
+    assert changes['yoy_pct']==pytest.approx((2800/2727-1)*100)
+    assert totals.loc['2026Q4','actual_wspw']!=totals.loc['2026Q4','actual_wspw']
+    assert totals.loc['2027Q1':,'actual_wspw'].isna().all()
+    assert set(rows.query("quarter=='2026Q4'").record_kind)=={'planning_bridge'}
+    assert '2026Q4' not in set(data['wafer_start_history'].quarter)
+
+
+def test_comparison_filters_reconcile_and_new_pilot_has_no_prior_history(data):
+    both=demand.comparison_totals(demand.comparison_frame(data))
+    parts=[demand.comparison_totals(demand.comparison_frame(data,site)) for site in C.SITES]
+    np.testing.assert_allclose(both.requested_wspw,(parts[0]+parts[1]).requested_wspw)
+    selected=demand.comparison_frame(data,'FAB_B',['NAND_C'])
+    assert set(selected.program)=={'NAND_C'} and set(selected.site)=={'FAB_B'}
+    pilot=demand.comparison_totals(demand.comparison_frame(data,programs=['DRAM_P'],pilot_case='introduction'))
+    assert pilot.loc['2026Q1':'2026Q4','requested_wspw'].isna().all()
+    assert pilot.loc['2027Q2':'2027Q4','expected_wspw'].isna().all()
+    assert np.isnan(demand.comparison_changes(demand.comparison_frame(data,programs=['DRAM_P'],pilot_case='introduction'),'2027Q2')['yoy_pct'])
+
+
+def test_chart_dropdowns_filter_program_data_and_preserve_unknown_actuals(data):
+    frame=demand.comparison_frame(data)
+    a=demand.year_comparison_chart(frame);b=demand.history_outlook_chart(frame)
+    assert list(a.data[0].marker.pattern.shape)==['','','','/']
+    assert np.isnan(b.data[1].y[3]) and all(np.isnan(x) for x in b.data[1].y[4:])
+    for fig in [a,b]:
+        buttons={v.label:v for v in fig.layout.updatemenus[0].buttons}
+        assert {'All selected programs','DRAM incl. HBM','NAND','HBM only','DRAM Node B (EUV)'}.issubset(buttons)
+        request=buttons['DRAM Node B (EUV)'].args[0]['y']
+        expected=demand.comparison_totals(frame[frame.program=='DRAM_B'])
+        plotted=request[0] if len(request[0])==8 else list(request[0])+list(request[1])
+        np.testing.assert_allclose(plotted,expected.requested_wspw)
+        assert fig.layout.legend.itemclick=='toggle'
+        assert fig.to_json()
+
+
+def test_q4_reference_does_not_train_realization_model(data):
+    original=demand.plan(data)
+    modified={**data,'demand_bridge_2026q4':data['demand_bridge_2026q4'].copy()}
+    modified['demand_bridge_2026q4']['requested_wspw']*=2
+    modified['demand_bridge_2026q4']['actual_wspw']=99999
+    pd.testing.assert_frame_equal(original,demand.plan(modified))
