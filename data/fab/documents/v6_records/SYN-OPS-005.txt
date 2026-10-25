@@ -1,0 +1,9 @@
+SYNTHETIC OPERATING RECORD SYN-OPS-005
+Date: 2026-09-07T08:00:00
+Fab: FAB_B; equipment group: FURN
+Issue/change: Furnace maintenance capacity hold
+Requested capacity hold: 1 tools for 24 hours.
+Actual non-preemptive hold: 2026-09-07T08:01:26.017396 through 2026-09-08T08:01:26.017396.
+The hold waits for in-flight processing; no mid-process wafer interruption is modeled.
+Investigate the corresponding weekly flow and equipment queue table. The record documents the hold; it does not establish that all observed cycle-time variation was caused by this event.
+Source: operating_events.csv and sim_tool_group_weekly.csv. Entirely synthetic.

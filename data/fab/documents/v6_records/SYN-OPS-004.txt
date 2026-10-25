@@ -1,0 +1,9 @@
+SYNTHETIC OPERATING RECORD SYN-OPS-004
+Date: 2026-08-10T08:00:00
+Fab: FAB_A; equipment group: DEP
+Issue/change: Engineering characterization campaign
+Requested capacity hold: 3 tools for 18 hours.
+Actual non-preemptive hold: 2026-08-10T08:00:00.000000 through 2026-08-11T02:00:00.000000.
+The hold waits for in-flight processing; no mid-process wafer interruption is modeled.
+Investigate the corresponding weekly flow and equipment queue table. The record documents the hold; it does not establish that all observed cycle-time variation was caused by this event.
+Source: operating_events.csv and sim_tool_group_weekly.csv. Entirely synthetic.

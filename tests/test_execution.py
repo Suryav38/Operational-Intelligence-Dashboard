@@ -3,7 +3,6 @@ import pandas as pd
 import pytest
 import execution_model as em
 import review_model as rm
-import oee_model as om
 
 
 def test_reconstructed_default_matches_published_weekly_totals(data):
@@ -20,7 +19,7 @@ def test_program_and_priority_partition_flow_and_wip(data):
     a=em.execution(data,priority='HOT');b=em.execution(data,priority='NORMAL')
     cols=['wafer_starts','wafer_outs','wip_wafers']
     np.testing.assert_allclose(overall['weekly'][cols],a['weekly'][cols]+b['weekly'][cols])
-    total=sum((em.execution(data,programs=[p])['weekly'][cols] for p in em.program_options()),start=pd.DataFrame(0,index=range(13),columns=cols))
+    total=sum((em.execution(data,programs=[p])['weekly'][cols] for p in em.program_options()),start=pd.DataFrame(0,index=range(52),columns=cols))
     np.testing.assert_allclose(overall['weekly'][cols],total)
 
 
@@ -68,38 +67,13 @@ def test_attainment_uses_filtered_start_rates(data):
 
 def test_queue_and_hold_claim_is_measured(data):
     p=em.execution(data);parts=p['breakdown']
-    assert (parts.queue_days+parts.hold_days)/parts.sum()==pytest.approx(.4004,abs=.001)
+    assert (parts.queue_days+parts.hold_days)/parts.sum()==pytest.approx(.37145,abs=.001)
 
 
 def test_target_wspw_applies_exactly_to_each_selected_quarter(data):
     review=rm.run_review(data,'FAB_A','DRAM_B',0,'2027Q2','2027Q4',target_wspw=1000)
-    assert review['scenario_state']['wspw']['FAB_A']['DRAM_B']==[700,1000,1000,1000]
-    assert review['base_state']['wspw']['FAB_A']['DRAM_B']==[700,780,840,880]
+    assert review['scenario_state']['wspw']['FAB_A']['DRAM_B']==[750,1000,1000,1000]
+    assert review['base_state']['wspw']['FAB_A']['DRAM_B']==[750,830,975,1125]
     for value in [-1,float('nan')]:
         with pytest.raises(ValueError):rm.run_review(data,'FAB_A','DRAM_B',0,'2027Q2','2027Q2',target_wspw=value)
 
-
-def test_oee_matches_known_example_and_direct_formula():
-    frame=om.example();out=om.calculate(frame).iloc[0]
-    assert out.availability_pct==75
-    assert out.performance_pct==pytest.approx(100*300/360)
-    assert out.quality_pct==98
-    assert out.oee_pct==61.25
-    assert out.oee_pct==pytest.approx(out.availability_pct*out.performance_pct*out.quality_pct/10000)
-
-
-@pytest.mark.parametrize('field,value',[
-    ('planned_minutes',0),('run_minutes',481),('total_count',301.5),
-    ('good_count',301),('ideal_cycle_seconds',1000),('run_minutes',float('inf'))])
-def test_invalid_oee_records_are_rejected(field,value):
-    example=om.example();example[field]=example[field].astype(float);example.loc[0,field]=value
-    with pytest.raises(ValueError):om.calculate(example)
-
-
-def test_machine_oee_needs_distinct_records_and_real_inputs(data):
-    with pytest.raises(ValueError,match='Missing columns'):om.calculate(data['sim_tool_group_q3_2026'])
-    with pytest.raises(ValueError,match='one single-recipe'):om.calculate(pd.concat([om.example(),om.example()]))
-    example=om.example();example.loc[0,['total_count','good_count','run_minutes']]=0
-    out=om.calculate(example).iloc[0]
-    assert out.oee_pct==0
-    assert pd.isna(out.quality_pct) and pd.isna(out.performance_pct)

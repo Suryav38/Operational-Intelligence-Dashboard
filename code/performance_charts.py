@@ -82,8 +82,9 @@ def equipment_states(frame):
     ec.style(fig,max(320,len(frame)*30+130));fig.update_layout(barmode='stack',margin=dict(l=0,r=12,t=12,b=100),legend=dict(y=-.23))
     fig.update_xaxes(title='Equipment time allocation (%)',range=[0,100.2]);fig.update_yaxes(autorange='reversed');return fig
 
-def queue_trend(data,site,groups):
+def queue_trend(data,site,groups,first=None,last=None):
     frame=data['sim_tool_group_weekly']
+    if first is not None:frame=frame[frame.week_start.between(first,last)]
     if site!='Both':frame=frame[frame.site==site]
     frame=frame[frame.tool_group.isin(groups)]
     fig=go.Figure()

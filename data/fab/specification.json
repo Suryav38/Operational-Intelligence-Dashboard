@@ -1,0 +1,43 @@
+{
+  "schema_version": "v6",
+  "provenance": "Entirely synthetic, independent of Micron",
+  "historical_period": [
+    "2025-09-29",
+    "2026-09-27"
+  ],
+  "planning_horizon": "2027",
+  "technology_start_mix": {
+    "DRAM_including_HBM": 0.75,
+    "NAND": 0.15,
+    "experiments": 0.1
+  },
+  "notes": "75% wafer-start share is a demo assumption, not inferred from revenue. Fleet is illustrative and sized for the declared workload.",
+  "study": {
+    "site": "FAB_A",
+    "start": "2027-04-05",
+    "weeks": 16,
+    "launch_date": "2027-05-17",
+    "pilot": "DRAM_P",
+    "seeds": [
+      7,
+      17,
+      27,
+      37,
+      47
+    ],
+    "cases": {
+      "baseline": "Pre-pilot baseline",
+      "introduction": "Pilot introduction",
+      "slower": "Slower pilot ramp"
+    }
+  },
+  "dispatch": "Non-preemptive HOT before NORMAL; same process, move and hold distributions for both priorities",
+  "batching": "FURN: compatible recipe only, at most 3 lots, 2 h maximum formation wait, fixed 6 h machine cycle",
+  "limitations": [
+    "No real fab validation",
+    "No chamber/operator/rework network",
+    "Non-preemptive capacity holds",
+    "Targets are illustrative, not customer promises",
+    "Replicate ranges quantify model randomness, not real-world predictive accuracy"
+  ]
+}

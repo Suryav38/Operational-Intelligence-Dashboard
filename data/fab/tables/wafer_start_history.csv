@@ -1,81 +1,81 @@
-quarter,site,program,requested_wspw,actual_wspw
-2024Q1,FAB_A,DRAM_A,310,303
-2024Q2,FAB_A,DRAM_A,280,283
-2024Q3,FAB_A,DRAM_A,320,308
-2024Q4,FAB_A,DRAM_A,300,290
-2025Q1,FAB_A,DRAM_A,300,284
-2025Q2,FAB_A,DRAM_A,290,289
-2025Q3,FAB_A,DRAM_A,280,274
-2025Q4,FAB_A,DRAM_A,280,270
-2026Q1,FAB_A,DRAM_A,260,258
-2026Q2,FAB_A,DRAM_A,280,255
-2026Q3,FAB_A,DRAM_A,260,250
-2024Q3,FAB_A,DRAM_B,280,233
-2024Q4,FAB_A,DRAM_B,320,279
-2025Q1,FAB_A,DRAM_B,440,357
-2025Q2,FAB_A,DRAM_B,510,407
-2025Q3,FAB_A,DRAM_B,550,442
-2025Q4,FAB_A,DRAM_B,600,518
-2026Q1,FAB_A,DRAM_B,700,569
-2026Q2,FAB_A,DRAM_B,740,614
-2026Q3,FAB_A,DRAM_B,790,650
-2024Q1,FAB_A,NAND_C,120,115
-2024Q2,FAB_A,NAND_C,130,117
-2024Q3,FAB_A,NAND_C,120,116
-2024Q4,FAB_A,NAND_C,130,127
-2025Q1,FAB_A,NAND_C,150,139
-2025Q2,FAB_A,NAND_C,140,145
-2025Q3,FAB_A,NAND_C,150,144
-2025Q4,FAB_A,NAND_C,140,135
-2026Q1,FAB_A,NAND_C,150,140
-2026Q2,FAB_A,NAND_C,150,145
-2026Q3,FAB_A,NAND_C,150,150
-2025Q3,FAB_A,HBM_TV,70,51
-2025Q4,FAB_A,HBM_TV,100,74
-2026Q1,FAB_A,HBM_TV,120,95
-2026Q2,FAB_A,HBM_TV,170,132
-2026Q3,FAB_A,HBM_TV,190,150
-2024Q1,FAB_A,SHORT,600,631
-2024Q2,FAB_A,SHORT,550,604
-2024Q3,FAB_A,SHORT,520,577
-2024Q4,FAB_A,SHORT,550,614
-2025Q1,FAB_A,SHORT,510,577
-2025Q2,FAB_A,SHORT,590,632
-2025Q3,FAB_A,SHORT,560,606
-2025Q4,FAB_A,SHORT,580,603
-2026Q1,FAB_A,SHORT,500,563
-2026Q2,FAB_A,SHORT,520,586
-2026Q3,FAB_A,SHORT,560,600
-2024Q1,FAB_B,DRAM_A,240,230
-2024Q2,FAB_B,DRAM_A,270,254
-2024Q3,FAB_B,DRAM_A,260,253
-2024Q4,FAB_B,DRAM_A,240,235
-2025Q1,FAB_B,DRAM_A,230,234
-2025Q2,FAB_B,DRAM_A,240,218
-2025Q3,FAB_B,DRAM_A,230,221
-2025Q4,FAB_B,DRAM_A,210,215
-2026Q1,FAB_B,DRAM_A,200,201
-2026Q2,FAB_B,DRAM_A,220,213
-2026Q3,FAB_B,DRAM_A,200,200
-2024Q1,FAB_B,NAND_C,280,258
-2024Q2,FAB_B,NAND_C,290,283
-2024Q3,FAB_B,NAND_C,310,296
-2024Q4,FAB_B,NAND_C,330,308
-2025Q1,FAB_B,NAND_C,320,285
-2025Q2,FAB_B,NAND_C,300,293
-2025Q3,FAB_B,NAND_C,320,297
-2025Q4,FAB_B,NAND_C,360,351
-2026Q1,FAB_B,NAND_C,390,356
-2026Q2,FAB_B,NAND_C,310,308
-2026Q3,FAB_B,NAND_C,390,350
-2024Q1,FAB_B,SHORT,350,379
-2024Q2,FAB_B,SHORT,370,420
-2024Q3,FAB_B,SHORT,340,370
-2024Q4,FAB_B,SHORT,340,369
-2025Q1,FAB_B,SHORT,330,364
-2025Q2,FAB_B,SHORT,340,390
-2025Q3,FAB_B,SHORT,350,404
-2025Q4,FAB_B,SHORT,380,412
-2026Q1,FAB_B,SHORT,400,430
-2026Q2,FAB_B,SHORT,370,417
-2026Q3,FAB_B,SHORT,340,400
+quarter,site,program,requested_wspw,actual_wspw,period_basis
+2024Q1,FAB_A,DRAM_A,782,756.000000000,Synthetic reporting-quarter weekly rate
+2024Q1,FAB_B,DRAM_A,913,894.000000000,Synthetic reporting-quarter weekly rate
+2024Q1,FAB_A,NAND_C,250,236.000000000,Synthetic reporting-quarter weekly rate
+2024Q1,FAB_B,NAND_C,98,94.000000000,Synthetic reporting-quarter weekly rate
+2024Q1,FAB_A,SHORT,107,118.000000000,Synthetic reporting-quarter weekly rate
+2024Q1,FAB_B,SHORT,90,102.000000000,Synthetic reporting-quarter weekly rate
+2024Q2,FAB_A,DRAM_A,789,777.000000000,Synthetic reporting-quarter weekly rate
+2024Q2,FAB_B,DRAM_A,925,918.000000000,Synthetic reporting-quarter weekly rate
+2024Q2,FAB_A,NAND_C,258,242.000000000,Synthetic reporting-quarter weekly rate
+2024Q2,FAB_B,NAND_C,104,97.000000000,Synthetic reporting-quarter weekly rate
+2024Q2,FAB_A,SHORT,105,121.000000000,Synthetic reporting-quarter weekly rate
+2024Q2,FAB_B,SHORT,93,105.000000000,Synthetic reporting-quarter weekly rate
+2024Q3,FAB_A,DRAM_A,521,491.000000000,Synthetic reporting-quarter weekly rate
+2024Q3,FAB_A,DRAM_B,791,669.000000000,Synthetic reporting-quarter weekly rate
+2024Q3,FAB_B,DRAM_A,607,580.000000000,Synthetic reporting-quarter weekly rate
+2024Q3,FAB_A,NAND_C,258,249.000000000,Synthetic reporting-quarter weekly rate
+2024Q3,FAB_B,NAND_C,104,99.000000000,Synthetic reporting-quarter weekly rate
+2024Q3,FAB_A,SHORT,109,124.000000000,Synthetic reporting-quarter weekly rate
+2024Q3,FAB_B,SHORT,94,108.000000000,Synthetic reporting-quarter weekly rate
+2024Q4,FAB_A,DRAM_A,508,503.000000000,Synthetic reporting-quarter weekly rate
+2024Q4,FAB_A,DRAM_B,825,687.000000000,Synthetic reporting-quarter weekly rate
+2024Q4,FAB_B,DRAM_A,623,595.000000000,Synthetic reporting-quarter weekly rate
+2024Q4,FAB_A,NAND_C,263,255.000000000,Synthetic reporting-quarter weekly rate
+2024Q4,FAB_B,NAND_C,110,102.000000000,Synthetic reporting-quarter weekly rate
+2024Q4,FAB_A,SHORT,115,128.000000000,Synthetic reporting-quarter weekly rate
+2024Q4,FAB_B,SHORT,98,110.000000000,Synthetic reporting-quarter weekly rate
+2025Q1,FAB_A,DRAM_A,534,516.000000000,Synthetic reporting-quarter weekly rate
+2025Q1,FAB_A,DRAM_B,833,704.000000000,Synthetic reporting-quarter weekly rate
+2025Q1,FAB_B,DRAM_A,612,610.000000000,Synthetic reporting-quarter weekly rate
+2025Q1,FAB_A,NAND_C,267,261.000000000,Synthetic reporting-quarter weekly rate
+2025Q1,FAB_B,NAND_C,111,105.000000000,Synthetic reporting-quarter weekly rate
+2025Q1,FAB_A,SHORT,117,131.000000000,Synthetic reporting-quarter weekly rate
+2025Q1,FAB_B,SHORT,103,113.000000000,Synthetic reporting-quarter weekly rate
+2025Q2,FAB_A,DRAM_A,532,529.000000000,Synthetic reporting-quarter weekly rate
+2025Q2,FAB_A,DRAM_B,836,721.000000000,Synthetic reporting-quarter weekly rate
+2025Q2,FAB_B,DRAM_A,641,625.000000000,Synthetic reporting-quarter weekly rate
+2025Q2,FAB_A,NAND_C,278,268.000000000,Synthetic reporting-quarter weekly rate
+2025Q2,FAB_B,NAND_C,116,107.000000000,Synthetic reporting-quarter weekly rate
+2025Q2,FAB_A,SHORT,118,134.000000000,Synthetic reporting-quarter weekly rate
+2025Q2,FAB_B,SHORT,104,116.000000000,Synthetic reporting-quarter weekly rate
+2025Q3,FAB_A,DRAM_A,519,503.000000000,Synthetic reporting-quarter weekly rate
+2025Q3,FAB_A,DRAM_B,832,686.000000000,Synthetic reporting-quarter weekly rate
+2025Q3,FAB_A,HBM_TV,167,137.000000000,Synthetic reporting-quarter weekly rate
+2025Q3,FAB_B,DRAM_A,602,594.000000000,Synthetic reporting-quarter weekly rate
+2025Q3,FAB_A,NAND_C,291,274.000000000,Synthetic reporting-quarter weekly rate
+2025Q3,FAB_B,NAND_C,115,110.000000000,Synthetic reporting-quarter weekly rate
+2025Q3,FAB_A,SHORT,122,137.000000000,Synthetic reporting-quarter weekly rate
+2025Q3,FAB_B,SHORT,109,119.000000000,Synthetic reporting-quarter weekly rate
+2025Q4,FAB_A,DRAM_A,502,482.692307692,Mean of 13 matching reporting weeks in weekly_program_flow.csv
+2025Q4,FAB_A,DRAM_B,764,661.538461538,Mean of 13 matching reporting weeks in weekly_program_flow.csv
+2025Q4,FAB_A,HBM_TV,162,130.769230769,Mean of 13 matching reporting weeks in weekly_program_flow.csv
+2025Q4,FAB_B,DRAM_A,581,565.384615385,Mean of 13 matching reporting weeks in weekly_program_flow.csv
+2025Q4,FAB_A,NAND_C,275,261.538461538,Mean of 13 matching reporting weeks in weekly_program_flow.csv
+2025Q4,FAB_B,NAND_C,109,105.769230769,Mean of 13 matching reporting weeks in weekly_program_flow.csv
+2025Q4,FAB_A,SHORT,114,130.769230769,Mean of 13 matching reporting weeks in weekly_program_flow.csv
+2025Q4,FAB_B,SHORT,102,113.461538462,Mean of 13 matching reporting weeks in weekly_program_flow.csv
+2026Q1,FAB_A,DRAM_A,533,507.692307692,Mean of 13 matching reporting weeks in weekly_program_flow.csv
+2026Q1,FAB_A,DRAM_B,792,678.846153846,Mean of 13 matching reporting weeks in weekly_program_flow.csv
+2026Q1,FAB_A,HBM_TV,176,136.538461538,Mean of 13 matching reporting weeks in weekly_program_flow.csv
+2026Q1,FAB_B,DRAM_A,600,592.307692308,Mean of 13 matching reporting weeks in weekly_program_flow.csv
+2026Q1,FAB_A,NAND_C,288,273.076923077,Mean of 13 matching reporting weeks in weekly_program_flow.csv
+2026Q1,FAB_B,NAND_C,111,105.769230769,Mean of 13 matching reporting weeks in weekly_program_flow.csv
+2026Q1,FAB_A,SHORT,121,132.692307692,Mean of 13 matching reporting weeks in weekly_program_flow.csv
+2026Q1,FAB_B,SHORT,106,119.230769231,Mean of 13 matching reporting weeks in weekly_program_flow.csv
+2026Q2,FAB_A,DRAM_A,522,517.307692308,Mean of 13 matching reporting weeks in weekly_program_flow.csv
+2026Q2,FAB_A,DRAM_B,828,709.615384615,Mean of 13 matching reporting weeks in weekly_program_flow.csv
+2026Q2,FAB_A,HBM_TV,185,148.076923077,Mean of 13 matching reporting weeks in weekly_program_flow.csv
+2026Q2,FAB_B,DRAM_A,632,613.461538462,Mean of 13 matching reporting weeks in weekly_program_flow.csv
+2026Q2,FAB_A,NAND_C,288,280.769230769,Mean of 13 matching reporting weeks in weekly_program_flow.csv
+2026Q2,FAB_B,NAND_C,123,113.461538462,Mean of 13 matching reporting weeks in weekly_program_flow.csv
+2026Q2,FAB_A,SHORT,124,142.307692308,Mean of 13 matching reporting weeks in weekly_program_flow.csv
+2026Q2,FAB_B,SHORT,115,125.000000000,Mean of 13 matching reporting weeks in weekly_program_flow.csv
+2026Q3,FAB_A,DRAM_A,570,538.461538462,Mean of 13 matching reporting weeks in weekly_program_flow.csv
+2026Q3,FAB_A,DRAM_B,853,736.538461538,Mean of 13 matching reporting weeks in weekly_program_flow.csv
+2026Q3,FAB_A,HBM_TV,186,148.076923077,Mean of 13 matching reporting weeks in weekly_program_flow.csv
+2026Q3,FAB_B,DRAM_A,673,640.384615385,Mean of 13 matching reporting weeks in weekly_program_flow.csv
+2026Q3,FAB_A,NAND_C,299,290.384615385,Mean of 13 matching reporting weeks in weekly_program_flow.csv
+2026Q3,FAB_B,NAND_C,118,111.538461538,Mean of 13 matching reporting weeks in weekly_program_flow.csv
+2026Q3,FAB_A,SHORT,133,148.076923077,Mean of 13 matching reporting weeks in weekly_program_flow.csv
+2026Q3,FAB_B,SHORT,110,126.923076923,Mean of 13 matching reporting weeks in weekly_program_flow.csv

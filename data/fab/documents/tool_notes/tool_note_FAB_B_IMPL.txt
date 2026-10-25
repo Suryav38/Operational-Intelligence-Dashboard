@@ -1,3 +1,5 @@
+ARCHIVED PROTOTYPE NOTE — earlier synthetic assumptions. Do not substitute its counts or loading for the v6 tables.
+
 Tool group note - Fab B (development fab, DUV only) - Ion implant
 Installed tools: 2.0
 Q3 2026: productive 42.1%, engineering 10.1%, unscheduled down 5.5%, average queue 1.2 h per lot step.

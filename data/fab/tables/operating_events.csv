@@ -1,0 +1,6 @@
+event_id,site,tool_group,start_time,duration_hours,affected_tools,state,reason,actual_start,actual_end,case,seed
+SYN-OPS-001,FAB_A,ETCH,2026-01-12T08:00:00,12,2,sched_down,Preventive maintenance capacity hold,2026-01-12T08:01:45.489715,2026-01-12T20:01:45.489715,baseline,42
+SYN-OPS-003,FAB_A,EUV,2026-06-15T08:00:00,36,1,unsched_down,Scanner recovery and verification capacity hold,2026-06-15T08:15:13.979175,2026-06-16T20:15:13.979175,baseline,42
+SYN-OPS-004,FAB_A,DEP,2026-08-10T08:00:00,18,3,engineering,Engineering characterization campaign,2026-08-10T08:00:00.000000,2026-08-11T02:00:00.000000,baseline,42
+SYN-OPS-002,FAB_B,DEP,2026-03-16T08:00:00,24,2,engineering,Deposition recipe qualification window,2026-03-16T08:00:00.000000,2026-03-17T08:00:00.000000,baseline,42
+SYN-OPS-005,FAB_B,FURN,2026-09-07T08:00:00,24,1,sched_down,Furnace maintenance capacity hold,2026-09-07T08:01:26.017396,2026-09-08T08:01:26.017396,baseline,42

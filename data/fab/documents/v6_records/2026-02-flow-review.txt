@@ -1,0 +1,5 @@
+SYNTHETIC WEEKLY FLOW REVIEW — 2026-02
+Scope: simulated history, not 2027 demand or real Micron operations.
+FAB_A: 4 reporting weeks; mean wafer starts 1725.0/week, completions 1754.2/week, mean WIP 5993.8 input-wafer equivalents.
+FAB_B: 4 reporting weeks; mean wafer starts 818.8/week, completions 791.0/week, mean WIP 2906.2 input-wafer equivalents.
+Review program mix, outages and queues before attributing causes. Source: sim_fab_weekly.csv, weekly_program_flow.csv and dated operating records.

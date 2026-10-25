@@ -1,0 +1,7 @@
+program,program_name,family,technology_family,mask_layers,route_version,lot_size,assumed_target_days,qualified_fabs,first_release,provenance
+DRAM_A,DRAM Node A,DRAM,DRAM,36,SYN-V6-1,25,38,FAB_A|FAB_B,Established program,Synthetic engineering assumptions
+DRAM_B,DRAM Node B (EUV),DRAM,DRAM,40,SYN-V6-1,25,45,FAB_A,Established program,Synthetic engineering assumptions
+NAND_C,3D NAND Gen C,NAND,NAND,28,SYN-V6-1,25,42,FAB_A|FAB_B,Established program,Synthetic engineering assumptions
+HBM_TV,HBM test vehicle,HBM,DRAM,44,SYN-V6-1,25,48,FAB_A,Established program,Synthetic engineering assumptions
+SHORT,Short-loop experiments,Experiments,Experiments,7,SYN-V6-1,25,12,FAB_A|FAB_B,Established program,Synthetic engineering assumptions
+DRAM_P,DRAM EUV pilot,DRAM,DRAM,44,SYN-V6-1,25,48,FAB_A,2027-05-17,Synthetic engineering assumptions

@@ -1,42 +1,42 @@
-# Validation — v5
+# Validation — v6
 
-## Completed
+## Completed checks
 
-- **72 automated tests passed** under Python 3.12. Includes deterministic capacity/forecast/retrieval tests retained from v3, new execution-cohort/OEE tests and the updated dashboard interaction tests. AI backend tests use mocks; the current UI makes no AI calls.
-- Offline capacity/scenario checks passed; source files compiled successfully.
-- All-program reconstructed weekly starts, output and WIP match the original published weekly tables exactly across the 13-week window.
-- HOT + NORMAL partitions and the five program partitions reconcile to total weekly flow and WIP.
-- Filtered completed cohorts use the selected date interval; combined weekly cycle time is weighted by actual completed lots. Empty cohorts and short-loop exclusions are explicit.
-- Earlier-cutoff WIP ages are reconstructed from timestamps. Future completions/output are hidden; route progress is unavailable for historical cutoffs because no intermediate progress events exist.
-- Default completed full-flow queue + hold share verified at approximately 40.04%, rather than the proposed >50% claim.
-- Exact target WSPW applies independently to each affected quarter while preserving baseline inputs and unaffected quarters.
-- Machine OEE matches the known worked example: 75% availability × 83.333% performance × 98% quality = 61.25% OEE. Tests reject missing, duplicate, non-finite, negative, inconsistent and >100% performance inputs. Empty-output behavior is explicit.
-- Browser checks covered all production tabs, a real two-record OEE CSV upload, capacity/scenario views and lot detail/export. No JavaScript page errors were observed.
-- Desktop layout inspected at 1512×1100 and mobile at 390×844. No document-level horizontal overflow. Tabs scroll on mobile; KPI cards stack.
-- Actual capacity download contained 76 rows (19 fab/equipment combinations × 4 quarters). Actual WIP lot export contained 359 lots with no future completion/output fields.
-- SHA-256 comparison confirmed all **27 original data files unchanged**: 11 CSVs, 15 text documents and one SQLite database.
+- **81 automated tests passed** under Python 3.12. Coverage includes capacity arithmetic, demand estimates, weekly calendar overlap, route qualifications, synthetic flow, paired pilot comparisons, retrieval and dashboard interactions. AI response generation is mocked; SQL, note retrieval and mathematical model tools use the actual project data.
+- `python code/self_check.py` passes. Python sources compile successfully.
+- The baseline 2027 requested rates are **2,800 / 3,000 / 3,300 / 3,600 WSPW**. DRAM technology, including HBM test vehicles, represents 75% in every quarter. This is an explicit synthetic wafer-start assumption, not a conversion from Micron revenue.
+- The data contains 52 reporting weeks for both fabs. Weekly surviving-wafer balances reconcile: opening WIP + starts − completions − scrap = closing WIP. Program and priority partitions reconcile to total flow.
+- Historical actual-start rates for 2025Q4–2026Q3 reconcile to their matching blocks of 13 reporting weeks. Requested starts and older planning history remain separately generated synthetic inputs.
+- Six program routes match their configured equipment visit totals. The pilot has 402 ordered operations, 44 mask layers and eight EUV visits. Fab B has no EUV tools; unqualified DRAM B and pilot transfers are rejected.
+- Equipment inventory contains all ten tool groups at each fab, including Fab B's zero EUV quantity: 139 tools at Fab A and 61 at Fab B before future releases. Equipment time allocation reconciles to calendar hours. Queue averages are weighted by visits and furnace fill by actual batches.
+- Furnace tests verify compatible recipes, maximum batch size and a single six-hour resource cycle shared by three batched lots. HOT dispatch is non-preemptive; processing, transport and hold distributions do not improve merely because priority changes.
+- Pilot cases use identical pre-launch states for each seed. Keyed random streams preserve each existing lot's intrinsic processing, transport, hold and survival draws across cases. Completion differences therefore reflect changed waits in this model. Capacity holds remain non-preemptive; their realized timing can depend on congestion.
+- All 1,613 starting existing-lot instances across five paired runs finish within the study horizon. Mean introduction-case additional WIP is approximately **1,460 wafers**, and mean existing-lot completion shift is **0.59 days**. The slower ramp gives approximately **554 wafers** and **0.24 days**. These are comparisons within this synthetic study, not customer lateness forecasts.
+- The pre-pilot Fab A Q2 EUV calculation is independently checked: 116.67 required tool-hours / 117.6 available tool-hours = 99.2% loading. A 10% DRAM B increase raises it to 107.4%.
+- Growth, tool unavailability and qualified load transfer retain the baseline and untouched periods. Outages cannot remove more released tools than exist. Transfers conserve network starts and change workloads at both fabs.
+- The 2027 calendar contains exactly 365 days across 53 clipped weekly buckets. Boundary weeks prorate quarterly demand and tool releases by exact day overlap. Pilot weekly demand starts on 17 May; quarterly averages reconcile to the ramp.
+- The new pilot has no historical realization model. Its expected starts remain unestimated; the dashboard does not present an unsupported all-program expected total when the pilot is active.
+- Held-out realization estimates preserve training separation. This regression estimates requested-to-actual start conversion; it does not forecast external market demand.
+- AI evidence binds to current filters, period, displayed values and active pilot case. Its SQL tool is read-only, notes carry dates and provenance, archived notes cannot override current assumptions, and model tools calculate scenario values. Citation and numeric checks are covered by tests.
+- Machine OEE is removed from the application and its calculator/template are excluded from this package.
+- All 27 CSV tables match the SQLite query copies. Realized DRAM share across the stochastic weekly history is 75.157%, consistent with the 75% release target after random variation and lot rounding.
+- Browser checks cover performance, equipment, routes, AI evidence preview, baseline/pilot demand, pilot WIP/capacity, outages and qualified transfers. No JavaScript page errors were observed. Desktop (1512×1100) and mobile (390×844) have no document-level horizontal overflow; mobile tabs scroll and cards stack.
+- Actual browser downloads were checked: 402 route operations, 36 pilot-inclusive demand rows, 1,613 paired lot instances and 76 transfer equipment-quarter rows across both fabs. Transfer workload is conserved across the network; positive pilot demand retains missing expected starts rather than inventing an estimate.
 
-## Additional v5 checks
+## Model limits
 
-- 2027 demand totals reconcile to the input plan at quarter, fab and program levels. Requested rates: 2,790 / 2,900 / 3,010 / 3,040 WSPW. Expected rates: 2,678 / 2,763 / 2,850 / 2,867 WSPW.
-- Program/family/route charts preserve totals; Combined equals the sum of fabs and the sum of programs. Filtering a forecast does not alter the capacity baseline.
-- Held-out predictions do not change when held-out actuals are modified, confirming training separation. MAPE is evaluated on the same individual held-out records.
-- Weekly calendar covers exactly 365 days of 2027 in 53 clipped buckets. Partial weeks use partial hours. Summed weekly EUV hours reconcile to the corresponding quarterly rates integrated over calendar days.
-- Weeks crossing quarterly demand or equipment releases prorate both demand and capacity by exact overlap. Exact-target and availability-recovery changes are confined to the selected weeks.
-- Outside-window rows, the other fab and source plan remain unchanged.
-- Scenario UI names fab and equipment, defaults to the affected fab, optionally shows both, and labels HOT priority. HOT/NORMAL changes metadata without changing capacity arithmetic.
-- Browser inspection covered both demand tabs, named-program expected-start charts, weekly HOT scenarios and their scope. Actual demand export contained 32 rows with reconciled quarter totals. Actual weekly export contained 530 affected-fab rows (10 groups × 53 weeks), HOT metadata, no Fab B rows, and zero changes outside the request window. No JavaScript errors or desktop/mobile horizontal overflow were observed.
+All routes, fleets, lots, demand and operating notes are synthetic and independent of Micron. More detailed inputs make this demonstration internally consistent; they do not establish real fab predictive accuracy. Validation against MES, actual qualification matrices, downtime events and completion outcomes would be necessary for operational use.
 
-## Practical limits
+The capacity model charges average full-route work per wafer start. It identifies equipment-hour gaps; it does not predict new WIP or completion times. Custom growth, outage and transfer requests run this capacity model. They do not rerun the discrete-event simulation.
 
-- All fab data is synthetic and independent of Micron. Detailed operation covers 29 June–27 September 2026. Start-request history and future planning retain their separately labelled periods.
-- No measured individual-machine OEE exists in the fab simulation. The OEE calculator uses a clearly separate example or user-supplied machine-period records; it is not an inferred fab KPI.
-- The data supports five program routes and lot/priority detail, not product SKU, per-step event history or machine-level attribution.
-- Equipment-state health is quarter-level and shared by programs, so only the site/equipment filters apply. Historical attainment follows site/program filters, not execution weeks or priority.
-- The capacity model uses configured routes, equipment, availability and arrivals; requested starts come from the plan CSV. CSV equipment snapshots alone do not override configuration.
-- Quarter screens count releases from their configured quarter. Weekly screens prorate at that quarter boundary. Aggregate equipment gaps do not include costs, ROI or qualification implementation plans.
-- Future quarter/week capacity scenarios do not rerun the historical simulation or predict new queues, cycle time or lot due dates. HOT priority is not a capacity multiplier or a simulated dispatch change.
-- Source lot timestamps have minute resolution. WIP uses original input-wafer equivalents. Finite-window WIP and completed-lot cycle time are not presented as an exact Little's Law balance.
-- Uploaded OEE records must represent non-overlapping single-recipe periods under a consistent planned-time policy. The app validates arithmetic and record uniqueness, not the truth of source measurements or overlapping time labels.
+The precomputed pilot study follows remaining routes, shared equipment, compatible furnace batches, sampled metrology, queues and holds. It represents one selected Fab A launch with three cases and five seeds. It omits chamber-level matching, operators, detailed recipe setup, rework networks, transport networks and electrical yield. Engineering development time is not automatically avoidable loss.
 
-Internal browser screenshots and test uploads are excluded from the deliverable.
+Availability holds are non-preemptive and do not interrupt an in-process lot. Installed tools are pooled as identical units within each group. Future tools become usable at their declared release boundary; installation and qualification lead times are not independently predicted.
+
+Illustrative completion targets are not promised customer due dates. Additional completion delay is measured against the paired baseline. The five-seed ranges describe model randomness, not confidence bounds on real fab accuracy. Finite-window WIP and completed-cohort cycle time are not asserted to satisfy an exact steady-state Little's Law balance.
+
+Historical execution ends on 27 September 2026. The 2027 plan and pilot launch are future scenarios. Reporting-quarter history uses week-aligned blocks, while future capacity uses calendar boundaries. Partial calendar months are labelled in the operating reviews.
+
+Live AI generation needs `OPENAI_API_KEY` in deployment secrets. No key was available during these checks, so actual provider responses, credentials, latency and billing were not exercised. Evidence preview, retrieval, SQL and model tools were exercised locally.
+
+Internal browser screenshots and downloaded QA samples are excluded from the deliverable.

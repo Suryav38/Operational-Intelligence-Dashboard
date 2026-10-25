@@ -1,23 +1,25 @@
-"""Offline validation of the focused dashboard's models; no API key required."""
-import fab_capacity as fc
+"""Fast offline integrity checks; no AI key or simulation regeneration required."""
+import numpy as np
 import fab_data as fd
-import review_model as rm
+import fab_config as C
+import fab_demo as D
+import launch_model as L
+import scenario_requests as R
+import execution_model as em
 
-data = fd.load()
-state = fc.base_state(data)
-table = fc.loading_table(state)
-euv = rm.select_scope(table, 'FAB_A', '2027Q1').query("tool_group == 'EUV'").iloc[0]
-assert abs(euv.loading_pct - 86.3) < .11
-assert abs(euv.available_h_wk - 117.6) < .01
-review = rm.run_review(data, 'FAB_A', 'DRAM_B', 10, '2027Q2', '2027Q2')
-assert abs(review['scenario_state']['wspw']['FAB_A']['DRAM_B'][1] - 858) < 1e-8
-assert review['scenario_state']['wspw']['FAB_A']['DRAM_B'][0] == 700
-for site in ('FAB_A', 'FAB_B'):
-    s = rm.capacity_summary(table, state, site, '2027Q2')
-    p = rm.production_metrics(data, site)
-    assert len(p['weekly']) == 13
-    assert 0 <= p['line_yield'] <= 100
-    assert abs(p['breakdown'].sum() - p['cycle_days']) < .03
-    print(f"{site}: {s['starts']:.0f} requested WSPW; {s['at_risk']}/{s['groups']} groups at risk; "
-          f"historical throughput {p['avg_outs']:.0f} wafers/week; cycle time {p['cycle_days']:.1f} days")
-print('Offline capacity, scenario and historical metric checks passed.')
+data=fd.load()
+assert len(data['sim_fab_weekly'].week_start.unique())==52
+assert data['sim_fab_weekly'].flow_balance_error.eq(0).all()
+assert data['launch_weekly'].flow_balance_error.eq(0).all()
+plan=data['plan_2027'].assign(technology=lambda f:f.program.map(D.TECHNOLOGY))
+ratio=plan[plan.technology=='DRAM'].groupby('quarter').requested_wspw.sum()/plan.groupby('quarter').requested_wspw.sum()
+assert np.allclose(ratio,.75)
+state,table=L.capacity(data,'baseline');row=table.query("site=='FAB_A' and tool_group=='EUV' and quarter=='2027Q2'").iloc[0]
+assert abs(row.loading_pct-99.2)<.01
+review=R.run(data,'Demand growth','FAB_A',program='DRAM_B',pct=10)
+assert review['comparison'].query("site=='FAB_A' and tool_group=='EUV' and quarter=='2027Q2'").loading_pct_scenario.iloc[0]==107.4
+for case in ['introduction','slower']:
+    summary=L.study_summary(data,case)
+    assert summary['matched_lots']==summary['initial_lots'] and summary['unfinished_lots']==0
+    print(case,'additional WIP',round(summary['additional_wip']),'mean existing-lot shift',round(summary['mean_delay_days'],2),'days')
+print('52-week flow balances, 75% DRAM target, capacity calculations and paired pilot cohorts passed.')

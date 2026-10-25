@@ -3,11 +3,12 @@ import plotly.graph_objects as go
 import pandas as pd
 import fab_config as C
 import review_model as rm
+import fab_demo as D
 
 BLUE,TEAL,AMBER,RED='#185adb','#27877f','#b97520','#bd4343'
 SITE_COLORS={'FAB_A':BLUE,'FAB_B':TEAL,'Both':'#24374f'}
-PROGRAM_SHORT={p:C.PROGRAMS[p]['name'] for p in C.PROGRAM_ORDER}
-PROGRAM_COLORS=['#185adb','#56a1cb','#27877f','#9b8cb9','#b8c4d3']
+PROGRAM_SHORT=dict(D.NAMES)
+PROGRAM_COLORS=['#185adb','#56a1cb','#27877f','#9b8cb9','#b8c4d3','#b97520']
 
 def style(fig,height=300,title_x=None):
     fig.update_layout(template='plotly_white',height=height,

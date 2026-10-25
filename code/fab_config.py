@@ -91,10 +91,10 @@ def tool_hours_per_wafer(program: str, tg: str) -> float:
 # ---------------------------------------------------------------- installed tools
 # Installed tool counts today (end of Q3 2026) and planned arrivals.
 INSTALLED_TOOLS = {
-    "FAB_A": {"EUV": 1, "DUV": 4, "ETCH": 24, "DEP": 36, "PVD": 4, "CMP": 9,
-              "WET": 19, "FURN": 13, "IMPL": 5, "METRO": 9},
+    "FAB_A": {"EUV": 1, "DUV": 4, "ETCH": 30, "DEP": 42, "PVD": 4, "CMP": 10,
+              "WET": 19, "FURN": 15, "IMPL": 5, "METRO": 9},
     "FAB_B": {"EUV": 0, "DUV": 2, "ETCH": 13, "DEP": 19, "PVD": 2, "CMP": 4,
-              "WET": 8, "FURN": 6, "IMPL": 2, "METRO": 4},
+              "WET": 8, "FURN": 7, "IMPL": 2, "METRO": 4},
 }
 # (site, tool group, quarter the tool is released to production, count)
 TOOL_ARRIVALS = [
@@ -106,19 +106,21 @@ TOOL_ARRIVALS = [
 # ---------------------------------------------------------------- wafer starts
 # Actual WSPW in Q3 2026 (drives the 13-week simulation).
 ACTUAL_WSPW_2026Q3 = {
-    "FAB_A": {"DRAM_A": 250, "DRAM_B": 650, "NAND_C": 150, "HBM_TV": 150, "SHORT": 600},
-    "FAB_B": {"DRAM_A": 200, "NAND_C": 350, "SHORT": 400},
+    "FAB_A": {"DRAM_A": 550, "DRAM_B": 750, "NAND_C": 300, "HBM_TV": 150, "SHORT": 150},
+    "FAB_B": {"DRAM_A": 650, "NAND_C": 120, "SHORT": 130},
 }
 
 # Requested WSPW for the 2027 planning horizon (what program teams asked for).
 PLAN_QUARTERS = ["2027Q1", "2027Q2", "2027Q3", "2027Q4"]
 REQUESTED_WSPW_2027 = {
-    "FAB_A": {"DRAM_A": [240, 220, 200, 180], "DRAM_B": [700, 780, 840, 880],
-              "NAND_C": [150, 150, 150, 150], "HBM_TV": [170, 210, 250, 270],
-              "SHORT": [580, 560, 560, 540]},
-    "FAB_B": {"DRAM_A": [190, 180, 170, 160], "NAND_C": [380, 420, 460, 480],
-              "SHORT": [380, 380, 380, 380]},
+    "FAB_A": {"DRAM_A": [550,550,550,550], "DRAM_B": [750,830,975,1125],
+              "NAND_C": [300,320,360,400], "HBM_TV": [150,170,200,225],
+              "SHORT": [150,180,215,200]},
+    "FAB_B": {"DRAM_A": [650,700,750,800], "NAND_C": [120,130,135,140],
+              "SHORT": [130,120,115,160]},
 }
+# Synthetic wafer-start mix: DRAM technology (including HBM test vehicles) 75%,
+# NAND 15%, experiments 10%. This is not inferred from Micron revenue share.
 
 # How actual starts have historically compared with requests (used only to
 # generate the synthetic history; the forecast model has to rediscover these).

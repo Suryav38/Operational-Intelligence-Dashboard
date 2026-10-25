@@ -1,11 +1,57 @@
-# Data and deferred AI integration — v5
+# AI and evidence — v6
 
-AI features are paused in the stakeholder dashboard. `code/apprag.py` imports neither `assistant.py` nor `planning_copilot.py`, reads no API key and makes no external AI calls. There is no AI page, request parser, explanation button, connection status or document-preview panel in the UI.
+## Where AI appears
 
-The legacy modules and their automated tests remain in the repository for future integration. A later "Ask about this view" interface can reuse structured table queries, document retrieval, typed request extraction and the deterministic capacity/scenario engine. It should declare the selected scope and period, expose proposed changes, calculate through the model and cite supporting notes. A document's historical route change must be reconciled with the baseline before applying it again.
+Expandable assistants sit inside historical Production Overview and Equipment Health, the 2027 Capacity Outlook, live Scenario Comparison and Program Introduction. Each receives a separate scope-specific context; there is no detached generic chat page.
 
-The existing 11 structured tables and 15 text documents remain unchanged. The current UI uses deterministic functions and the original data. Family labels are a display mapping over the five existing programs, not additional product data.
+No API call runs merely from opening the dashboard or changing a filter. **Ask AI** triggers generation. **Preview evidence** is keyword retrieval plus the exact numerical context and works offline.
 
-Machine OEE is a separate calculator: its example or uploaded records do not join the fab simulation and do not alter historical metrics or future capacity. Its required schema and definitions are documented in README.md and in `templates/machine_oee_template.csv`.
+## Data path
 
-The v5 demand outlook uses the retained deterministic request-realization model without AI. Weekly scenarios also remain deterministic. Before restoring legacy AI scenario tools, account for the new weekly mask, affected-fab display scope and declared HOT/NORMAL request metadata; legacy tools assume quarter-wide changes.
+1. GitHub stores versioned project code, CSV/SQLite tables and text notes.
+2. Streamlit loads its deployed copy. File fingerprints invalidate data caches when files change.
+3. The panel supplies the currently selected filters, reporting period, pilot case, planning limit and calculated values as **S1**. It reads underlying values, not chart pixels or client-side legend toggles.
+4. Read-only SQL queries retrieve additional structured facts. Notes are searched independently with keyword retrieval and optional embeddings.
+5. Explicit model tools calculate capacity scenarios or read the precomputed pilot study. The assistant explains the returned evidence and cites **S1/S2/D1** source IDs.
+
+It does not continually fetch live GitHub files. Updates enter through the deployment. Changes to a sidebar filter are reflected in the next question's context. Equipment-state context follows fab/equipment/weeks, because shared tool states are not attributed to the selected program or priority.
+
+## Structured data
+
+The bundle contains 27 tables. They include:
+
+| Group | Tables |
+|---|---|
+| Engineering assumptions | program_catalog, route_steps, routes, qualification, tool_groups, installed_tools, tool_arrivals |
+| Historical planning/flow | wafer_start_history, sim_lots, sim_fab_weekly, weekly_program_flow, sim_tool_group_weekly, sim_tool_group_q3_2026, operating_events |
+| Future requested demand | plan_2027, pilot_plan_quarterly, pilot_plan_weekly |
+| Pilot experiment | launch_initial_wip, launch_summary, launch_weekly, launch_program_weekly, launch_equipment, launch_lot_comparison, launch_batches, three launch_lots case tables |
+
+`data/fab/td_fab.db` mirrors the CSVs. Raw SQL answers identify the actual query and scope; numerical aggregation must use the intended dates, site, case and seed.
+
+## Unstructured evidence
+
+There are 35 text notes: 15 archived earlier-prototype records and 20 current v6 records. Current records include five dated capacity-hold incidents, 13 calendar-month flow reviews (the 52-week span includes partial boundary months), one pilot change note and one model/mix policy.
+
+The current notes identify the request and actual realized hold timestamps, affected equipment and duration, with references to source tables. A documented capacity hold does not establish that every observed WIP or queue change was caused by it.
+
+Legacy notes begin **ARCHIVED PROTOTYPE NOTE**. They cannot override the v6 fleet, route or loading tables. Historical observations, future requests and simulated pilot results retain separate periods and provenance.
+
+Text chunks retain source filenames and character positions. Optional semantic retrieval uses `text-embedding-3-small`, combined with keyword ranking. If embedding retrieval is unavailable, the fallback is labelled. Structured tables remain SQL/model inputs, not document embeddings.
+
+## Model tools
+
+- **Read capacity:** route-aware requested-plan loading, including the selected pilot case.
+- **Calculate capacity request:** isolated demand changes, unavailable tools or qualified transfers, using explicit quarter/week bounds. It does not mutate source files or active UI controls.
+- **Read pilot study:** baseline/introduction/slower results from matched SimPy runs. These are precomputed simulation outputs, not measured production or a new arbitrary run per question.
+- **Query data / search notes:** inspect source facts and dated context.
+
+Transfers enforce qualification and conserve total network starts. Losing the only EUV tool produces no EUV capacity. A HOT label does not increase available hours. Arbitrary pilot ramp, route, queue or due-date predictions outside the three supplied DES cases require a new simulation study.
+
+## Checks and limits
+
+Source IDs must exist. Numerical claims must occur in cited evidence; unknown quantities are rejected. SQL runs through a bounded, read-only connection with a table allowlist and operation limits. Text and table contents are evidence, not instructions.
+
+These checks do not prove semantic association, causality or recommendation quality. The assistant should identify measured facts, documented explanations and hypotheses separately. It cannot approve loading, promise a due date, infer real-fab accuracy, or invent CAPEX/ROI.
+
+No live API key was available during the build. Tests exercise actual data/retrieval and model calculations with mocked generation/embedding calls. Enable the user's own key in Streamlit Secrets; no fake AI response is supplied when disconnected.

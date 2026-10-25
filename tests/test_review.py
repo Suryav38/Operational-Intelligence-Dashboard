@@ -9,11 +9,11 @@ def test_known_euv_capacity(data):
     state=fc.base_state(data)
     table=fc.loading_table(state)
     row=rm.select_scope(table,'FAB_A','2027Q1').query("tool_group == 'EUV'").iloc[0]
-    assert row.required_h_wk == pytest.approx((700+170)*7/60,abs=.051)
+    assert row.required_h_wk == pytest.approx((750+150)*7/60,abs=.051)
     assert row.available_h_wk == pytest.approx(168*.70)
-    assert row.loading_pct == pytest.approx(86.3,abs=.051)
+    assert row.loading_pct == pytest.approx(89.3,abs=.051)
     detail=rm.program_workload(state,'FAB_A','EUV','2027Q1')
-    assert detail['Required h / week'].sum() == pytest.approx(101.5)
+    assert detail['Required h / week'].sum() == pytest.approx(105.0)
 
 def test_focus_does_not_remove_other_programs_or_resources(data):
     state=fc.base_state(data)
@@ -23,15 +23,15 @@ def test_focus_does_not_remove_other_programs_or_resources(data):
     summary=rm.capacity_summary(table,state,'FAB_A','2027Q2')
     assert len(focus)==3
     assert summary['groups']==10
-    assert summary['starts']==1920
+    assert summary['starts']==2050
     pd.testing.assert_frame_equal(table,snapshot)
 
 def test_one_quarter_change_preserves_baseline_and_other_periods(data):
     review=rm.run_review(data,'FAB_A','DRAM_B',10,'2027Q2','2027Q2')
     base=review['base_state']['wspw']['FAB_A']['DRAM_B']
     scen=review['scenario_state']['wspw']['FAB_A']['DRAM_B']
-    assert base==[700,780,840,880]
-    assert scen==pytest.approx([700,858,840,880])
+    assert base==[750,830,975,1125]
+    assert scen==pytest.approx([750,913,975,1125])
     unchanged=review['comparison'].query("site == 'FAB_B' or quarter != '2027Q2'")
     assert (unchanged.change_pp==0).all()
     assert len(review['comparison'])==len(review['baseline'])
@@ -58,8 +58,8 @@ def test_risk_classification_includes_missing_capacity():
 @pytest.mark.parametrize('site',['FAB_A','FAB_B'])
 def test_production_metrics_use_matching_cohorts(data,site):
     p=rm.production_metrics(data,site)
-    assert len(p['weekly'])==13
-    assert str(p['window_start'])=='2026-06-29'
+    assert len(p['weekly'])==52
+    assert str(p['window_start'])=='2025-09-29'
     assert str(p['window_end'])=='2026-09-27'
     assert p['line_yield']==pytest.approx(p['completed'].wafers_out.sum()/p['completed'].wafers_in.sum()*100)
     assert 'SHORT' not in set(p['full'].program)
@@ -94,23 +94,23 @@ def test_ai_extract_uses_typed_output_and_source_evidence():
 def test_decision_brief_accounts_for_existing_constraints(data):
     r=rm.run_review(data,'FAB_A','DRAM_B',10,'2027Q2','2027Q2')
     b=rm.decision_brief(r,'2027Q2')
-    assert b['after']['starts']==pytest.approx(b['before']['starts']+78)
+    assert b['after']['starts']==pytest.approx(b['before']['starts']+83)
     assert b['after']['at_risk']>=b['before']['at_risk']
     assert 'due dates' in b['limit']
 
 def test_ai_context_has_exact_model_facts_and_period(data):
     r=rm.run_review(data,'FAB_A','DRAM_B',10,'2027Q2','2027Q2')
     c=rm.ai_review_context(r,'2027Q2')
-    assert c['facts']['euv_before']=='98.2%'
-    assert c['facts']['euv_after']=='106.0%'
-    assert c['facts']['dep_after']=='85.3%'
-    assert c['facts']['starts_after']=='1,998 wafers/week'
+    assert c['facts']['euv_before']=='99.2%'
+    assert c['facts']['euv_after']=='107.4%'
+    assert c['facts']['dep_after']=='96.5%'
+    assert c['facts']['starts_after']=='2,133 wafers/week'
     assert len(c['equipment'])==10
     assert c['quarter_is_affected'] is True
     assert rm.ai_review_context(r,'2027Q3')['quarter_is_affected'] is False
 
 def test_ai_text_allows_only_source_fact_references():
-    assert ai.render_grounded_text('Load changes to {{load}}.',{'load':'106.0%'})=='Load changes to 106.0%.'
+    assert ai.render_grounded_text('Load changes to {{load}}.',{'load':'107.4%'})=='Load changes to 107.4%.'
     with pytest.raises(ValueError,match='unknown model fact'):
         ai.render_grounded_text('Load is {{invented}}.',{})
     with pytest.raises(ValueError,match='unverified quantity'):
@@ -131,8 +131,8 @@ def test_ai_scenario_explanation_is_grounded_and_typed(data):
         return SimpleNamespace(choices=[SimpleNamespace(message=SimpleNamespace(refusal=None,parsed=response))])
     client=SimpleNamespace(chat=SimpleNamespace(completions=SimpleNamespace(parse=parse)))
     out=ai.explain_scenario(context,'mock',client=client)
-    assert '98.2% to 106.0%' in out['summary']
-    assert '85.3%' in out['operating_implication']
+    assert '99.2% to 107.4%' in out['summary']
+    assert '96.5%' in out['operating_implication']
     assert captured['response_format'] is ai.ScenarioExplanation
     assert captured['store'] is False
     context['equipment']=[x for x in context['equipment'] if x['code']!='EUV']

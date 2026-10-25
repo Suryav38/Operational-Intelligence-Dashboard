@@ -12,22 +12,32 @@ import forecast_model as fm
 import execution_model as em
 import executive_charts as ec
 import review_model as rm
+import fab_demo as D
 
-BREAKDOWNS={'Program family':'family','Program name':'program','Route technology':'route_technology'}
+BREAKDOWNS={'Technology family':'technology_family','Program family':'family','Program name':'program','Route technology':'route_technology'}
 MEASURES={'Requested plan':'requested_wspw','Expected starts':'expected_wspw'}
 
-def plan(data,site='Both',programs=None):
+def plan(data,site='Both',programs=None,pilot_case='baseline'):
     model=fm.fit(data['wafer_start_history'])
     frame=fm.corrected_plan(data['plan_2027'],model).rename(columns={'corrected_wspw':'expected_wspw'})
     frame=frame.merge(model[['program','realization_rate']],on='program',how='left',validate='many_to_one')
     frame['family']=frame.program.map(em.FAMILIES)
+    frame['technology_family']=frame.program.map(D.TECHNOLOGY)
     frame['route_technology']=frame.program.map(lambda p:'Includes EUV' if C.PROGRAMS[p]['passes']['EUV'] else 'DUV only')
+    if pilot_case!='baseline':
+        extra=data['pilot_plan_quarterly'].query('case==@pilot_case').copy()
+        extra['expected_wspw']=extra.requested_wspw.map(lambda n:float('nan') if n>0 else 0.)
+        extra['realization_rate']=float('nan');extra['family']='DRAM';extra['technology_family']='DRAM';extra['route_technology']='Includes EUV'
+        frame=pd.concat([frame,extra.drop(columns='case')],ignore_index=True)
     if site!='Both':frame=frame[frame.site==site]
     if programs is not None:frame=frame[frame.program.isin(programs)]
     return frame.sort_values(['quarter','site','program']).reset_index(drop=True)
 
 def quarterly(frame):
-    return frame.groupby('quarter')[['requested_wspw','expected_wspw']].sum().reindex(C.PLAN_QUARTERS,fill_value=0)
+    totals=frame.groupby('quarter')[['requested_wspw','expected_wspw']].sum().reindex(C.PLAN_QUARTERS,fill_value=0)
+    unknown=frame[frame.expected_wspw.isna()&frame.requested_wspw.gt(0)].quarter.unique()
+    totals.loc[unknown,'expected_wspw']=float('nan')
+    return totals
 
 def validation(data,site='Both',programs=None):
     history=data['wafer_start_history'].copy()
@@ -50,10 +60,10 @@ def validation(data,site='Both',programs=None):
 def mix_chart(frame,group,measure):
     dimension=BREAKDOWNS[group];col=MEASURES[measure]
     pivot=frame.pivot_table(index='quarter',columns=dimension,values=col,aggfunc='sum',fill_value=0).reindex(C.PLAN_QUARTERS,fill_value=0)
-    orders={'program':C.PROGRAM_ORDER,'family':['DRAM','NAND','HBM','Experiments'],'route_technology':['Includes EUV','DUV only']}
+    orders={'program':list(D.PROGRAMS),'family':['DRAM','NAND','HBM','Experiments'],'technology_family':['DRAM','NAND','Experiments'],'route_technology':['Includes EUV','DUV only']}
     pivot=pivot.reindex(columns=[name for name in orders[dimension] if name in pivot.columns])
-    colors={p:color for p,color in zip(C.PROGRAM_ORDER,ec.PROGRAM_COLORS)} if dimension=='program' else (
-        {'DRAM':ec.BLUE,'NAND':ec.TEAL,'HBM':'#9b8cb9','Experiments':'#b8c4d3'} if dimension=='family' else {'Includes EUV':ec.BLUE,'DUV only':ec.TEAL})
+    colors={p:color for p,color in zip(D.PROGRAMS,ec.PROGRAM_COLORS)} if dimension=='program' else (
+        {'DRAM':ec.BLUE,'NAND':ec.TEAL,'HBM':'#9b8cb9','Experiments':'#b8c4d3'} if dimension in ('family','technology_family') else {'Includes EUV':ec.BLUE,'DUV only':ec.TEAL})
     fig=go.Figure()
     for i,name in enumerate(pivot.columns):
         label=ec.PROGRAM_SHORT[name] if dimension=='program' else name
@@ -76,7 +86,7 @@ def ramp_chart(frame,measure,quarter):
     col=MEASURES[measure];frame=frame.copy()
     frame['label']=frame.site.map(rm.SITE_LABELS)+' · '+frame.program.map(ec.PROGRAM_SHORT)
     pivot=frame.pivot_table(index='label',columns='quarter',values=col,aggfunc='sum',fill_value=0).reindex(columns=C.PLAN_QUARTERS,fill_value=0)
-    order=[rm.SITE_LABELS[s]+' · '+ec.PROGRAM_SHORT[p] for s in C.SITES for p in C.PROGRAM_ORDER]
+    order=[rm.SITE_LABELS[s]+' · '+ec.PROGRAM_SHORT[p] for s in C.SITES for p in D.PROGRAMS]
     pivot=pivot.reindex([x for x in order if x in pivot.index])
     fig=go.Figure(go.Heatmap(x=pivot.columns,y=pivot.index,z=pivot.values,
         text=pivot.map(lambda v:f'{v:,.0f}').values,texttemplate='%{text}',textfont=dict(size=11),

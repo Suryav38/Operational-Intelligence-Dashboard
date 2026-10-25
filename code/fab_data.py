@@ -16,9 +16,11 @@ DB_PATH = DATA / "td_fab.db"
 def load() -> dict:
     if not (TABLES / "plan_2027.csv").exists():
         raise FileNotFoundError("Data missing. Run `python code/data_generation.py` first.")
-    names = ["tool_groups", "routes", "installed_tools", "tool_arrivals", "qualification", "plan_2027",
-             "wafer_start_history", "sim_lots", "sim_tool_group_q3_2026", "sim_fab_weekly", "sim_tool_group_weekly"]
-    return {n: pd.read_csv(TABLES / f"{n}.csv") for n in names}
+    return {p.stem:pd.read_csv(p) for p in sorted(TABLES.glob('*.csv'))}
+
+
+def fingerprint():
+    return tuple((p.name,p.stat().st_size,p.stat().st_mtime_ns) for p in sorted(TABLES.glob('*.csv')))
 
 
 def _sites(site):

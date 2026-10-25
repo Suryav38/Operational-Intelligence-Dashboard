@@ -1,39 +1,45 @@
-# Stakeholder walkthrough — v5
+# A focused stakeholder demonstration — v6
 
-All data is synthetic. Describe this as an independent planning prototype.
+Use a six-to-eight-minute main story. All inputs and outputs are synthetic; this is a prototype of a planning workflow, not Micron internal data.
 
-## 1. Execution first
+## 1. Establish the operating picture
 
-Open **Fab performance → Production overview** with Combined and all programs. Explain completions/week, completed-lot cycle time, WIP and same-cohort wafer yield. Compare the two fabs' WIP and cycle-time trends. Filter **DRAM → DRAM Node B (EUV)**, then **HOT**. Combined cycle time is weighted by actual completed lots. Reset filters before the next comparison.
+Open **Fab Performance**. Show the 52-week history and narrow the week slider to a period of interest. Explain starts, completions, average WIP and completed-lot cycle time. The weekly program chart shows the DRAM-heavy mix. HBM belongs to the DRAM technology family; 75% starts is a demo assumption, not a translation of company revenue.
 
-In **Equipment health**, compare productive, standby, engineering and downtime allocation. These are full-quarter equipment-group measurements. In **Historical attainment**, compare historical requested/actual starts; this follows program/fab filters, not execution-week filters.
+In **Equipment Health**, show quantities by fab, shared-tool time allocation and weekly queue changes. Inspect the dated scanner recovery note through the AI evidence preview. Engineering time is required development work, not automatically avoidable waste. Machine OEE has been removed.
 
-## 2. Show the next-year demand ramp
+If asked about routes, open **Program Routes**. Show a program's qualified fab, equipment visit counts and ordered repeated visits. The pilot has 44 mask layers and 402 illustrative operations, including eight EUV visits. These synthetic layer modules are not a validated device traveler.
 
-Open **Demand outlook**, Combined and all programs. The 2027 requested plan rises from **2,790 to 3,040 WSPW**, about **9.0%** Q4 versus Q1. Show the family mix, switch to named programs, and compare Fab A with Fab B. The heatmap drills into fab × program × quarter.
+## 2. Show demand and resource exposure
 
-Switch the chart basis to **Expected starts**: the model estimates historical start realization conditional on the requested plan. The expected totals are **2,678 / 2,763 / 2,850 / 2,867 WSPW**. Explain that this is not an independent market-demand forecast or a reason to discard commitments. The capacity baseline remains requested-plan based.
+Open **Demand Outlook**, baseline. The requested network rate grows 2,800 → 3,600 WSPW over 2027. Fab A DRAM B rises 750 → 1,125 WSPW. Requested demand, fitted realization and a new program's unestimated ramp are labelled separately.
 
-In **Forecast validation**, show the separate training/holdout periods and errors. The full synthetic holdout has 24 records; raw-request MAPE is about 10.8%, adjusted MAPE about 3.4%. These results do not guarantee next-year accuracy. Route technology means configured EUV use; physical wafer diameter/substrate data is absent.
+In **Capacity & Scenarios → Capacity Outlook**, Q2 Fab A EUV is at 99.2%. Explain required hours divided by available hours. Follow the horizon to the resource exposure in Q3 and the planned second EUV scanner in Q4. Resource gaps at the planning limit already present in the baseline must not all be blamed on a new program.
 
-## 3. Review capacity and a demand change
+## 3. Test unexpected growth, unavailability or consolidation
 
-Open **Capacity & scenarios → Capacity outlook**, Combined, 2027Q2. The requested plan is **2,900 WSPW**. Fab A EUV is at **98.2%** loading. Follow the horizon to Q3 overcapacity and Q4 relief from a second scanner.
+In **Scenario Comparison**:
 
-In **Scenario comparison**, choose **Fab A / DRAM Node B (EUV), +10%, Q2 only**. Results default to Fab A: **1,920 → 1,998 WSPW**, EUV **98.2% → 106.0%**. The named at-risk list also identifies Deposition. The baseline-versus-scenario chart omits unchanged Fab B. Use **Include the other fab in results** only when useful.
+- **Demand growth:** increase Fab A DRAM B by 10% for Q2. Its requested starts rise by 83/week; EUV loading rises from 99.2% to 107.4%.
+- **Tool unavailability:** remove one Fab A EUV tool for selected weeks. With only one released scanner, the model reports no available EUV capacity.
+- **Qualified load transfer:** transfer part of DRAM A from Fab A to Fab B. Network starts remain unchanged; evaluate the receiving fab's furnace, deposition and other constraints. DRAM A has no EUV visits, so moving it does not solve an EUV scanner shortage. EUV-required routes cannot be transferred to unqualified Fab B.
 
-Switch to **Week range** and test **05–11 Apr through 12–18 Apr 2027**. Only those weeks change. Inspect either week and the full-year weekly risk trend. Equipment releases and quarter-boundary demand use actual calendar-day overlap; this is a weekly capacity screen, not a dispatch simulation.
+Show either affected-fab-only or both-fab results as appropriate. Named at-risk equipment and request priority are explicit. This is a live capacity screen; it does not fabricate new WIP/delivery forecasts.
 
-Set **Request priority = HOT** and enter a real milestone only if one exists. The result heading/export records the declared priority; equipment hours remain the same. Discuss whether the need-by date justifies moving normal work, and identify the constrained equipment. Do not claim that a HOT label fixes overload or predicts delivery benefit.
+## 4. Introduce one program in the middle
 
-## 4. Explain lot-flow drivers
+Select **Pilot case = Pilot introduction**, then **Program Introduction**. Release is 17 May 2027, week 7 of a 16-week study. The program ramps 100 → 200 WSPW; a slower response ramps 50 → 75.
 
-Open **Lot flow & cycle time**. Compare processing, queues, transport and holds by program, HOT/NORMAL cohorts, cycle-time spread and WIP age. Queue + hold is about **40%** for the default full-flow population. Engineering holds can be required development work.
+Show the three-case WIP graph and paired existing-lot completion shifts. Across five seeds, the introduction adds about 1,460 input-wafer equivalents of post-release average WIP and 0.59 days of mean completion time. Slower ramp adds about 554 wafers and 0.24 days. These are simulated consequences, not guarantees.
 
-Open **Lot explorer** to inspect a specific completed lot or WIP cohort. Intermediate route progress is unavailable because only the final progress snapshot exists. Historical production does not change when a future scenario is evaluated.
+The same 1,613 lot instances across runs are paired from the initial WIP; all finish in the supplied horizon. Show the starting state and source comparison if asked. Processing/move/hold inputs remain matched; the completion shift is explained by changed queues.
 
-## Optional: machine OEE
+In **Demand & Capacity**, show both quarter-average loading and the weekly forward-loading chart. A mid-quarter launch can have a stronger weekly peak than the quarter average. The slower response reduces impact but may leave constraints. Equipment counts, qualification, ramp timing and operating recovery remain planning decisions.
 
-Open **Fab performance → Machine OEE**. EXAMPLE-01 is separate from the fab simulation. Show the factors and 61.25% OEE, edit inputs, or upload machine-period records from the template. Do not describe the example as measured Fab A/B OEE.
+## Optional: AI
 
-AI remains paused. Program/fab/lot detail is available; product SKU, individual-machine event history and physical wafer specifications are not present. Capacity screening does not predict new queue time, due dates, investment costs or ROI.
+Ask a question in the relevant view, such as which equipment constrains a DRAM increase or which operating record supports investigating a queue spike. Explain that the assistant receives displayed values, queries the deployed tables, retrieves dated notes and calls numerical models. Open sources and model operations. No API key is needed for evidence preview; live answers need the configured key.
+
+## Be ready to explain limits
+
+History and planning are separate. Capacity calculates average hours; the DES tracks lots and queues. Pilot results are precomputed reproducible cases. Actual fab calibration, chamber/operator detail, rework, financial ROI and customer due-date promises are outside scope. See MODEL_GUIDE.md for the concise explanation and assumptions.

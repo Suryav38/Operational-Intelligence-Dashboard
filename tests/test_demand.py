@@ -11,8 +11,8 @@ from pathlib import Path
 def test_next_year_totals_reconcile_to_requested_plan(data):
     frame=demand.plan(data)
     totals=demand.quarterly(frame)
-    assert totals.requested_wspw.tolist()==[2790,2900,3010,3040]
-    assert totals.requested_wspw.mean()==2935
+    assert totals.requested_wspw.tolist()==[2800,3000,3300,3600]
+    assert totals.requested_wspw.mean()==3175
     assert len(frame)==32
     assert set(frame.quarter)=={'2027Q1','2027Q2','2027Q3','2027Q4'}
     expected=fm.corrected_plan(data['plan_2027'],fm.fit(data['wafer_start_history']))
@@ -27,7 +27,7 @@ def test_combined_equals_sum_of_fabs_and_programs(data):
     pd.testing.assert_frame_equal(total,by_program)
     filtered=demand.plan(data,'FAB_B',['NAND_C'])
     assert set(filtered.program)=={'NAND_C'} and set(filtered.site)=={'FAB_B'}
-    assert filtered.requested_wspw.tolist()==[380,420,460,480]
+    assert filtered.requested_wspw.tolist()==[120,130,135,140]
 
 
 def test_expected_starts_are_pooled_program_calibration_not_new_site_models(data):

@@ -2,13 +2,14 @@
 from __future__ import annotations
 import pandas as pd
 import fab_config as C
+import fab_demo as D
 
-FAMILIES={'DRAM_A':'DRAM','DRAM_B':'DRAM','NAND_C':'NAND','HBM_TV':'HBM','SHORT':'Experiments'}
+FAMILIES=D.FAMILIES
 COMPONENTS=['process_days','queue_days','transport_days','hold_days']
 
-def program_options(site='Both',family='All families'):
+def program_options(site='Both',family='All families',include_pilot=False):
     sites=list(C.SITES) if site=='Both' else [site]
-    return [p for p in C.PROGRAM_ORDER if any(p in C.QUALIFIED[s] for s in sites)
+    return [p for p in list(C.PROGRAM_ORDER)+([D.PILOT] if include_pilot else []) if any(D.qualified(s,p) for s in sites)
             and (family=='All families' or FAMILIES[p]==family)]
 
 def prepare_lots(data):
@@ -70,8 +71,16 @@ def historical_attainment(data,site='Both',programs=None):
     out['attainment_pct']=100*out.actual_wspw/out.requested_wspw.replace(0,float('nan'))
     return out
 
-def equipment_health(data,site='Both',groups=None):
+def equipment_health(data,site='Both',groups=None,first=None,last=None):
     frame=data['sim_tool_group_q3_2026'].copy()
+    if first is not None:
+        selected=data['sim_tool_group_weekly']
+        selected=selected[selected.week_start.between(first,last)]
+        records=[]
+        for (s,g),rows in selected.groupby(['site','tool_group']):
+            total=rows.calendar_h.sum();prod=rows.productive_h.sum();eng=rows.engineering_h.sum();sd=rows.sched_down_h.sum();ud=rows.unsched_down_h.sum();visits=rows.lot_steps.sum()
+            records.append(dict(site=s,tool_group=g,tools=rows.tools.mean(),productive_pct=100*prod/total,standby_pct=100*rows.standby_h.sum()/total,engineering_pct=100*eng/total,sched_down_pct=100*sd/total,unsched_down_pct=100*ud/total,loading_pct=100*prod/(total-eng-sd-ud),avg_queue_h=(rows.avg_queue_h*rows.lot_steps).sum()/visits if visits else 0,batch_count=rows.batch_count.sum(),batch_lots=rows.batch_lots.sum(),average_batch_fill=rows.batch_lots.sum()/rows.batch_count.sum() if rows.batch_count.sum() else float('nan')))
+        frame=pd.DataFrame(records)
     if site!='Both':frame=frame[frame.site==site]
     if groups is not None:frame=frame[frame.tool_group.isin(groups)]
     frame['downtime_pct']=frame.sched_down_pct+frame.unsched_down_pct

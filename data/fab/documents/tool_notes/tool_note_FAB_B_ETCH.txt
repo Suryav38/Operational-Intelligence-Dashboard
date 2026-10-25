@@ -1,3 +1,5 @@
+ARCHIVED PROTOTYPE NOTE — earlier synthetic assumptions. Do not substitute its counts or loading for the v6 tables.
+
 Tool group note - Fab B (development fab, DUV only) - Dry etch
 Installed tools: 13.0
 Q3 2026: productive 65.7%, engineering 13.3%, unscheduled down 6.4%, average queue 0.63 h per lot step.

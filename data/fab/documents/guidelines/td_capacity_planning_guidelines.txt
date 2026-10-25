@@ -1,3 +1,5 @@
+ARCHIVED PROTOTYPE NOTE — earlier synthetic assumptions. Do not substitute its counts or loading for the v6 tables.
+
 TD Capacity Planning Guidelines
 
 1. Loading = required tool hours / available production hours (calendar hours minus scheduled downtime, unscheduled downtime and engineering time).

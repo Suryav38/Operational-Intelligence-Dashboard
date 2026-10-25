@@ -28,7 +28,7 @@ def capacity_summary(table, state, site, quarter, ceiling=0.85):
     i = C.PLAN_QUARTERS.index(quarter)
     worst = t.assign(_sort=t["loading_pct"].fillna(float("inf"))).sort_values("_sort", ascending=False).iloc[0]
     sites=list(C.SITES) if site=='Both' else [site]
-    return {"starts": sum(state["wspw"][s][p][i] for s in sites for p in C.PROGRAM_ORDER),
+    return {"starts": sum(state["wspw"][s][p][i] for s in sites for p in state['wspw'][s]),
             "at_risk": int((t["loading_pct"].isna() | (t["loading_pct"] >= ceiling * 100)).sum()),
             "over_capacity": int((t["loading_pct"].isna() | (t["loading_pct"] > 100)).sum()),
             "groups": len(t), "worst_group": worst["tool_group"], "worst_site":worst['site'], "worst_load": worst["loading_pct"]}

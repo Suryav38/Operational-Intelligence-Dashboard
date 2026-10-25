@@ -1,0 +1,6 @@
+SYNTHETIC MODEL POLICY — SYN-V6-1
+The requested 2027 baseline and historical actual-start mix target DRAM technology 75%, NAND 15%, experiments 10%. DRAM technology includes HBM test vehicles; display family HBM may remain separate. The 75% wafer-start share is a demonstration assumption, not inferred from Micron revenue share.
+History: 29 September 2025 through 27 September 2026. Future plan: calendar 2027.
+Resources are shared tool-group pools with re-entrant routes, compatible furnace batching, sampled metrology, stochastic non-preemptive capacity holds and engineering holds. All device recipes and equipment counts are synthetic.
+The capacity screen charges average full-route tool hours per wafer start. The DES follows each lot's remaining route and queues. Do not substitute capacity loading for a prediction of cycle time or order completion.
+Model random-seed ranges are not confidence bounds on real fab accuracy. No real fab MES data was used to validate the prototype.

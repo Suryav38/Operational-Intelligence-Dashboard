@@ -13,7 +13,7 @@ def test_combined_does_not_pool_equipment_capacity(data):
     s=fc.base_state(data);t=fc.loading_table(s)
     a=rm.capacity_summary(t,s,'FAB_A','2027Q2');b=rm.capacity_summary(t,s,'FAB_B','2027Q2')
     both=rm.capacity_summary(t,s,'Both','2027Q2')
-    assert both['starts']==a['starts']+b['starts']==2900
+    assert both['starts']==a['starts']+b['starts']==3000
     assert both['groups']==19
     assert both['at_risk']==a['at_risk']+b['at_risk']
     assert both['worst_load']==max(a['worst_load'],b['worst_load'])
@@ -21,7 +21,7 @@ def test_combined_does_not_pool_equipment_capacity(data):
 
 def test_combined_production_uses_counts_and_cohorts(data):
     a=rm.production_metrics(data,'FAB_A');b=rm.production_metrics(data,'FAB_B');p=rm.production_metrics(data,'Both')
-    assert len(p['weekly'])==13
+    assert len(p['weekly'])==52
     assert p['wip']==pytest.approx(a['wip']+b['wip'])
     assert p['avg_outs']==pytest.approx(a['avg_outs']+b['avg_outs'])
     all_full=pd.concat([a['full'],b['full']])
@@ -33,15 +33,15 @@ def test_combined_ai_context_preserves_site_specific_facts(data):
     r=rm.run_review(data,'FAB_A','DRAM_B',10,'2027Q2','2027Q2')
     c=rm.ai_review_context(r,'2027Q2','Both')
     assert len(c['equipment'])==19
-    assert c['facts']['fab_a_euv_after']=='106.0%'
-    assert c['facts']['starts_after']=='2,978 wafers/week'
+    assert c['facts']['fab_a_euv_after']=='107.4%'
+    assert c['facts']['starts_after']=='3,083 wafers/week'
     snap=rag.dashboard_snapshot(data,'Both','2027Q2',review=r)
     assert len(snap['capacity'])==19
     assert snap['scope']['basis']=='reviewed hypothetical scenario'
 
 def test_document_retrieval_and_provenance():
     index=rag.DocumentIndex(fd.DOCS)
-    assert len({c['source'] for c in index.chunks})==15
+    assert len({c['source'] for c in index.chunks})==len(list(fd.DOCS.rglob('*.txt')))
     hits=index.search('Fab A EUV scanner availability and second scanner',4)
     assert hits
     assert any('EUV' in x['source'] for x in hits)
@@ -63,7 +63,7 @@ def test_hybrid_embeddings_are_used_with_keyword_retrieval():
 def test_sql_is_read_only_and_bounded():
     before=hashlib.sha256(fd.DB_PATH.read_bytes()).digest()
     out=rag.read_sql(fd.DB_PATH,"SELECT loading_pct FROM sim_tool_group_q3_2026 WHERE site='FAB_A' AND tool_group='EUV'")
-    assert out['rows'][0]['loading_pct']==79.2
+    assert out['rows'][0]['loading_pct']==pytest.approx(86.12319554)
     assert rag.read_sql(fd.DB_PATH,'SELECT * FROM sim_lots',limit=3)['truncated']
     for sql in ['DELETE FROM sim_lots',"ATTACH DATABASE '/tmp/other.db' AS x","SELECT load_extension('anything')",'SELECT 1; DELETE FROM sim_lots']:
         with pytest.raises(ValueError):rag.read_sql(fd.DB_PATH,sql)
@@ -78,7 +78,7 @@ class Message:
 
 def test_copilot_runs_structured_tool_and_returns_citations(data):
     call=SimpleNamespace(id='call_test',function=SimpleNamespace(name='query_structured_data',arguments=json.dumps({'query':"SELECT loading_pct FROM sim_tool_group_q3_2026 WHERE site='FAB_A' AND tool_group='EUV'"})))
-    messages=iter([Message(tool_calls=[call]),Message('Historical EUV loading is 79.2% [S2].')])
+    messages=iter([Message(tool_calls=[call]),Message('Historical EUV loading is 86.12319554% [S2].')])
     client=SimpleNamespace(chat=SimpleNamespace(completions=SimpleNamespace(create=lambda **kw:SimpleNamespace(choices=[SimpleNamespace(message=next(messages))]))))
     agent=rag.Copilot(data,rag.DocumentIndex(fd.DOCS),'FAB_A','2027Q2')
     out=agent.answer('What was historical EUV loading?','mock',client=client)

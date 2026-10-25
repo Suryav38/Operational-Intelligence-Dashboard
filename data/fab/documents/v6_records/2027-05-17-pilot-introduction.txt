@@ -1,0 +1,8 @@
+SYNTHETIC PLANNING CHANGE — PILOT-2027-001
+Planned release: 17 May 2027, seventh week of the 16-week study beginning 05 April 2027.
+Program: DRAM_P, DRAM EUV pilot. Qualified only at FAB_A; FAB_B has no EUV resource.
+Introduction: 100 WSPW for two weeks, then 200 WSPW. Slower response: 50 WSPW for four weeks, then 75 WSPW.
+Both cases retain existing release plans and matched per-lot random inputs. Furnace recipes for the pilot are distinct compatible-batch families. Equipment recipes, ordered visits and sampling are in route_steps.csv.
+No historical request-realization coefficient exists for this new program. Its requested ramp is a planning assumption, not a fitted demand forecast.
+Compare launch_summary.csv, launch_lot_comparison.csv, launch_initial_wip.csv and future capacity calculations. Delays are relative to the same existing lots; targets are illustrative and no customer promise is asserted.
+Changing HOT priority is not a capacity increase. Consolidating EUV-required routes into FAB_B is not qualified. A slower ramp may reduce impact without resolving every equipment constraint.

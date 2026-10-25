@@ -6,15 +6,15 @@ APP=Path(__file__).resolve().parents[1]/'code'/'apprag.py'
 def app():return AppTest.from_file(str(APP),default_timeout=40).run()
 
 
-def test_performance_is_first_and_no_ai_controls():
+def test_performance_is_first_with_embedded_ai_and_routes():
     at=app()
     assert not at.exception
     assert at.title[0].value=='Fab performance'
     assert at.radio(key='page').options==['Fab performance','Demand outlook','Capacity & scenarios','Lot flow & cycle time']
-    assert not at.text_area
-    assert not any('AI' in b.label for b in at.button)
+    assert any(b.label=='Ask AI' and b.disabled for b in at.button)
+    assert any('Program routes'==t.label for t in at.tabs)
     assert any('Weekly cycle time'==s.value for s in at.subheader)
-    assert any('Equipment time allocation'==s.value for s in at.subheader)
+    assert any('Installed tools by fab'==s.value for s in at.subheader)
 
 
 def test_named_program_filters_and_empty_qualified_family():
@@ -85,11 +85,3 @@ def test_capacity_focus_retains_all_program_risk():
     at.toggle(key='all_groups').set_value(True).run()
     assert not at.exception
 
-
-def test_oee_calculator_validates_example_and_exposes_upload():
-    at=app()
-    at.number_input(key='oee_good').set_value(301).run()
-    assert any('Good count' in e.value for e in at.error)
-    at.radio(key='oee_source').set_value('Upload machine records').run()
-    assert not at.exception
-    assert not at.number_input

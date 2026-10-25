@@ -1,3 +1,5 @@
+ARCHIVED PROTOTYPE NOTE — earlier synthetic assumptions. Do not substitute its counts or loading for the v6 tables.
+
 Tool group note - Fab B (development fab, DUV only) - CVD/ALD deposition
 Installed tools: 19.0
 Q3 2026: productive 66.7%, engineering 9.7%, unscheduled down 4.8%, average queue 0.17 h per lot step.

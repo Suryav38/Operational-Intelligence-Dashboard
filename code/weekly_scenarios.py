@@ -9,6 +9,7 @@ import fab_config as C
 import fab_capacity as fc
 import review_model as rm
 import executive_charts as ec
+import fab_demo as D
 
 def calendar():
     start=pd.Timestamp('2027-01-01');end=pd.Timestamp('2028-01-01')
@@ -31,7 +32,7 @@ def segments(lo,hi):
         if days:out.append((i,days/7))
     return out
 
-def week_table(base,changed=None,first_week=None,last_week=None):
+def week_table(base,changed=None,first_week=None,last_week=None,pilot_case='baseline'):
     base_tools=fc._tools(base);changed_tools=fc._tools(changed) if changed else base_tools
     records=[];starts=[]
     for w in calendar().itertuples():
@@ -40,9 +41,12 @@ def week_table(base,changed=None,first_week=None,last_week=None):
         parts=segments(w.period_start,w.period_end)
         for site in C.SITES:
             volume=sum(sum(state['wspw'][site][p][i] for p in C.PROGRAM_ORDER)*fraction for i,fraction in parts)
+            pilot_volume=sum(D.pilot_rate(d,pilot_case) for d in pd.date_range(w.period_start,w.period_end-pd.Timedelta(days=1)))/7 if site=='FAB_A' else 0.
+            volume+=pilot_volume
             starts.append(dict(site=site,week_start=w.week_start,starts_in_period=volume,starts_weekly_equiv=volume*7/w.period_days))
             for group in C.TOOL_GROUP_ORDER:
                 required=sum(sum(state['wspw'][site][p][i]*fc._hours_per_wafer(state,p,group,i) for p in C.PROGRAM_ORDER)*fraction for i,fraction in parts)
+                required+=pilot_volume*D.hours_per_wafer(D.PILOT,group)
                 available=sum(tools[site][group][i]*168*state['avail'][site][group][i]*fraction for i,fraction in parts)
                 if required==0 and available==0:continue
                 records.append(dict(site=site,tool_group=group,week_start=w.week_start,period_start=w.period_start,
