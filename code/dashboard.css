@@ -156,3 +156,10 @@ table.cap.matrix td.mx.dn1, table.cap.matrix td.mx.dn2, table.cap.matrix td.mx.d
 table.cap.matrix td.up3 .v, table.cap.matrix td.up3 .d, table.cap.matrix td.dn3 .v, table.cap.matrix td.dn3 .d { color:#fff; }
 .legend-row i.sw { background:var(--c, #fff); border:1px solid var(--rule); }
 table.cap.matrix tr.total td { border-top:1px solid var(--ink); font-weight:600; }
+
+table.cap td.q .qa { display:block; font-family:var(--mono); font-size:14px; font-weight:500; color:var(--ink); }
+table.cap td.q .qa.zero { color:var(--faint); font-weight:400; }
+table.cap td.q .ql { display:block; font-size:10.5px; color:var(--muted); }
+table.cap td.q.bad .ql { color:#7d2a1e; }
+table.cap th .sub { font-size:9.5px; text-transform:none; letter-spacing:0; color:var(--faint); font-weight:400; }
+table.cap td.q { width:84px; line-height:1.25; }

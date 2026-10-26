@@ -107,7 +107,15 @@ def buy_list(data, case='baseline', basis='requested', ceiling=.85, state=None):
             arrivals = [(q, k) for site, grp, q, k in C.TOOL_ARRIVALS if site == s and grp == g]
             loading = np.where(timed[i, j] > 0, 100 * required[i, j] / np.where(timed[i, j] > 0, timed[i, j] * per[i, j], 1), np.nan)
             short = [Q[k] for k in range(4) if timed_gap[k] > 0]
-            rows.append(dict(
+            # Tools must stay once installed: required fleet by quarter is the running max of need.
+            fleet = np.maximum.accumulate(n)
+            new_cum = np.clip(fleet - comm[i, j], 0, None)            # new tools that must be in service by each quarter
+            new_add = np.diff(np.concatenate([[0.], new_cum]))         # new tools to bring in during each quarter
+            pull_cum = np.minimum(np.clip(fleet - timed[i, j], 0, None), comm[i, j] - timed[i, j])
+            pull_q = next((Q[k] for k in range(4) if pull_cum[k] > 0), None)
+            rows.append(dict(pull_in_by=pull_q,
+                **{f'add_{q}': int(new_add[k]) for k, q in enumerate(Q)},
+                **{f'fleet_{q}': int(fleet[k]) for k, q in enumerate(Q)},
                 site=s, tool_group=g, installed=int(inst[i, j]),
                 on_order=int(sum(k for _, k in arrivals)),
                 on_order_label=', '.join(f'{k} in {q}' for q, k in arrivals) or '—',
@@ -360,3 +368,32 @@ def response_plan(data, case='baseline', basis='requested', ceiling=.85, max_sha
     final['cost_index'] = final.net_new * final.tool_group.map(C.RELATIVE_COST_INDEX)
     return dict(steps=pd.DataFrame(rows), transfer=transfer, buy=final, final_state=moved,
                 overloads=overloads(requested), overloads_current=overloads(current))
+
+
+# ------------------------------------------------------------------ planned fleet (follow the buy plan)
+def planned_extras(data, basis='requested', ceiling=.85):
+    """extra_tools entries that take every group to its planned 2027 fleet: pull-ins + new buys, by quarter.
+
+    Cumulative extras = max(0, planned fleet - tools released by date). Negative steps cancel a pulled-in
+    tool when its original order arrives, so it is never counted twice.
+    """
+    b = buy_list(data, 'baseline', basis, ceiling)
+    timed = timed_tools()
+    extras = []
+    for r in b.itertuples():
+        i, j = SITES.index(r.site), GROUPS.index(r.tool_group)
+        prev = 0
+        for k, q in enumerate(Q):
+            cum = max(0, getattr(r, f'fleet_{q}') - int(timed[i, j, k]))
+            if cum != prev:
+                extras.append([r.site, r.tool_group, q, int(cum - prev)])
+            prev = cum
+    return extras
+
+
+def with_fleet(state, data, fleet='current', basis='requested', ceiling=.85):
+    if fleet == 'planned':
+        state['extra_tools'] = list(state.get('extra_tools', [])) + planned_extras(data, basis, ceiling)
+    elif fleet != 'current':
+        raise ValueError('Fleet must be current or planned.')
+    return state

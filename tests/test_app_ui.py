@@ -3,7 +3,7 @@ from streamlit.testing.v1 import AppTest
 
 APP = Path(__file__).resolve().parents[1] / 'code' / 'apprag.py'
 PAGES = ['Demand outlook', 'Fab performance', 'Capacity scenario planning']
-VIEWS = ['Wafer request analyst', '2027 capacity', 'Response plan', 'Other scenarios']
+VIEWS = ['2027 capacity', 'Response plan', 'Wafer request analyst', 'Other scenarios']
 
 
 def app():
@@ -44,11 +44,18 @@ def test_capacity_views_render_at_each_limit():
 def test_analyst_calculates_and_flags_stale_inputs():
     at = app()
     at.radio(key='page').set_value('Capacity scenario planning').run()
+    assert at.radio(key='cap_view').value == '2027 capacity'
+    at.radio(key='cap_view').set_value('Wafer request analyst').run()
     assert any(b.label == 'Extract inputs with AI' and b.disabled for b in at.button)
+    assert at.radio(key='an_fleet').value == 'planned'
     at.button(key='an_calc').click().run()
     assert not at.exception
+    planned = next(m.value for m in at.markdown if 'class="decision"' in m.value)
+    assert 'Accept <b>+100</b>' in planned            # after the 2027 buys, EUV has room
+    at.radio(key='an_fleet').set_value('current').run()
+    at.button(key='an_calc').click().run()
     decision = next(m.value for m in at.markdown if 'class="decision"' in m.value)
-    assert 'EUV lithography' in decision
+    assert 'EUV lithography' in decision and 'capacity must be added' in decision
     at.number_input(key='an_target').set_value(900.).run()
     assert any('Inputs changed' in i.value for i in at.info)
     at.selectbox(key='analyst_example').set_value(at.selectbox(key='analyst_example').options[1]).run()

@@ -49,6 +49,8 @@ The four weeks after the stored history come from rerunning the same fab simulat
 
 ## 3. Capacity scenario planning
 
+### Views, in order: 2027 capacity · Response plan · Wafer request analyst · Other scenarios
+
 ### Wafer request analyst (the AI feature)
 
 1. **Request.** You type or paste a request. *Extract inputs with AI* sends it to an LLM together with the top retrieved notes. The LLM must fill a **strict JSON schema**: fab, program, quarter, the new total or the change, weeks, protected programs, and constraints. Each constraint must cite `REQUEST` or a retrieved note ID. Python then validates the output:
@@ -96,15 +98,17 @@ The four weeks after the stored history come from rerunning the same fab simulat
 - **REQ-2027-021: DRAM Node A +50 at Fab B, Q1.** Wet clean binds. The recommended response cuts short-loop experiments (priority 3) to free the hours.
 - **Short loops +100 at Fab A, Q1.** The excess runs on qualified tools at Fab B.
 
-### 2027 capacity
+### 2027 capacity (first view)
 
 ```
-tools needed = ⌈required h ÷ (168 × availability × limit)⌉
-buy = peak need − (installed + on order)
-pull in = on-order tools needed before their arrival quarter
+tools needed (quarter) = ⌈required h ÷ (168 × availability × limit)⌉
+fleet needed by quarter = running maximum of tools needed (tools are never removed)
+add (quarter) = increase in fleet needed beyond installed + on order, quarter by quarter
+buy · 2027 = sum of the quarterly adds = peak need − (installed + on order)
+pull in = on-order tools needed before their scheduled arrival, with the quarter they're needed by
 ```
 
-The view shows loading by quarter on the released fleet. A drill-down lists required vs. available hours by program, with the full arithmetic.
+Each quarter cell shows the tools to add that quarter, with the load *before* adding them underneath (required hours ÷ hours from installed + on-order tools released by then). For example, Fab A Deposition needs 50 → 59 → 66 → 73 tools against 42 installed: **+8, +9, +7, +7** by quarter, 31 for the year. A drill-down lists required vs. available hours by program, with the full arithmetic.
 
 ### Response plan: 2026Q4 rate → 2027 plan → response
 
@@ -119,4 +123,16 @@ The view ends with the buy list: tools, need-by quarter, pull-ins and cost index
 
 ### Other scenarios
 
-This view runs one change at a time: a demand change, a tool outage, or a qualified transfer. It can be applied by quarter or by exact week, and it compares baseline and scenario loading for every tool group.
+Each test runs on one of two fleets:
+
+- **Planned fleet (default):** installed + on order + the 2027 buys from the *2027 capacity* view, with each tool added in the quarter it's needed. A pulled-in tool is not counted again when its original order arrives. The 2027 plan then sits at or below the planning limit everywhere (max 84.9%), so a scenario shows its true marginal effect. Without the buys, groups already at 105–150% make every scenario look the same.
+- **Current fleet:** installed + on order only. This answers "what if we don't buy?"
+
+The tests:
+
+- **Demand growth:** change one program's starts, as a % or a target.
+- **Product mix shift:** move N wafers/week from one program to another at the same fab, with total starts unchanged. Because routes differ, the same wafers load tools differently. Shifting NAND to HBM, for example, adds EUV and lithography load and frees deposition and etch.
+- **Tool unavailability:** take N tools out of service for a window.
+- **Qualified load transfer:** move a share of a dual-qualified program to the other fab.
+
+Each test can run by quarter or by exact week. The **Wafer request analyst** has the same *Tools assumed* switch.

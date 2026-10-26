@@ -58,3 +58,31 @@ def test_response_plan_steps_and_freed_capacity(data):
     fv = K.freed_vs_added(data).set_index(['site', 'tool_group'])
     assert fv.loc[('FAB_A', 'EUV'), 'freed_h_wk'] == 0   # NAND/short loops never use EUV
     assert fv.loc[('FAB_A', 'ETCH'), 'freed_h_wk'] > 0
+
+
+def test_quarterly_additions_sum_to_buy_and_follow_need(data):
+    b = K.buy_list(data)
+    adds = b[[f'add_{q}' for q in K.Q]]
+    assert (adds.sum(axis=1) == b.net_new).all() and (adds >= 0).all().all()
+    dep = b.query("site=='FAB_A' and tool_group=='DEP'").iloc[0]
+    assert [dep[f'add_{q}'] for q in K.Q] == [8, 9, 7, 7]          # 50, 59, 66, 73 needed vs 42 installed
+    etch = b.query("site=='FAB_A' and tool_group=='ETCH'").iloc[0]
+    assert etch.pull_in == 3 and etch.pull_in_by == '2027Q1'
+
+
+def test_planned_fleet_brings_every_group_under_the_limit(data):
+    import launch_model as L
+    state = K.with_fleet(L.planning_state(data), data, 'planned')
+    table = L.loading_state(state, .85)
+    assert table.loading_pct.max() <= 85 + 1e-9
+    euv = table.query("site=='FAB_A' and tool_group=='EUV'").tools.tolist()
+    assert euv == [2, 2, 3, 3]          # pulled-in scanner in Q1, one new scanner in Q3; Q4 arrival not double counted
+
+
+def test_mix_shift_conserves_starts_and_planned_fleet_shows_real_delta(data):
+    import scenario_requests as R
+    r = R.run(data, 'Product mix shift', 'FAB_A', program='NAND_C', to_program='HBM_TV', wafers=50, first='2027Q2', last='2027Q2', fleet='planned')
+    base, new = r['base_state']['wspw']['FAB_A'], r['scenario_state']['wspw']['FAB_A']
+    assert sum(v[1] for v in base.values()) == sum(v[1] for v in new.values())
+    euv = r['comparison'].query("site=='FAB_A' and tool_group=='EUV' and quarter=='2027Q2'").iloc[0]
+    assert euv.loading_pct_base < 85 and euv.loading_pct_scenario > euv.loading_pct_base

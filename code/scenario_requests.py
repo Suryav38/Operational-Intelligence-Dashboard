@@ -7,10 +7,12 @@ import review_model as rm
 import weekly_scenarios as W
 import launch_model as L
 
-OPERATIONS=['Demand growth','Tool unavailability','Qualified load transfer']
+OPERATIONS=['Demand growth','Product mix shift','Tool unavailability','Qualified load transfer']
+FLEETS={'planned':'Planned fleet (after 2027 buys)','current':'Current fleet (installed + on order)'}
 
 def run(data,operation,site,program='DRAM_B',pct=10.,group='EUV',unavailable=1,to_site='FAB_B',
-        first='2027Q2',last='2027Q2',timing='quarters',ceiling=.85,recovery_group=None,recovery_points=0.,target_wspw=None,pilot_case='baseline'):
+        first='2027Q2',last='2027Q2',timing='quarters',ceiling=.85,recovery_group=None,recovery_points=0.,target_wspw=None,pilot_case='baseline',
+        fleet='current',to_program=None,wafers=0.):
     if operation not in OPERATIONS or site not in C.SITES:raise ValueError('Choose a supported operation and fab.')
     if timing=='weeks':
         calendar=W.calendar().set_index('week_start')
@@ -20,10 +22,26 @@ def run(data,operation,site,program='DRAM_B',pct=10.,group='EUV',unavailable=1,t
         if first not in C.PLAN_QUARTERS or last not in C.PLAN_QUARTERS or first>last:raise ValueError('The end quarter must be on or after the start quarter.')
         first_q,last_q=first,last
     if not math.isfinite(pct) or not -100<=pct<=100:raise ValueError('Choose a finite percentage from -100 to 100.')
-    base=L.planning_state(data,pilot_case)
-    if operation=='Demand growth':
+    import capital_model as K
+    base=K.with_fleet(L.planning_state(data,pilot_case),data,fleet,'requested',ceiling)
+    if operation=='Product mix shift':
+        if program not in C.QUALIFIED[site] or to_program not in C.QUALIFIED[site] or to_program==program:
+            raise ValueError('Choose two different programs that are both qualified at this fab.')
+        if not math.isfinite(wafers) or wafers<=0:raise ValueError('Choose a positive number of wafers per week to shift.')
+        qs=[q for q in C.PLAN_QUARTERS if first_q<=q<=last_q]
+        if any(base['wspw'][site][program][C.PLAN_QUARTERS.index(q)]<wafers for q in qs):
+            raise ValueError('The shift is larger than the source program\'s starts in that period.')
+        changes=[fc.PlanChange(type='starts_change',site=site,program=program,wspw_delta=-wafers,from_quarter=first_q,to_quarter=last_q),
+                 fc.PlanChange(type='starts_change',site=site,program=to_program,wspw_delta=wafers,from_quarter=first_q,to_quarter=last_q)]
+        changed,applied,warnings=fc.apply_changes(base,changes)
+        if warnings:raise ValueError('; '.join(warnings))
+        applied=[f'{site}: move {wafers:,.0f} WSPW from {C.PROGRAMS[program]["name"]} to {C.PROGRAMS[to_program]["name"]}, {first_q}–{last_q}; total starts unchanged']
+        changes=[c.model_dump(exclude_none=True) for c in changes]
+    elif operation=='Demand growth':
         review=rm.run_review(data,site,program,pct,first_q,last_q,ceiling,recovery_group,recovery_points,target_wspw=target_wspw)
         applied=review['applied'];changes=review['changes']
+        if target_wspw is not None:  # targets are absolute: recompute deltas against this base
+            changes=[dict(c,wspw_delta=target_wspw-base['wspw'][site][program][C.PLAN_QUARTERS.index(c['from_quarter'])]) for c in changes]
         changed,_,warnings=fc.apply_changes(base,changes)
         if warnings:raise ValueError('; '.join(warnings))
     elif operation=='Qualified load transfer':
@@ -43,7 +61,7 @@ def run(data,operation,site,program='DRAM_B',pct=10.,group='EUV',unavailable=1,t
                 changed['tools_base'][site][group][i]-=unavailable
         applied=[f'{site}: {unavailable} {group} tools unavailable in the selected window'];changes=[]
     b=L.loading_state(base,ceiling);s=L.loading_state(changed,ceiling)
-    review=dict(base_state=base,scenario_state=changed,baseline=b,scenario=s,comparison=rm.compare_tables(b,s,ceiling),
+    review=dict(base_state=base,scenario_state=changed,baseline=b,scenario=s,comparison=rm.compare_tables(b,s,ceiling),fleet=fleet,
         applied=applied,changes=changes,site=site,program=program,pct=pct,first_quarter=first_q,last_quarter=last_q,
         ceiling=ceiling,target_wspw=target_wspw,timing_mode=timing,operation=operation,pilot_case=pilot_case,to_site=to_site if operation=='Qualified load transfer' else None)
     if timing=='weeks':

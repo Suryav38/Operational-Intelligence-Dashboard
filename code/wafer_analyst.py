@@ -56,7 +56,7 @@ def observed_availability(data, weeks=4):
 BASES = {'run_rate': 'Planned run rate', 'requested': 'Requested plan'}
 
 
-def base_state(data, case='baseline', availability='plan', basis='run_rate'):
+def base_state(data, case='baseline', availability='plan', basis='run_rate', fleet='current', ceiling=.85):
     """Loading basis: the planned run rate (what will actually start) or the requested plan."""
     state = L.planning_state(data, case)
     if basis == 'run_rate':
@@ -68,7 +68,8 @@ def base_state(data, case='baseline', availability='plan', basis='run_rate'):
     if availability == 'observed':
         for (s, g), a in observed_availability(data).items():
             state['avail'][s][g] = [float(a)] * len(Q)
-    return state
+    import capital_model as K
+    return K.with_fleet(state, data, fleet, 'requested', ceiling)
 
 
 def current_wspw(data, site, program, quarter, case='baseline', basis='run_rate'):
@@ -166,7 +167,7 @@ def _score(weekly, base_weekly, weeks, sites, limit, ceiling):
 
 
 # ------------------------------------------------------------------ main analysis
-def analyze(data, request, case='baseline', limit=.85, ceiling=.95, availability='plan', basis='run_rate'):
+def analyze(data, request, case='baseline', limit=.85, ceiling=.95, availability='plan', basis='run_rate', fleet='current'):
     errors = validate(data, request, case)
     if errors:
         raise ValueError(' '.join(errors))
@@ -175,7 +176,7 @@ def analyze(data, request, case='baseline', limit=.85, ceiling=.95, availability
     qi = Q.index(quarter)
     protected = list(request.get('protected') or [])
     plan = programs(data)
-    state = base_state(data, case, availability, basis)
+    state = base_state(data, case, availability, basis, fleet, limit)
     current = float(state['wspw'][site][program][qi])
     target = float(request['requested_wspw'])
     delta = target - current
@@ -349,7 +350,7 @@ def analyze(data, request, case='baseline', limit=.85, ceiling=.95, availability
                       recommended=at(rec_weekly, site, bottleneck, wk) if best else None)
     week_label = W.calendar().set_index('week_start').loc[wk, 'label']
     result = dict(request=dict(request, current_wspw=current, delta_wspw=delta, protected=protected),
-                  case=case, limit=limit, ceiling=ceiling, availability=availability, basis=basis,
+                  case=case, limit=limit, ceiling=ceiling, availability=availability, basis=basis, fleet=fleet,
                   weeks=weeks, critical_week=wk, critical_week_label=week_label, bottleneck=bottleneck,
                   binding=binding, fits_under_ceiling=fit, fits_under_limit=fit_limit, accepted_now=accepted_now,
                   deficit_h_wk=max(0., float(crit.deficit_h) * scale), comparison=comparison,

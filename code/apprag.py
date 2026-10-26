@@ -192,11 +192,11 @@ CASE_NOTE = ui.CASES[pilot_case]
 
 
 # ================================================================== 1 · CAPITAL PLAN
-def load_cell(value, gap, ceiling):
-    if pd.isna(value):
-        return '<td class="q bad">no tool</td>'
-    tone = 'bad' if value > 100 else 'warn' if value >= ceiling * 100 else 'ok'
-    return f'<td class="q {tone}">{value:.0f}%</td>'
+def quarter_cell(add, value, ceiling):
+    tone = 'bad' if pd.isna(value) or value > 100 else 'warn' if value >= ceiling * 100 else 'ok'
+    load = 'no tool' if pd.isna(value) else f'{value:.0f}%'
+    tools = f'+{add}' if add else '–'
+    return f'<td class="q {tone}"><span class="qa{" zero" if not add else ""}">{tools}</span><span class="ql">{load}</span></td>'
 
 
 def capital_table(view, show_covered):
@@ -204,24 +204,26 @@ def capital_table(view, show_covered):
     rows = rows.assign(_c=rows.action.eq('Covered')).sort_values(['_c', 'net_new', 'pull_in', 'peak_loading_pct'],
                                                                  ascending=[True, False, False, False])
     head = ('<tr>' + ('<th class="l">Fab</th>' if BOTH else '') + '<th class="l">Tool group</th><th>Installed</th>'
-            '<th>On order</th><th>Peak need</th><th>Buy</th><th>Pull in</th><th>Need by</th>'
-            + ''.join(f'<th>{q[-2:]} load</th>' for q in K.Q) + '</tr>')
+            '<th>On order</th><th>Pull in</th><th>Buy · 2027</th>'
+            + ''.join(f'<th>{q}<div class="sub">add · load</div></th>' for q in K.Q) + '<th>Fleet by Q4</th></tr>')
     body = []
     for r in rows.itertuples():
         cls = ' class="covered"' if r.action == 'Covered' else ''
         on_order = f'{r.on_order} <span class="sub">({esc(r.on_order_label.split(" in ")[-1])})</span>' if r.on_order else '<span class="sub">—</span>'
+        pull = f'{r.pull_in} <span class="sub">to {r.pull_in_by}</span>' if r.pull_in else '–'
         body.append(f'<tr{cls}>' + (f'<td class="l">{site_label(r.site)}</td>' if BOTH else '')
                     + f'<td class="l">{esc(rm.GROUP_LABELS[r.tool_group])}</td><td class="num">{r.installed}</td>'
-                    f'<td class="num">{on_order}</td><td class="num">{r.needed_peak}</td>'
+                    f'<td class="num">{on_order}</td>'
+                    f'<td class="buy {"zero" if not r.pull_in else ""}">{pull}</td>'
                     f'<td class="buy {"zero" if not r.net_new else ""}">{r.net_new or "–"}</td>'
-                    f'<td class="buy {"zero" if not r.pull_in else ""}">{r.pull_in or "–"}</td>'
-                    f'<td class="num">{r.need_by or "—"}</td>'
-                    + ''.join(load_cell(getattr(r, f'load_{q}'), getattr(r, f'gap_{q}'), ceiling) for q in K.Q) + '</tr>')
+                    + ''.join(quarter_cell(getattr(r, f'add_{q}'), getattr(r, f'load_{q}'), ceiling) for q in K.Q)
+                    + f'<td class="num">{getattr(r, "fleet_2027Q4")}</td></tr>')
     st.markdown(f'<div class="cap-wrap"><table class="cap"><thead>{head}</thead><tbody>{"".join(body)}</tbody></table></div>',
                 unsafe_allow_html=True)
-    st.markdown(f'<div class="legend-row"><span><i style="background:var(--warn-bg)"></i>{ceiling*100:.0f}–100% loaded</span>'
-                '<span><i style="background:var(--bad-bg)"></i>over 100% · cannot run the plan</span>'
-                '<span>Load = required hours ÷ hours from tools released that quarter</span></div>', unsafe_allow_html=True)
+    st.markdown(f'<div class="legend-row"><span>+n = new tools to bring into service that quarter</span>'
+                f'<span>load = required hours ÷ hours from installed + on-order tools released by then</span>'
+                f'<span><i style="background:var(--warn-bg)"></i>{ceiling*100:.0f}–100%</span>'
+                '<span><i style="background:var(--bad-bg)"></i>over 100%</span></div>', unsafe_allow_html=True)
 
 
 def program_hours(state, s, grp, qi):
@@ -266,7 +268,7 @@ def outlook_view():
 
     head, toggle = st.columns([4, 1], vertical_alignment='bottom')
     with head:
-        section('Tools needed vs. installed + on order · loading by quarter', 'Buy = peak need − (installed + on order) · Pull in = on-order tools needed early')
+        section('New tools by quarter vs. installed + on-order fleet', 'Buy = 2027 total · each quarter shows tools to add and load before adding them')
     show_covered = toggle.checkbox('Show covered groups', key='show_covered')
     capital_table(view, show_covered)
 
@@ -304,9 +306,9 @@ def outlook_view():
                                     'Hours / wk': st.column_config.NumberColumn(format='%.0f')})
 
     labels = {'site': 'Fab', 'tool_group': 'Tool group', 'installed': 'Installed', 'on_order': 'On order',
-              'on_order_label': 'Arrivals', 'needed_peak': 'Peak need', 'peak_quarter': 'Peak quarter', 'net_new': 'Buy',
-              'pull_in': 'Pull in', 'need_by': 'Need by', 'action': 'Action'}
-    export = view[list(labels) + [f'load_{q}' for q in K.Q]].assign(planning_limit_pct=ceiling * 100, basis=basis, plan_case=pilot_case)
+              'on_order_label': 'Arrivals', 'needed_peak': 'Peak need', 'net_new': 'Buy 2027', 'pull_in': 'Pull in',
+              'pull_in_by': 'Pull in to', **{f'add_{q}': f'Add {q}' for q in K.Q}, **{f'load_{q}': f'Load {q} (%)' for q in K.Q}}
+    export = view[list(labels)].assign(planning_limit_pct=ceiling * 100, basis=basis, plan_case=pilot_case)
     st.download_button('Download tool requirement (CSV)', csv(export, labels), 'td_2027_tool_requirement.csv', 'text/csv')
     ai_panel('ai_capital', dict(view='2027 capacity outlook', site=site, pilot_case=pilot_case, planning_limit=ceiling, demand_basis=basis,
                                 totals=t, headline=K.headline(view, ceiling, basis).replace('<b>', '').replace('</b>', ''),
@@ -476,11 +478,11 @@ def response_view():
                    f'<td class="num">{m["share_pct"]}%</td><td class="num">{m["avg_wspw"]:,}</td></tr>' for m in moves) or '<tr><td class="l" colspan="4">No move lowers the cost index</td></tr>'
     st.markdown('<div class="cap-wrap narrow"><table class="cap"><thead><tr><th class="l">Program</th><th class="l">Move</th><th>Share</th>'
                 f'<th>Starts / week</th></tr></thead><tbody>{rows}</tbody></table></div>', unsafe_allow_html=True)
-    section('Tools to buy and need-by quarter · after reallocation and rebalancing', 'Pull in = on-order tools needed early')
+    section('Tools to add by quarter · after reallocation and rebalancing', 'Pull in = on-order tools needed before their arrival date')
     buy = r['buy'] if BOTH else r['buy'][r['buy'].site == site]
     capital_table(buy, False)
     st.caption('Cost index: illustrative relative cost per tool (wet clean = 1, EUV = 18), used only to rank responses; not a price.')
-    export = buy[['site', 'tool_group', 'installed', 'on_order', 'needed_peak', 'net_new', 'pull_in', 'need_by', 'cost_index']]
+    export = buy[['site', 'tool_group', 'installed', 'on_order', 'needed_peak', 'net_new', 'pull_in', 'pull_in_by', *[f'add_{q}' for q in K.Q], 'cost_index']]
     st.download_button('Download response buy list (CSV)', csv(export), f'td_2027_response_{case}.csv', 'text/csv')
 
 
@@ -488,7 +490,10 @@ def response_view():
 def scenario_test():
     programs = em.program_options(site, 'All families', include_pilot=False)
     quarter = '2027Q3'
-    operation = st.selectbox('Test', request_model.OPERATIONS, key='scenario_operation')
+    a, b = st.columns([1, 1.4])
+    operation = a.selectbox('Test', request_model.OPERATIONS, key='scenario_operation')
+    fleet = b.radio('Tools assumed', list(request_model.FLEETS), format_func=request_model.FLEETS.get, horizontal=True, key='scenario_fleet',
+                    help='Planned fleet = installed + on order + the 2027 buys from the 2027 capacity view (sized to requested starts at the planning limit).')
     if ss.get('_scenario_scope') != (site,):
         ss['_scenario_scope'] = (site,)
         ss['review'] = None
@@ -508,10 +513,20 @@ def scenario_test():
         if not eligible:
             st.info('No program here is qualified for this action. EUV routes cannot move to Fab B.')
             return
-        if ss.get('scenario_program') not in eligible:
-            ss['scenario_program'] = 'DRAM_B' if 'DRAM_B' in eligible else eligible[0]
-        program = b.selectbox('Program', eligible, format_func=ec.PROGRAM_SHORT.get, key='scenario_program')
-    request_priority = c.selectbox('Request priority', ['NORMAL', 'HOT'], key='scenario_priority', disabled=operation == 'Tool unavailability')
+        pkey = 'mix_from' if operation == 'Product mix shift' else 'scenario_program'
+        default = 'NAND_C' if operation == 'Product mix shift' else 'DRAM_B'
+        if ss.get(pkey) not in eligible:
+            ss[pkey] = default if default in eligible else eligible[0]
+        program = b.selectbox('Shift from' if operation == 'Product mix shift' else 'Program', eligible, format_func=ec.PROGRAM_SHORT.get, key=pkey)
+    to_program, wafers = None, 0.
+    if operation == 'Product mix shift':
+        targets = [p for p in C.QUALIFIED[request_site] if p != program]
+        if ss.get('scenario_to_program') not in targets:
+            ss['scenario_to_program'] = 'HBM_TV' if 'HBM_TV' in targets else targets[0]
+        to_program = c.selectbox('Shift to', targets, format_func=ec.PROGRAM_SHORT.get, key='scenario_to_program')
+        request_priority = 'NORMAL'
+    else:
+        request_priority = c.selectbox('Request priority', ['NORMAL', 'HOT'], key='scenario_priority', disabled=operation == 'Tool unavailability')
     timing = st.radio('Timing', ['Quarter range', 'Week range'], horizontal=True, key='scenario_timing')
     first_week = last_week = None
     if timing == 'Quarter range':
@@ -538,6 +553,8 @@ def scenario_test():
     pct, target = 0., None
     if operation == 'Tool unavailability':
         unavailable = int(st.number_input('Tools unavailable', min_value=1, max_value=100, value=1, step=1, key='unavailable_tools'))
+    elif operation == 'Product mix shift':
+        wafers = st.number_input('Wafers / week to shift (total starts unchanged)', min_value=5., max_value=1000., value=50., step=5., key='mix_wafers')
     elif operation == 'Qualified load transfer':
         st.caption(f'{site_label(request_site)} → {site_label(to_site)}. Both fabs are evaluated; network starts are conserved.')
         pct = st.number_input('Share of the program to move (%)', min_value=0., max_value=100., value=10., step=5., key='transfer_pct')
@@ -555,11 +572,13 @@ def scenario_test():
         a, b = st.columns(2)
         recovery_group = a.selectbox('Equipment to recover', [g_ for g_ in C.TOOL_GROUP_ORDER if C.INSTALLED_TOOLS[request_site][g_] > 0], format_func=rm.GROUP_LABELS.get, key='recovery_group_' + request_site)
         points = b.number_input('Recovery (percentage points)', min_value=.5, max_value=15., value=5., step=.5, key='recovery_points')
-    signature = (site, pilot_case, operation, request_site, program, pct, target, timing, first_period, last_period, ceiling, recovery_group, points, request_priority, milestone, outage_group, unavailable)
+    signature = (site, pilot_case, operation, request_site, program, pct, target, timing, first_period, last_period, ceiling, recovery_group, points,
+                 request_priority, milestone, outage_group, unavailable, fleet, to_program, wafers)
     if st.button('Run scenario', type='primary'):
         try:
             review = request_model.run(data, operation, request_site, program, pct, outage_group, unavailable, to_site, first_period, last_period,
-                                       'weeks' if timing == 'Week range' else 'quarters', ceiling, recovery_group, points, target, pilot_case)
+                                       'weeks' if timing == 'Week range' else 'quarters', ceiling, recovery_group, points, target, pilot_case,
+                                       fleet=fleet, to_program=to_program, wafers=wafers)
             review.update(request_priority=request_priority, milestone=milestone)
             ss['review'] = review
             ss['review_signature'] = signature
@@ -575,7 +594,9 @@ def scenario_test():
         return
     include_other = st.checkbox('Include the other fab in results', value=False, key='scenario_include_other') if BOTH and operation != 'Qualified load transfer' else operation == 'Qualified load transfer'
     result_scope = 'Both' if include_other else request_site
-    request_name = rm.GROUP_LABELS[outage_group] + ' unavailable' if operation == 'Tool unavailability' else ec.PROGRAM_SHORT[program] + ' · ' + request_priority
+    request_name = (rm.GROUP_LABELS[outage_group] + ' unavailable' if operation == 'Tool unavailability'
+                    else f'{wafers:,.0f} WSPW {ec.PROGRAM_SHORT[program]} → {ec.PROGRAM_SHORT[to_program]}' if operation == 'Product mix shift'
+                    else ec.PROGRAM_SHORT[program] + ' · ' + request_priority)
     if timing == 'Week range':
         inspect = st.selectbox('Inspect week', week_options, format_func=lambda w: calendar.loc[w, 'label'], key='inspect_week')
         before = weekly.summary(review, result_scope, inspect)
@@ -591,7 +612,7 @@ def scenario_test():
         current = rm.select_scope(comparison, result_scope, inspect)
         inspection_label = inspect
     section(site_label(request_site) + (' → ' + site_label(to_site) if operation == 'Qualified load transfer' else '') + ' · ' + request_name,
-            period_label + ' · ' + ('both fabs' if include_other else site_label(request_site) + ' only'))
+            period_label + ' · ' + ('both fabs' if include_other else site_label(request_site) + ' only') + ' · ' + request_model.FLEETS[fleet].lower())
     stats([
         (f"{before['starts']:,.0f} → {after['starts']:,.0f}", 'Starts / week', ''),
         (f"{before['at_risk']} → {after['at_risk']}", f'Groups at or above {ceiling*100:.0f}%', 'warn' if after['at_risk'] > before['at_risk'] else ''),
@@ -719,8 +740,8 @@ def _extract():
 
 
 @st.cache_data(show_spinner=False, max_entries=24)
-def cached_analysis(fingerprint, request_json, case, limit, ceiling_, availability, basis):
-    return WA.analyze(load_data(fingerprint), json.loads(request_json), case, limit, ceiling_, availability, basis)
+def cached_analysis(fingerprint, request_json, case, limit, ceiling_, availability, basis, fleet):
+    return WA.analyze(load_data(fingerprint), json.loads(request_json), case, limit, ceiling_, availability, basis, fleet)
 
 
 def pill(status):
@@ -822,9 +843,12 @@ def analyst_view():
                             help='Above the planning limit but below this ceiling = needs an exception. Above it = not accepted.')
     availability = c4.radio('Tool availability', ['plan', 'observed'], key='an_avail', horizontal=False,
                             format_func={'plan': 'Planning assumption', 'observed': 'Measured, Q4 to date'}.get)
-    protected = st.multiselect('Protected programs (never cut or moved)', [p for p in C.PROGRAM_ORDER if p != program], format_func=D.NAMES.get, key='an_protected')
+    c1, c2 = st.columns([2.4, 1.6])
+    protected = c1.multiselect('Protected programs (never cut or moved)', [p for p in C.PROGRAM_ORDER if p != program], format_func=D.NAMES.get, key='an_protected')
+    fleet = c2.radio('Tools assumed', list(request_model.FLEETS), format_func=request_model.FLEETS.get, key='an_fleet',
+                     help='Planned fleet includes the 2027 buys from the 2027 capacity view; current fleet is installed + on order only.')
     request = dict(site=an_site, program=program, quarter=quarter, requested_wspw=float(target), first_week=first, last_week=last, protected=protected)
-    signature = json.dumps([request, pilot_case, ceiling, ceiling_, availability, basis], sort_keys=True)
+    signature = json.dumps([request, pilot_case, ceiling, ceiling_, availability, basis, fleet], sort_keys=True)
     if st.button('Calculate impact', type='primary', key='an_calc'):
         ss['an_signature'] = signature
     if ss.get('an_signature') != signature:
@@ -836,7 +860,7 @@ def analyst_view():
         return
     try:
         with st.spinner('Calculating weekly loading for both fabs…'):
-            r = cached_analysis(FP, json.dumps(request), pilot_case, ceiling, ceiling_, availability, basis)
+            r = cached_analysis(FP, json.dumps(request), pilot_case, ceiling, ceiling_, availability, basis, fleet)
     except ValueError as exc:
         st.error(str(exc))
         return
@@ -922,7 +946,7 @@ def capacity_page():
     t = K.totals(K.scope(frame, site))
     exp = K.totals(K.scope(cached_buy(FP, pilot_case, 'expected', ceiling), site))
     page_head(f'{ui.SITES[site].upper()} · 2027 PLAN · {ceiling*100:.0f}% LIMIT', 'Capacity scenario planning')
-    view = st.radio('View', ['Wafer request analyst', '2027 capacity', 'Response plan', 'Other scenarios'], horizontal=True,
+    view = st.radio('View', ['2027 capacity', 'Response plan', 'Wafer request analyst', 'Other scenarios'], horizontal=True,
                     key='cap_view', label_visibility='collapsed')
     if view == 'Wafer request analyst':
         analyst_view()
