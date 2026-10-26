@@ -385,7 +385,7 @@ def version_bridge(vf, base, target, col):
     fig = go.Figure(go.Waterfall(x=x, y=y, measure=['absolute'] + ['relative'] * len(d) + ['total'],
                                  text=[f'{b.sum():,.0f}'] + [f'{v:+,.0f}' for v in d] + [f'{t.sum():,.0f}'], textposition='outside',
                                  textfont=dict(size=11, color=INK), connector=dict(line=dict(color='#cfd4d9', width=1)),
-                                 increasing=dict(marker=dict(color=BAD)), decreasing=dict(marker=dict(color='#7fa1c3')),
+                                 increasing=dict(marker=dict(color='#7fa1c3')), decreasing=dict(marker=dict(color=BAD)),
                                  totals=dict(marker=dict(color=ACCENT)), hovertemplate='%{x}: %{text}<extra></extra>'))
     lo = min(b.sum(), t.sum()) * .8
     ec.style(fig, 360)

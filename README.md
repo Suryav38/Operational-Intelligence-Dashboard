@@ -6,16 +6,16 @@ The dashboard has three pages that form one planning workflow:
 
 | Page | What it shows |
 |---|---|
-| **Demand outlook** (the opener) | Requested vs. actual starts from 2024 through the 2026Q4 forecast to the 2027 2026Q3 and 2026Q4 plans; the plan bridge; the program × quarter change table; per-program trends; the mix; the realization factor; priorities and milestones |
+| **Demand outlook** (the opener) | Requested vs. actual starts from 2024 through the 2026Q4 forecast to the 2027 plan; the demand bridge from 2026Q4; the program × quarter change table; per-program trends; the mix; the realization factor; priorities and milestones |
 | **Fab performance** | 2026Q4 to date (28 Sep – 25 Oct 2026, simulated): starts vs. plan, completions, WIP, cycle time, yield, tool loading and queues, measured vs. planned availability, and the model check |
-| **Capacity scenario planning** | **AI wafer loading analyst** (request → editable inputs → model → ranked responses → cited explanation), 2027 capacity, the **Response plan** (2026Q3 plan → 2026Q4 plan → cost-optimal response) and other scenarios |
+| **Capacity scenario planning** | **AI wafer loading analyst** (request → editable inputs → model → ranked responses → cited explanation), 2027 capacity, the **Response plan** (2026Q4 rate → 2027 plan → cost-optimal response) and other scenarios |
 
 **VIEW_GUIDE.md** explains every view and calculation. **DEMO_GUIDE.md** is the walkthrough.
 
 ### What changed in v10
 - Three dashboard pages with no headline sentences. Each chart heading states what is compared and over what period.
 - **The demand year boundary is fixed.** 2027 requests are now on the same basis as historical requests (run rate ÷ realization factor), and 2026Q4 is a trend forecast. Requests go 2,942 → 2,994 → 3,130, with no artificial drop.
-- The 2026Q4 plan carries the latest program changes (DRAM Node B, HBM and Node A up; NAND and short loops down). It is compared against the 2026Q3 plan.
+- The 2027 plan is compared against today's 2026Q4 rate. DRAM Node B, HBM and Node A grow; NAND and short loops decline in some quarters.
 - **2026Q4 to date is simulated** by `code/simulate_q4_to_date.py`. It reruns the same model for 56 weeks, verifies that the first 52 weeks match the stored history exactly, then writes the `*_q4` tables.
 - New `wafer_analyst.py`, `request_parser.py` (strict-schema LLM extraction with citation checks) and `capital_model.response_plan` (reallocation of freed capacity plus a cost-optimal rebalancing search).
 - AI explanations get one automatic repair turn when citations are missing, and the number check accepts rounding.

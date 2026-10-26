@@ -13,8 +13,9 @@ import fab_data as fd
 
 CURRENT_VERSION = '2026Q4 plan (current)'
 PREVIOUS_VERSION = '2026Q3 plan'
-VERSIONS = [PREVIOUS_VERSION, CURRENT_VERSION]
-VERSION_SHORT = {PREVIOUS_VERSION: '2026Q3 plan', CURRENT_VERSION: '2026Q4 plan'}
+TODAY_VERSION = '2026Q4 run rate (today)'
+VERSIONS = [TODAY_VERSION, CURRENT_VERSION]
+VERSION_SHORT = {TODAY_VERSION: '2026Q4 today', CURRENT_VERSION: '2027 plan', PREVIOUS_VERSION: '2026Q3 plan'}
 
 PROGRAMS = [
     dict(program='DRAM_B', priority=1, priority_label='Ramp', milestone='Node B yield-learning gate',
@@ -62,13 +63,19 @@ if __name__ == '__main__':
 
 
 def versions_frame(data):
-    """2027 plan versions (July, October) with requested and expected starts."""
+    """The 2027 plan, plus today's 2026Q4 rate held flat as the comparison base, with requested and expected starts."""
     import fab_demo as D
     import forecast_model as fm
-    v = data['plan_versions_2027'].copy()
+    v = data['plan_versions_2027']
+    v = v[v.version == CURRENT_VERSION].copy()
     rate = fm.fit(data['wafer_start_history']).set_index('program').realization_rate
     v['realization_rate'] = v.program.map(rate)
     v['expected_wspw'] = v.requested_wspw * v.realization_rate
+    q4 = data['demand_bridge_2026q4']
+    today = pd.DataFrame([dict(version=TODAY_VERSION, site=r.site, program=r.program, quarter=q, requested_wspw=float(r.requested_wspw),
+                               expected_wspw=float(r.forecast_wspw), realization_rate=float(rate[r.program]))
+                          for r in q4.itertuples() for q in C.PLAN_QUARTERS])
+    v = pd.concat([today, v], ignore_index=True)
     v['family'] = v.program.map(D.FAMILIES)
     v['technology_family'] = v.program.map(D.TECHNOLOGY)
     return v

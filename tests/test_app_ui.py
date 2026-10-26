@@ -27,7 +27,6 @@ def test_demand_versions_and_unused_assumptions_disabled():
     assert at.selectbox(key='limit_pct').disabled
     at.radio(key='demand_split').set_value('Family').run()
     at.radio(key='demand_measure').set_value('Expected').run()
-    at.selectbox(key='dm_compare').set_value(at.selectbox(key='dm_compare').options[1]).run()
     assert not at.exception
     assert not any('class="headline"' in m.value for m in at.markdown)
 

@@ -149,6 +149,10 @@ ol.note { padding-left:18px; }
 table.cap.matrix td.mx { text-align:right; line-height:1.25; padding:6px 10px; }
 table.cap.matrix td.mx .v { display:block; font-family:var(--mono); font-size:13px; color:var(--ink); }
 table.cap.matrix td.mx .d { display:block; font-family:var(--mono); font-size:10.5px; color:var(--muted); }
-table.cap.matrix td.up2 { background:#f2d4cd; } table.cap.matrix td.up1 { background:#f8ecd6; }
-table.cap.matrix td.dn1 { background:#dfe9f3; } table.cap.matrix td.dn2 { background:#c9dbec; }
+.up1 { --c:#e3ebf4; } .up2 { --c:#a9c1dc; } .up3 { --c:#2f5d8a; }
+.dn1 { --c:#f8e1de; } .dn2 { --c:#eeaca4; } .dn3 { --c:#b8412f; }
+table.cap.matrix td.mx.up1, table.cap.matrix td.mx.up2, table.cap.matrix td.mx.up3,
+table.cap.matrix td.mx.dn1, table.cap.matrix td.mx.dn2, table.cap.matrix td.mx.dn3 { background:var(--c); }
+table.cap.matrix td.up3 .v, table.cap.matrix td.up3 .d, table.cap.matrix td.dn3 .v, table.cap.matrix td.dn3 .d { color:#fff; }
+.legend-row i.sw { background:var(--c, #fff); border:1px solid var(--rule); }
 table.cap.matrix tr.total td { border-top:1px solid var(--ink); font-weight:600; }

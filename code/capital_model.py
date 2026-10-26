@@ -285,7 +285,7 @@ def headline(frame, ceiling, basis):
     return text
 
 
-# ------------------------------------------------------------------ response plan (July -> Q4 plan)
+# ------------------------------------------------------------------ response plan (2026Q4 rate -> 2027 plan)
 def overloads(state):
     """Tool groups that cannot run the plan on installed + on-order tools (released by date): load > 100%."""
     _, required = tools_needed(_wspw(state), _per_tool_hours(state), 1.)
@@ -301,16 +301,14 @@ def overloads(state):
     return pd.DataFrame(rows, columns=['site', 'tool_group', 'quarter', 'load_pct', 'short_h_wk'])
 
 
-def _july_state(data, basis):
+def _today_state(data, basis):
+    """Today's 2026Q4 rate held flat through 2027: requests, or forecast starts for the expected basis."""
     state = plan_state(data, 'baseline', 'requested')
-    for s, programs in C.JULY_REQUESTED_WSPW_2027.items():
-        for p, v in programs.items():
-            state['wspw'][s][p] = [float(x) for x in v]
-    if basis == 'expected':
-        rates = realization_rates(data)
-        for s in SITES:
-            for p in C.PROGRAM_ORDER:
-                state['wspw'][s][p] = [x * float(rates[p]) for x in state['wspw'][s][p]]
+    col = 'requested_wspw' if basis == 'requested' else 'forecast_wspw'
+    q4 = data['demand_bridge_2026q4'].set_index(['site', 'program'])[col]
+    for s in SITES:
+        for p in C.PROGRAM_ORDER:
+            state['wspw'][s][p] = [float(q4.get((s, p), 0.))] * 4
     return state
 
 
@@ -324,8 +322,8 @@ def _increases_only(previous, current):
 
 
 def freed_vs_added(data, case='baseline', basis='requested', quarter='2027Q3'):
-    """Hours per week the latest plan adds (growing programs) and gives back (shrinking programs), per tool group."""
-    base = _july_state(data, basis)
+    """Hours per week the 2027 plan adds (growing programs) and gives back (shrinking programs) versus today's 2026Q4 rate."""
+    base = _today_state(data, basis)
     new = plan_state(data, case, basis)
     qi = Q.index(quarter)
     rows = []
@@ -344,13 +342,13 @@ def freed_vs_added(data, case='baseline', basis='requested', quarter='2027Q3'):
 
 def response_plan(data, case='baseline', basis='requested', ceiling=.85, max_share=50):
     """Cheapest response to the latest plan: declines given back, then cross-fab rebalancing, then buy the rest."""
-    current = _july_state(data, basis)
+    current = _today_state(data, basis)
     requested = plan_state(data, case, basis)
     up_only = _increases_only(current, requested)
     transfer = optimize_transfers(requested, ceiling, max_share, weighted=True)
     moved = apply_moves(requested, transfer['moves'])
-    steps = [('2026Q3 plan', 'Previous planning cycle (2026Q3)', current),
-             ('Increases only', 'If nothing else gave way', up_only),
+    steps = [('2026Q4 rate', "Today's run rate held flat", current),
+             ('Growth only', 'If nothing else gave way', up_only),
              ('Reallocate freed capacity', 'Declining programs release shared tools', requested),
              ('Rebalance fabs', 'Cost-optimal move of dual-qualified work', moved)]
     rows = []

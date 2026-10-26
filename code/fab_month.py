@@ -50,7 +50,9 @@ def summary(data, site='Both', weeks=WEEKS):
     programs = pd.DataFrame({'actual_wspw': by_program, 'plan_wspw': planned}).fillna(0.)
     programs['attainment_pct'] = 100 * programs.actual_wspw / programs.plan_wspw.where(programs.plan_wspw > 0)
 
-    return dict(weeks=wk, start=start, end=end - pd.Timedelta(days=1), plan_quarter=quarter, weekly=weekly,
+    started_total = float(weekly.wafer_starts.sum())
+    return dict(started_total=started_total, quarter_total_plan=plan_wspw * 13, weeks_done=len(wk),
+                weeks=wk, start=start, end=end - pd.Timedelta(days=1), plan_quarter=quarter, weekly=weekly,
                 starts_wspw=float(weekly.wafer_starts.mean()), outs_wspw=float(weekly.wafer_outs.mean()),
                 plan_wspw=plan_wspw, attainment_pct=100 * float(weekly.wafer_starts.mean()) / plan_wspw if plan_wspw else float('nan'),
                 wip=float(weekly.wip_wafers.mean()), cycle_days=float(full.cycle_time_days.mean()),
