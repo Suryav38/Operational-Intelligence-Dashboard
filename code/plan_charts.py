@@ -49,25 +49,32 @@ def drivers(state, site, group, ceiling):
 
 
 # ------------------------------------------------------------------ demand
-def demand_trend(totals, history):
-    """Actual and requested history, then the 2027 request and expected starts."""
+def demand_trend(totals, history, q4=None):
+    """Actual and requested history, the 2026Q4 trend forecast, then the 2027 request and expected starts."""
     fig = go.Figure()
     h = history
-    fig.add_scatter(x=h.index, y=h.requested_wspw, name='Requested (history)', mode='lines',
+    hq = list(h.index)
+    req_x, req_y = hq + (['2026Q4'] if q4 else []), list(h.requested_wspw) + ([q4['requested_wspw']] if q4 else [])
+    fig.add_scatter(x=req_x, y=req_y, name='Requested (history + Q4)', mode='lines',
                     line=dict(color=HISTORY, width=1.5, dash='dot'), hovertemplate='%{x} · %{y:,.0f} requested<extra></extra>')
-    fig.add_scatter(x=h.index, y=h.actual_wspw, name='Actual starts', mode='lines+markers',
+    fig.add_scatter(x=hq, y=h.actual_wspw, name='Actual starts', mode='lines+markers',
                     line=dict(color=INK, width=2), marker=dict(size=5), hovertemplate='%{x} · %{y:,.0f} actual<extra></extra>')
+    if q4:
+        fig.add_scatter(x=[hq[-1], '2026Q4'], y=[h.actual_wspw.iloc[-1], q4['forecast_wspw']], name='Q4 forecast (no actuals yet)',
+                        mode='lines+markers', line=dict(color=INK, width=1.5, dash='dash'), marker=dict(size=7, symbol='circle-open'),
+                        hovertemplate='%{x} · %{y:,.0f} forecast<extra></extra>')
     t = totals
     fig.add_scatter(x=t.index, y=t.requested_wspw, name='2027 requested', mode='lines+markers',
                     line=dict(color=ACCENT, width=2.5), marker=dict(size=6), hovertemplate='%{x} · %{y:,.0f} requested<extra></extra>')
     fig.add_scatter(x=t.index, y=t.expected_wspw, name='2027 expected', mode='lines+markers',
                     line=dict(color=ACCENT, width=2, dash='dash'), marker=dict(size=6, symbol='circle-open'),
                     hovertemplate='%{x} · %{y:,.0f} expected<extra></extra>')
-    fig.add_vrect(x0=len(h) - .5, x1=len(h) + len(t) - .5, fillcolor='#f3f5f8', line_width=0, layer='below')
-    fig.add_annotation(x=len(h) - .45, y=1, yref='paper', text='Plan', showarrow=False, xanchor='left',
+    order = hq + (['2026Q4'] if q4 else []) + list(t.index)
+    first_plan = order.index(t.index[0])
+    fig.add_vrect(x0=first_plan - .5, x1=len(order) - .5, fillcolor='#f3f5f8', line_width=0, layer='below')
+    fig.add_annotation(x=first_plan - .45, y=1, yref='paper', text='2027 plan', showarrow=False, xanchor='left',
                        font=dict(size=10, color=MUTED))
-    ec.style(fig, 330)
-    order = list(h.index) + list(t.index)
+    ec.style(fig, 340)
     fig.update_xaxes(type='category', categoryorder='array', categoryarray=order, showgrid=False)
     fig.update_yaxes(title='Wafer starts / week', rangemode='tozero')
     return fig
@@ -108,11 +115,11 @@ def realization(model):
 
 
 # ------------------------------------------------------------------ levers
-def waterfall(steps):
+def waterfall(steps, final='Tools to buy'):
     values = steps.net_new.tolist()
     measure = ['absolute'] + ['relative'] * (len(values) - 1) + ['total']
     y = [values[0]] + [values[i] - values[i - 1] for i in range(1, len(values))] + [values[-1]]
-    x = [str(v).replace(' ', '<br>', 1) for v in steps.step] + ['Tools<br>to buy']
+    x = [str(v).replace(' ', '<br>') for v in steps.step] + [final.replace(' ', '<br>')]
     text = [str(values[0])] + [f'{v:+d}' for v in y[1:-1]] + [str(values[-1])]
     fig = go.Figure(go.Waterfall(x=x, y=y, measure=measure, text=text, textposition='outside',
                                  textfont=dict(size=13, color=INK),
@@ -162,7 +169,7 @@ def model_check(frame):
                     marker=dict(color=INK, size=9, symbol='diamond-open', line=dict(width=2)),
                     hovertemplate='%{y}<br>Simulated %{x:.1f}%<extra></extra>')
     ec.style(fig, max(280, 26 * len(f) + 70))
-    fig.update_xaxes(title='Production loading, last 13 weeks (%)', range=[40, 100])
+    fig.update_xaxes(title='Production loading, 2026Q3 (%)', range=[40, 100])
     fig.update_yaxes(showgrid=False)
     return fig
 
@@ -191,4 +198,258 @@ def cycle_trend(weekly, site):
     ec.style(fig, 260)
     fig.update_xaxes(type='date', tickformat='%b %Y', showgrid=False)
     fig.update_yaxes(title='Cycle time (days)', rangemode='tozero')
+    return fig
+
+
+# ------------------------------------------------------------------ demand context
+def version_change(versions, previous, current):
+    v = versions.groupby(['version', 'program']).requested_wspw.sum().unstack(0).fillna(0) / 4
+    v['delta'] = v[current] - v[previous]
+    v = v.sort_values('delta')
+    colors = [ACCENT if d > 0 else (WARN if d < 0 else LIGHT) for d in v.delta]
+    fig = go.Figure(go.Bar(y=[D.NAMES[p] for p in v.index], x=v.delta, orientation='h', marker_color=colors,
+                           text=[f'{d:+.0f}' for d in v.delta], textposition='outside', textfont=dict(size=11, color=INK),
+                           customdata=np.c_[v[previous], v[current]],
+                           hovertemplate='%{y}<br>%{customdata[0]:,.0f} → %{customdata[1]:,.0f} WSPW (2027 avg)<extra></extra>'))
+    fig.add_vline(x=0, line=dict(color=MUTED, width=1))
+    ec.style(fig, 260)
+    span = max(10, float(v.delta.abs().max()) * 1.35)
+    fig.update_xaxes(title='Change in 2027 average starts / week', range=[-span, span], showgrid=False)
+    fig.update_yaxes(showgrid=False)
+    return fig
+
+
+# ------------------------------------------------------------------ fab performance (one month)
+def month_flow(weekly, plan_wspw):
+    labels = [pd.Timestamp(w).strftime('%d %b') for w in weekly.week_start]
+    fig = go.Figure()
+    fig.add_bar(x=labels, y=weekly.wafer_starts, name='Starts', marker_color=INK,
+                hovertemplate='Week of %{x} · %{y:,.0f} started<extra></extra>')
+    fig.add_bar(x=labels, y=weekly.wafer_outs, name='Completions', marker_color=LIGHT,
+                hovertemplate='Week of %{x} · %{y:,.0f} completed<extra></extra>')
+    fig.add_hline(y=plan_wspw, line=dict(color=WARN, width=1.5, dash='dash'),
+                  annotation=dict(text=f'Plan {plan_wspw:,.0f}', font=dict(size=11, color=WARN), xanchor='right', x=1, yanchor='bottom'))
+    ec.style(fig, 300)
+    fig.update_layout(barmode='group', bargap=.35)
+    fig.update_yaxes(title='Wafers / week', rangemode='tozero', range=[0, max(plan_wspw, weekly[['wafer_starts', 'wafer_outs']].max().max()) * 1.15])
+    fig.update_xaxes(title='Week starting', showgrid=False)
+    return fig
+
+
+def month_wip_ct(weekly):
+    from plotly.subplots import make_subplots
+    labels = [pd.Timestamp(w).strftime('%d %b') for w in weekly.week_start]
+    fig = make_subplots(rows=2, cols=1, shared_xaxes=True, vertical_spacing=.12,
+                        subplot_titles=('WIP at week end (wafers)', 'Cycle time of lots completed (days)'))
+    fig.add_scatter(x=labels, y=weekly.wip_wafers, mode='lines+markers+text', line=dict(color=INK, width=2), row=1, col=1,
+                    text=[f'{v:,.0f}' for v in weekly.wip_wafers], textposition='top center', textfont=dict(size=11),
+                    hovertemplate='%{x} · %{y:,.0f} wafers<extra></extra>', showlegend=False)
+    fig.add_scatter(x=labels, y=weekly.cycle_time_days, mode='lines+markers+text', line=dict(color=ACCENT, width=2), row=2, col=1,
+                    text=[f'{v:.1f}' for v in weekly.cycle_time_days], textposition='top center', textfont=dict(size=11),
+                    hovertemplate='%{x} · %{y:.1f} days<extra></extra>', showlegend=False)
+    ec.style(fig, 320)
+    fig.update_layout(margin=dict(t=34))
+    fig.update_annotations(font=dict(size=11, color=MUTED), x=0, xanchor='left')
+    w, c = weekly.wip_wafers, weekly.cycle_time_days
+    fig.update_yaxes(range=[w.min() * .9, w.max() * 1.08], row=1, col=1)
+    fig.update_yaxes(range=[c.min() * .85, c.max() * 1.12], row=2, col=1)
+    fig.update_xaxes(showgrid=False)
+    return fig
+
+
+def availability(tools, both):
+    f = tools.copy()
+    f['label'] = (f.site.map(rm.SITE_LABELS) + ' · ' if both else '') + f.tool_group.map(rm.GROUP_LABELS)
+    f = f.sort_values('avail_gap_pts')
+    fig = go.Figure()
+    for r in f.itertuples():
+        fig.add_shape(type='line', x0=r.assumed_avail_pct, x1=r.observed_avail_pct, y0=r.label, y1=r.label,
+                      line=dict(color=BAD if r.avail_gap_pts < -2 else '#cfd4d9', width=3))
+    fig.add_scatter(x=f.assumed_avail_pct, y=f.label, mode='markers', name='Planning assumption', marker=dict(color=LIGHT, size=9),
+                    hovertemplate='%{y}<br>Assumed %{x:.1f}%<extra></extra>')
+    fig.add_scatter(x=f.observed_avail_pct, y=f.label, mode='markers', name='Measured, Q4 to date',
+                    marker=dict(color=INK, size=9, symbol='diamond'), hovertemplate='%{y}<br>Measured %{x:.1f}%<extra></extra>')
+    ec.style(fig, max(280, 25 * len(f) + 80))
+    fig.update_xaxes(title='Production availability (% of calendar time)', range=[60, 95])
+    fig.update_yaxes(showgrid=False)
+    return fig
+
+
+def loading_queue(tools, limit, both):
+    f = tools.copy()
+    f['label'] = (f.site.map(rm.SITE_LABELS) + ' · ' if both else '') + f.tool_group.map(rm.GROUP_LABELS)
+    f = f.sort_values('loading_pct')
+    colors = [BAD if v > 100 else WARN if v >= limit * 100 else LIGHT for v in f.loading_pct]
+    fig = go.Figure(go.Bar(y=f.label, x=f.loading_pct, orientation='h', marker_color=colors,
+                           text=[f'{l:.0f}% · {q:.1f} h queue' for l, q in zip(f.loading_pct, f.queue_h)], textposition='outside',
+                           textfont=dict(size=10, color=MUTED), hovertemplate='%{y}<br>%{x:.1f}% loaded<extra></extra>'))
+    fig.add_vline(x=limit * 100, line=dict(color=WARN, width=1.2, dash='dash'))
+    ec.style(fig, max(280, 25 * len(f) + 80))
+    fig.update_xaxes(title='Production loading (%)', range=[0, 125], showgrid=False)
+    fig.update_yaxes(showgrid=False)
+    return fig
+
+
+# ------------------------------------------------------------------ wafer loading analyst
+def analyst_weeks(result):
+    req = result['request']
+    site, group = req['site'], result['bottleneck']
+    fig = go.Figure()
+
+    def series(frame, name, color, dash, width=2):
+        rows = frame[(frame.site == site) & (frame.tool_group == group)].sort_values('week_start')
+        fig.add_scatter(x=pd.to_datetime(rows.week_start), y=rows.loading_pct, name=name, mode='lines',
+                        line=dict(color=color, width=width, dash=dash, shape='hv'),
+                        hovertemplate='Week of %{x|%d %b} · %{y:.1f}%<extra>' + name + '</extra>')
+    series(result['base_weekly'], 'Baseline plan', HISTORY, 'solid')
+    series(result['request_weekly'], 'Full request', BAD, 'solid')
+    if result['recommended'] is not None:
+        series(result['recommended']['weekly'], 'Recommended', ACCENT, 'solid', 3)
+    w0 = pd.Timestamp(result['weeks'][0])
+    w1 = pd.Timestamp(result['weeks'][-1]) + pd.Timedelta(days=7)
+    fig.add_vrect(x0=w0, x1=w1, fillcolor='#f3f5f8', line_width=0, layer='below',
+                  annotation=dict(text='Request window', font=dict(size=10, color=MUTED), yanchor='top', y=1))
+    _limit_line(fig, result['limit'] * 100, f'{result["limit"]*100:.0f}% planning limit')
+    _limit_line(fig, result['ceiling'] * 100, f'{result["ceiling"]*100:.0f}% acceptance ceiling', BAD, 'dot')
+    ec.style(fig, 300)
+    fig.update_xaxes(type='date', tickformat='%b', showgrid=False, range=['2027-01-01', '2027-12-31'])
+    fig.update_yaxes(title=f'{rm.SITE_LABELS[site]} · {rm.GROUP_LABELS[group]} loading (%)', range=[40, 130])
+    return fig
+
+
+def freed_added(frame, both):
+    f = frame.copy()
+    f['label'] = (f.site.map(rm.SITE_LABELS) + ' · ' if both else '') + f.tool_group.map(rm.GROUP_LABELS)
+    f = f.sort_values('added_h_wk')
+    fig = go.Figure()
+    fig.add_bar(y=f.label, x=f.added_h_wk, orientation='h', name='Added by growing programs', marker_color=BAD,
+                hovertemplate='%{y}<br>+%{x:,.0f} h/wk<extra></extra>')
+    fig.add_bar(y=f.label, x=-f.freed_h_wk, orientation='h', name='Freed by declining programs', marker_color='#7fa1c3',
+                customdata=f.offset_pct, hovertemplate='%{y}<br>%{x:,.0f} h/wk · offsets %{customdata:.0f}% of the increase<extra></extra>')
+    ec.style(fig, max(300, 24 * len(f) + 90))
+    fig.update_layout(barmode='relative')
+    fig.update_xaxes(title='Tool-hours / week (freed ← → added)', zeroline=True, zerolinecolor=MUTED)
+    fig.update_yaxes(showgrid=False)
+    return fig
+
+
+# ------------------------------------------------------------------ demand outlook (versions)
+import planning_context as PCX
+VERSION_COLOR = {PCX.PREVIOUS_VERSION: '#9aa1a8', PCX.CURRENT_VERSION: ACCENT}
+VERSION_DASH = {PCX.PREVIOUS_VERSION: 'solid', PCX.CURRENT_VERSION: 'solid'}
+
+
+def version_trend(history, q4, vf, col, shown):
+    """All lines solid: actual runs straight into the Q4 forecast point, plan versions continue from it."""
+    fig = go.Figure()
+    hq = list(history.index)
+    fig.add_scatter(x=hq + ['2026Q4'], y=list(history.requested_wspw) + [q4['requested_wspw']], name='Requested',
+                    mode='lines', line=dict(color='#c3c8ce', width=2), hovertemplate='%{x} · %{y:,.0f} requested<extra></extra>')
+    fig.add_scatter(x=hq + ['2026Q4'], y=list(history.actual_wspw) + [q4['forecast_wspw']], name='Actual starts',
+                    mode='lines+markers', line=dict(color=INK, width=2.2), marker=dict(size=4),
+                    hovertemplate='%{x} · %{y:,.0f} starts<extra></extra>')
+    fig.add_scatter(x=['2026Q4'], y=[q4['forecast_wspw']], mode='markers+text', marker=dict(size=9, color=INK),
+                    text=['Q4 fcst'], textposition='bottom center', textfont=dict(size=10, color=MUTED), showlegend=False,
+                    hovertemplate='2026Q4 forecast · %{y:,.0f}<extra></extra>')
+    anchor = q4['requested_wspw'] if col == 'requested_wspw' else q4['forecast_wspw']
+    for v in PCX.VERSIONS:
+        if v not in shown:
+            continue
+        t = vf[vf.version == v].groupby('quarter')[col].sum().reindex(C.PLAN_QUARTERS)
+        fig.add_scatter(x=['2026Q4'] + list(t.index), y=[anchor] + list(t), name=PCX.VERSION_SHORT[v], mode='lines+markers',
+                        line=dict(color=VERSION_COLOR[v], width=2.6 if v == PCX.CURRENT_VERSION else 2),
+                        marker=dict(size=6), hovertemplate='%{x} · %{y:,.0f}<extra>' + PCX.VERSION_SHORT[v] + '</extra>')
+    order = hq + ['2026Q4'] + C.PLAN_QUARTERS
+    fig.add_vrect(x0=order.index('2027Q1') - .5, x1=len(order) - .5, fillcolor='#f3f5f8', line_width=0, layer='below',
+                  annotation=dict(text='2027 plan', font=dict(size=10, color=MUTED), yanchor='top', y=1, xanchor='left'))
+    ec.style(fig, 360)
+    fig.update_xaxes(type='category', categoryorder='array', categoryarray=order, showgrid=False, tickangle=-45)
+    fig.update_yaxes(title='Wafer starts / week', rangemode='tozero')
+    return fig
+
+
+def version_bridge(vf, base, target, col):
+    b = vf[vf.version == base].groupby('program')[col].sum() / 4
+    t = vf[vf.version == target].groupby('program')[col].sum() / 4
+    d = (t - b.reindex(t.index).fillna(0))
+    d = d.reindex([p for p in C.PROGRAM_ORDER if p in d.index])
+    SHORTN = {'DRAM_A': 'Node A', 'DRAM_B': 'Node B', 'NAND_C': 'NAND', 'HBM_TV': 'HBM', 'SHORT': 'Short<br>loops'}
+    x = [PCX.VERSION_SHORT[base].replace(' ', '<br>')] + [SHORTN[p] for p in d.index] + [PCX.VERSION_SHORT[target].replace(' ', '<br>')]
+    y = [b.sum()] + list(d) + [t.sum()]
+    fig = go.Figure(go.Waterfall(x=x, y=y, measure=['absolute'] + ['relative'] * len(d) + ['total'],
+                                 text=[f'{b.sum():,.0f}'] + [f'{v:+,.0f}' for v in d] + [f'{t.sum():,.0f}'], textposition='outside',
+                                 textfont=dict(size=11, color=INK), connector=dict(line=dict(color='#cfd4d9', width=1)),
+                                 increasing=dict(marker=dict(color=BAD)), decreasing=dict(marker=dict(color='#7fa1c3')),
+                                 totals=dict(marker=dict(color=ACCENT)), hovertemplate='%{x}: %{text}<extra></extra>'))
+    lo = min(b.sum(), t.sum()) * .8
+    ec.style(fig, 360)
+    fig.update_layout(showlegend=False, margin=dict(t=30))
+    fig.update_yaxes(title='Starts / week (2027 avg)', range=[lo, max(b.sum(), t.sum(), b.sum() + d.clip(lower=0).sum()) * 1.06])
+    fig.update_xaxes(showgrid=False, tickangle=0, tickfont=dict(size=10))
+    return fig
+
+
+def program_multiples(hp, bridge, vf, col, shown):
+    from plotly.subplots import make_subplots
+    progs = [p for p in C.PROGRAM_ORDER if p in set(vf.program)]
+    fig = make_subplots(rows=1, cols=len(progs), subplot_titles=[D.NAMES[p].replace(' (EUV)', '') for p in progs], horizontal_spacing=.035)
+    order = sorted(hp.quarter.unique()) + ['2026Q4'] + C.PLAN_QUARTERS
+    ticks = ['2024Q1', '2025Q1', '2026Q1', '2027Q1']
+    for i, p in enumerate(progs, start=1):
+        h = hp[hp.program == p].groupby('quarter')[['requested_wspw', 'actual_wspw']].sum()
+        q4 = bridge[bridge.program == p]
+        q4r, q4f = float(q4.requested_wspw.sum()), float(q4.forecast_wspw.sum())
+        fig.add_scatter(x=list(h.index) + ['2026Q4'], y=list(h.requested_wspw) + [q4r], mode='lines', line=dict(color='#c3c8ce', width=1.6),
+                        showlegend=False, row=1, col=i, hovertemplate='%{x} · %{y:,.0f} requested<extra></extra>')
+        fig.add_scatter(x=list(h.index) + ['2026Q4'], y=list(h.actual_wspw) + [q4f], mode='lines', line=dict(color=INK, width=1.6),
+                        showlegend=False, row=1, col=i, hovertemplate='%{x} · %{y:,.0f} actual / forecast<extra></extra>')
+        anchor = q4r if col == 'requested_wspw' else q4f
+        for v in PCX.VERSIONS:
+            if v not in shown:
+                continue
+            t = vf[(vf.version == v) & (vf.program == p)].groupby('quarter')[col].sum().reindex(C.PLAN_QUARTERS)
+            fig.add_scatter(x=['2026Q4'] + C.PLAN_QUARTERS, y=[anchor] + list(t), mode='lines', showlegend=False, row=1, col=i,
+                            line=dict(color=VERSION_COLOR[v], width=2, dash=VERSION_DASH[v]),
+                            hovertemplate='%{x} · %{y:,.0f}<extra>' + PCX.VERSION_SHORT[v] + '</extra>')
+        fig.update_xaxes(type='category', categoryorder='array', categoryarray=order, tickvals=ticks, ticktext=['24', '25', '26', '27'],
+                         showgrid=False, row=1, col=i)
+        fig.update_yaxes(rangemode='tozero', row=1, col=i)
+    ec.style(fig, 250)
+    fig.update_annotations(font=dict(size=12, color=INK))
+    fig.update_layout(margin=dict(t=40, b=30))
+    return fig
+
+
+def version_mix(frame, col, group):
+    key = {'Program': 'program', 'Family': 'technology_family', 'Fab': 'site'}[group]
+    fig = go.Figure()
+    values = list(dict.fromkeys(frame[key]))
+    if key == 'program':
+        values = [p for p in C.PROGRAM_ORDER if p in values]
+    palette = ['#2f5d8a', '#7fa1c3', '#6f8f7a', '#b08d4a', '#c9ced4']
+    for i, v in enumerate(values):
+        rows = frame[frame[key] == v].groupby('quarter')[col].sum().reindex(C.PLAN_QUARTERS)
+        name = D.NAMES[v] if key == 'program' else rm.SITE_LABELS.get(v, v)
+        color = PROGRAM_COLOR[v] if key == 'program' else (ec.SITE_COLORS.get(v) or palette[i % len(palette)])
+        fig.add_bar(x=rows.index, y=rows, name=name, marker_color=color, hovertemplate='%{x} · %{y:,.0f}<extra>' + name + '</extra>')
+    ec.style(fig, 320)
+    fig.update_layout(barmode='stack')
+    fig.update_yaxes(title='Wafer starts / week')
+    fig.update_xaxes(showgrid=False)
+    return fig
+
+
+def program_vs_plan(programs):
+    f = programs.sort_values('plan_wspw', ascending=True)
+    names = [D.NAMES[p] for p in f.program]
+    fig = go.Figure()
+    fig.add_bar(y=names, x=f.plan_wspw, orientation='h', name='Q4 plan', marker_color='#d9dde2',
+                hovertemplate='%{y}<br>Plan %{x:,.0f}<extra></extra>')
+    fig.add_bar(y=names, x=f.actual_wspw, orientation='h', name='Actual', marker_color=INK, width=.4,
+                text=[f'{a:.0f}%' for a in f.attainment_pct], textposition='outside', textfont=dict(size=11, color=MUTED),
+                hovertemplate='%{y}<br>Actual %{x:,.0f}<extra></extra>')
+    ec.style(fig, 280)
+    fig.update_layout(barmode='overlay')
+    fig.update_xaxes(title='Wafer starts / week', showgrid=False, range=[0, float(f.plan_wspw.max()) * 1.18])
+    fig.update_yaxes(showgrid=False)
     return fig

@@ -11,28 +11,36 @@ NAMES={p:v['name'] for p,v in PROGRAMS.items()}
 TECHNOLOGY={p:('DRAM' if p.startswith('DRAM') or p=='HBM_TV' else 'NAND' if p=='NAND_C' else 'Experiments') for p in PROGRAMS}
 FAMILIES={p:('HBM' if p=='HBM_TV' else TECHNOLOGY[p]) for p in PROGRAMS}
 CASES={'baseline':'Pre-pilot baseline','introduction':'Pilot introduction','slower':'Slower pilot ramp'}
+
+def pilot_case(case):
+    """The pilot overlay a plan case uses."""
+    return case if case in CASES else 'baseline'
 HISTORY_START='2025-09-29'
 HISTORY_WEEKS=52
 STUDY_START='2027-04-05'
 STUDY_WEEKS=16
 LAUNCH_DATE='2027-05-17'  # seventh reporting week, after the same simulated prefix
 SEEDS=[7,17,27,37,47]
-PRIOR_Q4_REQUEST_WSPW=2950.
 TARGET_DAYS={'DRAM_A':38,'DRAM_B':45,'NAND_C':42,'HBM_TV':48,'SHORT':12,PILOT:48}
 
-def demand_bridge():
-    """User-provided Q4 total; assumed allocation, with no invented actuals.
+def demand_bridge(history):
+    """2026Q4 forecast: the quarter in progress when the history ends (27 Sep 2026).
 
-    Keep this outside training history: it is a planning reference, not an
-    observed reporting quarter. The program mix is an explicit allocation rule.
+    Requested and actual starts each continue the program's own trend: the latest quarter
+    times its mean quarter-on-quarter change over the last four quarters. Q4 actuals do not
+    exist yet, so this is a labelled forecast. It never enters the realization model fit.
     """
     import pandas as pd
-    total=sum(v[0] for groups in C.REQUESTED_WSPW_2027.values() for v in groups.values())
-    return pd.DataFrame([dict(quarter='2026Q4',site=site,program=p,
-        requested_wspw=PRIOR_Q4_REQUEST_WSPW*values[0]/total,actual_wspw=float('nan'),
-        record_kind='planning_bridge',period_basis='User-provided synthetic planning reference; actuals unavailable',
-        allocation_basis='Assumed fab/program split proportional to baseline 2027Q1 requested starts')
-        for site,groups in C.REQUESTED_WSPW_2027.items() for p,values in groups.items()])
+    rows=[]
+    for (site,program),g in history.groupby(['site','program']):
+        g=g.sort_values('quarter')
+        req=g.requested_wspw.iloc[-1]*(1+g.requested_wspw.pct_change().tail(4).mean())
+        act=g.actual_wspw.iloc[-1]*(1+g.actual_wspw.pct_change().tail(4).mean())
+        rows.append(dict(quarter='2026Q4',site=site,program=program,requested_wspw=round(float(req)),
+            actual_wspw=float('nan'),forecast_wspw=round(float(act)),record_kind='q4_forecast',
+            period_basis='Trend forecast; Q4 is in progress and has no actuals yet',
+            allocation_basis='Each fab/program continues its own last-four-quarter trend'))
+    return pd.DataFrame(rows)
 
 def pilot_rate(date,case):
     import pandas as pd

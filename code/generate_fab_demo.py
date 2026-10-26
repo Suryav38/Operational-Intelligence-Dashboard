@@ -33,7 +33,7 @@ def plans(seeds=D.SEEDS):
         for p,values in programs.items():
             for q,w in zip(C.PLAN_QUARTERS,values):rows.append(dict(site=site,program=p,quarter=q,requested_wspw=w))
     frame=pd.DataFrame(rows);save('plan_2027',frame);save('wafer_start_history',quarter_history())
-    save('demand_bridge_2026q4',D.demand_bridge())
+    save('demand_bridge_2026q4',D.demand_bridge(quarter_history()))
     save('installed_tools',pd.DataFrame([dict(site=s,tool_group=g,tools=n) for s,groups in C.INSTALLED_TOOLS.items() for g,n in groups.items()]))
     save('tool_arrivals',pd.DataFrame(C.TOOL_ARRIVALS,columns=['site','tool_group','quarter','tools']))
     route=D.route_steps();save('route_steps',route)
@@ -55,7 +55,7 @@ def plans(seeds=D.SEEDS):
     save('pilot_plan_quarterly',pd.DataFrame(quarterly));save('pilot_plan_weekly',pd.DataFrame(weekly))
     specification=dict(schema_version='v6',provenance='Entirely synthetic, independent of Micron',historical_period=[D.HISTORY_START,'2026-09-27'],planning_horizon='2027',technology_start_mix={'DRAM_including_HBM':.75,'NAND':.15,'experiments':.10},
         notes='75% wafer-start share is a demo assumption, not inferred from revenue. Fleet is illustrative and sized for the declared workload.',
-        prior_year_bridge=dict(quarter='2026Q4',requested_wspw=D.PRIOR_Q4_REQUEST_WSPW,source='User-provided planning reference',allocation='Proportional to baseline 2027Q1 fab/program requests',actuals_available=False,used_for_training=False),
+        prior_year_bridge=dict(quarter='2026Q4',source='Trend forecast per fab/program (requested and starts)',actuals_available=False,used_for_training=False),
         study=dict(site='FAB_A',start=D.STUDY_START,weeks=D.STUDY_WEEKS,launch_date=D.LAUNCH_DATE,pilot=D.PILOT,seeds=list(seeds),cases=D.CASES),
         dispatch='Non-preemptive HOT before NORMAL; same process, move and hold distributions for both priorities',
         batching='FURN: compatible recipe only, at most 3 lots, 2 h maximum formation wait, fixed 6 h machine cycle',

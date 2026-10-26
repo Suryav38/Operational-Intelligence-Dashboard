@@ -1,25 +1,26 @@
-# TD Capacity Plan 2027 (v9)
+# TD Capacity Plan 2027 (v10)
 
-An independent interview prototype for a fictional two-fab Technology Development network. **All operating data, routes, tool counts, targets and notes are synthetic.** No company data and no internal screens are used.
+An independent interview prototype for a fictional two-fab Technology Development network. **All operating data, routes, tool counts, plans and notes are synthetic.** No company data or internal screens are used.
 
-The dashboard answers one question: **what tools does the 2027 plan need, by when, and what could we do instead of buying them?**
+The dashboard has three pages that form one planning workflow:
 
-| Page | Question it answers |
+| Page | What it shows |
 |---|---|
-| **Capital plan** | Net-new tools and pull-ins by fab, tool group and need-by quarter, with a drill-down into which programs drive each group |
-| **Demand** | Requested vs. expected 2027 starts, and how much of a request historically gets run |
-| **Levers** | Planning to expected starts, raising the loading limit, and an optimized rebalancing of qualified work, each shown with its risk |
-| **Scenarios** | Live demand, tool-outage and transfer tests, plus the precomputed EUV-pilot lot simulation (WIP and delay) |
-| **2026 baseline** | Checks the capacity model against the lot simulation, request attainment and cycle time |
+| **Demand outlook** (the opener) | Requested vs. actual starts from 2024 through the 2026Q4 forecast to the 2027 July and October plans; the plan bridge; the program × quarter change table; per-program trends; the mix; the realization factor; priorities and milestones |
+| **Fab performance** | 2026Q4 to date (28 Sep – 25 Oct 2026, simulated): starts vs. plan, completions, WIP, cycle time, yield, tool loading and queues, measured vs. planned availability, and the model check |
+| **Capacity scenario planning** | **AI wafer loading analyst** (request → editable inputs → model → ranked responses → cited explanation), 2027 capacity, the **Response plan** (July → October → cost-optimal response) and other scenarios |
 
-Three global assumptions sit in the grey bar: **Fab**, **Plan case** and **Planning limit**. Every other control sits next to the chart it changes. **VIEW_GUIDE.md** explains every view and calculation.
+**VIEW_GUIDE.md** explains every view and calculation. **DEMO_GUIDE.md** is the walkthrough.
 
-### What changed in v9
-- The equipment-health, lot-explorer and route pages were removed. They covered daily operations, not capital decisions.
-- New `capital_model.py` provides the buy list (net-new vs. pull-in), lever steps, a transfer optimizer, and the model-vs-simulation check.
-- New `plan_charts.py` and `dashboard.css` give one restrained visual system: IBM Plex, a single accent colour, and colour used only for limit and over-capacity status.
-- The program/family filters and the "More filters" popover were removed. The sidebar was replaced by a top tab rail.
-- The AI assistant now appears only on Capital plan and Scenarios.
+### What changed in v10
+- Three dashboard pages with no headline sentences. Each chart heading states what is compared and over what period.
+- **The demand year boundary is fixed.** 2027 requests are now on the same basis as historical requests (run rate ÷ realization factor), and 2026Q4 is a trend forecast. Requests go 2,942 → 2,994 → 3,130, with no artificial drop.
+- The October plan carries the latest program changes (DRAM Node B, HBM and Node A up; NAND and short loops down). It is compared against the July plan.
+- **2026Q4 to date is simulated** by `code/simulate_q4_to_date.py`. It reruns the same model for 56 weeks, verifies that the first 52 weeks match the stored history exactly, then writes the `*_q4` tables.
+- New `wafer_analyst.py`, `request_parser.py` (strict-schema LLM extraction with citation checks) and `capital_model.response_plan` (reallocation of freed capacity plus a cost-optimal rebalancing search).
+- AI explanations get one automatic repair turn when citations are missing, and the number check accepts rounding.
+- Removed from the UI: Levers, the EUV pilot study, the lot explorer and the equipment-health pages.
+- `code/eval_extraction.py` with `evals/request_extraction_cases.json` measures extraction accuracy and time when an API key is set.
 
 ## AI setup and data path
 
@@ -90,15 +91,15 @@ This deliberately overwrites the generated tables, notes and database. A full ru
 
 ## Update your Mac/GitHub project
 
-Download **td-fab-planner-v9.zip** into Downloads, then run in Cursor:
+Download **td-fab-planner-v10.zip** into Downloads, then run in Cursor:
 
 ```bash
-unzip -q -o "$HOME/Downloads/td-fab-planner-v9.zip" -d "$HOME/Downloads/td-planner-v9"
-ditto "$HOME/Downloads/td-planner-v9/td-fab-planner-update" "$HOME/Desktop/Operational-Intelligence-Dashboard"
+unzip -q -o "$HOME/Downloads/td-fab-planner-v10.zip" -d "$HOME/Downloads/td-planner-v10"
+ditto "$HOME/Downloads/td-planner-v10/td-fab-planner-update" "$HOME/Desktop/Operational-Intelligence-Dashboard"
 cd "$HOME/Desktop/Operational-Intelligence-Dashboard"
 git rm --ignore-unmatch tests/test_dashboard.py tests/test_dashboard_v8.py
 git add -A
-git commit -m "Refocus dashboard on 2027 capital planning"
+git commit -m "Demand-led 3-page planner with AI wafer loading analyst"
 git push origin main
 ```
 

@@ -12,6 +12,7 @@ Tool counts are not costs. An EUV scanner and a wet bench both count as one tool
 """
 from __future__ import annotations
 
+import copy
 import itertools
 import math
 
@@ -90,8 +91,8 @@ def tools_needed(wspw, per_tool, ceiling):
 
 
 # ------------------------------------------------------------------ buy list
-def buy_list(data, case='baseline', basis='requested', ceiling=.85):
-    state = plan_state(data, case, basis)
+def buy_list(data, case='baseline', basis='requested', ceiling=.85, state=None):
+    state = state or plan_state(data, case, basis)
     per = _per_tool_hours(state)
     need, required = tools_needed(_wspw(state), per, ceiling)
     timed, inst, comm = timed_tools(), installed(), committed()
@@ -137,7 +138,14 @@ def scope(frame, site):
 
 
 # ------------------------------------------------------------------ levers
-def optimize_transfers(state, ceiling, max_share=50, step=5):
+COST = np.array([C.RELATIVE_COST_INDEX[g] for g in GROUPS])
+
+
+def cost_index(net_new):
+    return float((np.asarray(net_new) * COST[None, :]).sum())
+
+
+def optimize_transfers(state, ceiling, max_share=50, step=5, weighted=False):
     """Grid-search a constant 2027 share of each dual-qualified program moved between fabs.
 
     Objective: fewest net-new tools across both fabs; ties go to the smallest move.
@@ -159,8 +167,10 @@ def optimize_transfers(state, ceiling, max_share=50, step=5):
         stack[:, 1, k] += a_to_b - b_to_a
         moved += (a_to_b + b_to_a).mean(axis=1)
     need, _ = tools_needed(stack, per, ceiling)
-    net = np.clip(need.max(axis=-1) - comm, 0, None).sum(axis=(1, 2))
-    best = int(np.lexsort((moved, net))[0])
+    gaps = np.clip(need.max(axis=-1) - comm, 0, None)
+    count = gaps.sum(axis=(1, 2))
+    net = (gaps * COST[None, None, :]).sum(axis=(1, 2)) if weighted else count
+    best = int(np.lexsort((moved, count, net))[0])
     zero = int(np.flatnonzero((combos == 0).all(axis=1))[0])
     moves = []
     for col, p in enumerate(TRANSFERABLE):
@@ -170,7 +180,7 @@ def optimize_transfers(state, ceiling, max_share=50, step=5):
         src, dst = ('FAB_A', 'FAB_B') if x > 0 else ('FAB_B', 'FAB_A')
         wafers = abs(x) * np.mean(W[SITES.index(src), PROGRAMS.index(p)])
         moves.append(dict(program=p, from_site=src, to_site=dst, share_pct=round(100 * abs(x)), avg_wspw=round(wafers)))
-    return dict(before=int(net[zero]), after=int(net[best]), moves=moves,
+    return dict(before=float(net[zero]), after=float(net[best]), tools_before=int(count[zero]), tools_after=int(count[best]), moves=moves,
                 moved_wspw=round(float(moved[best])), max_share=max_share, step=step,
                 searched=len(combos))
 
@@ -273,3 +283,82 @@ def headline(frame, ceiling, basis):
     if t['first_need']:
         text += f" The first shortfall is in <b>{t['first_need']}</b>."
     return text
+
+
+# ------------------------------------------------------------------ response plan (July -> October plan)
+def overloads(state):
+    """Tool groups that cannot run the plan on installed + on-order tools (released by date): load > 100%."""
+    _, required = tools_needed(_wspw(state), _per_tool_hours(state), 1.)
+    avail = timed_tools() * _per_tool_hours(state)
+    rows = []
+    for i, s in enumerate(SITES):
+        for j, g in enumerate(GROUPS):
+            for k, q in enumerate(Q):
+                req, av = required[i, j, k], avail[i, j, k]
+                if req > 0 and (av == 0 or req > av):
+                    rows.append(dict(site=s, tool_group=g, quarter=q, load_pct=np.nan if av == 0 else 100 * req / av,
+                                     short_h_wk=req - av))
+    return pd.DataFrame(rows, columns=['site', 'tool_group', 'quarter', 'load_pct', 'short_h_wk'])
+
+
+def _july_state(data, basis):
+    state = plan_state(data, 'baseline', 'requested')
+    for s, programs in C.JULY_REQUESTED_WSPW_2027.items():
+        for p, v in programs.items():
+            state['wspw'][s][p] = [float(x) for x in v]
+    if basis == 'expected':
+        rates = realization_rates(data)
+        for s in SITES:
+            for p in C.PROGRAM_ORDER:
+                state['wspw'][s][p] = [x * float(rates[p]) for x in state['wspw'][s][p]]
+    return state
+
+
+def _increases_only(previous, current):
+    """Current plan where programs grew, previous plan where they shrank (nothing gives way)."""
+    out = copy.deepcopy(current)
+    for s in SITES:
+        for p in C.PROGRAM_ORDER:
+            out['wspw'][s][p] = [max(a, b) for a, b in zip(previous['wspw'][s][p], current['wspw'][s][p])]
+    return out
+
+
+def freed_vs_added(data, case='baseline', basis='requested', quarter='2027Q3'):
+    """Hours per week the latest plan adds (growing programs) and gives back (shrinking programs), per tool group."""
+    base = _july_state(data, basis)
+    new = plan_state(data, case, basis)
+    qi = Q.index(quarter)
+    rows = []
+    for i, s in enumerate(SITES):
+        for j, g in enumerate(GROUPS):
+            added = freed = 0.
+            for p in C.PROGRAM_ORDER:
+                d = (new['wspw'][s][p][qi] - base['wspw'][s][p][qi]) * D.hours_per_wafer(p, g)
+                added += max(d, 0.)
+                freed += max(-d, 0.)
+            if added or freed:
+                rows.append(dict(site=s, tool_group=g, added_h_wk=added, freed_h_wk=freed, net_h_wk=added - freed,
+                                 offset_pct=100 * min(freed, added) / added if added else np.nan))
+    return pd.DataFrame(rows)
+
+
+def response_plan(data, case='baseline', basis='requested', ceiling=.85, max_share=50):
+    """Cheapest response to the latest plan: declines given back, then cross-fab rebalancing, then buy the rest."""
+    current = _july_state(data, basis)
+    requested = plan_state(data, case, basis)
+    up_only = _increases_only(current, requested)
+    transfer = optimize_transfers(requested, ceiling, max_share, weighted=True)
+    moved = apply_moves(requested, transfer['moves'])
+    steps = [('July plan', 'Previous planning cycle', current),
+             ('Increases only', 'If nothing else gave way', up_only),
+             ('Reallocate freed capacity', 'Declining programs release shared tools', requested),
+             ('Rebalance fabs', 'Cost-optimal move of dual-qualified work', moved)]
+    rows = []
+    for name, detail, st in steps:
+        arr = _net_new(st, ceiling)
+        rows.append(dict(step=name, detail=detail, tools=int(arr.sum()), cost_index=cost_index(arr),
+                         **{f'{s}|{g}': int(arr[i, j]) for i, s in enumerate(SITES) for j, g in enumerate(GROUPS)}))
+    final = buy_list(data, case, basis, ceiling, state=moved)
+    final['cost_index'] = final.net_new * final.tool_group.map(C.RELATIVE_COST_INDEX)
+    return dict(steps=pd.DataFrame(rows), transfer=transfer, buy=final, final_state=moved,
+                overloads=overloads(requested), overloads_current=overloads(current))

@@ -91,8 +91,8 @@ The capacity screen converts program routes and starts into equipment hours. The
 
 ## Demand comparison and the year boundary
 
-The 2026 comparison contains Q1–Q3 synthetic reporting-quarter requests/actuals plus a separate Q4 planning reference. The user supplied the Q4 combined rate of 2,950 WSPW. Its fab/program allocation is assumed in proportion to the baseline 2027Q1 requests, not measured history. Q4 actuals are missing and this reference is excluded from both model training and backtesting.
+History ends at 2026Q3 (reporting week ending 27 Sep 2026). 2026Q4 is the quarter in progress, so it has no actuals. Each fab/program continues its own last-four-quarter trend, separately for requests and for starts. The result is stored as a labelled forecast in `demand_bridge_2026q4.csv` and never enters the realization fit or the backtest.
 
-The 2027Q1 requested baseline is still 2,800 WSPW. Its prior-quarter change is (2,800 / 2,950 − 1) × 100 = **−5.1%**, or −150 WSPW. Its same-quarter year-over-year change uses 2026Q1's 2,727 WSPW: (2,800 / 2,727 − 1) × 100 = **+2.7%**. A later 2027 ramp does not remove the initial decrease.
+The 2027 requests (`fab_config.REQUESTED_WSPW_2027`) are on the same basis as the historical requests: planned run rate (`RUN_RATE_WSPW_2027`) ÷ the program's realization factor, rounded to 5. Earlier versions entered run rates labelled as requests, which made both the request and expected-start lines step down about 5% at the year boundary. The lot simulation still releases work at the run rates.
 
-Charts compare weekly rates, not quarter-volume totals. The history uses reporting-quarter blocks; the future plan uses calendar quarters. Unknown Q4 actuals and unsupported pilot expectations are gaps, not zero output. The shared on-screen fab/program filters change the demand charts and KPI cards together. Chart period limits plotted/exported quarters; Focus quarter selects the KPI basis. Legends hide a series in their own plot only. Missing prior history produces no growth percentage.
+Charts compare weekly rates, not quarter totals. The history uses reporting-quarter blocks; the future plan uses calendar quarters.

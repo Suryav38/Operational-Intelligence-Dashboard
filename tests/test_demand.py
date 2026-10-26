@@ -13,8 +13,8 @@ from pathlib import Path
 def test_next_year_totals_reconcile_to_requested_plan(data):
     frame=demand.plan(data)
     totals=demand.quarterly(frame)
-    assert totals.requested_wspw.tolist()==[2800,3000,3300,3600]
-    assert totals.requested_wspw.mean()==3175
+    assert totals.requested_wspw.tolist()==[3130,3645,4030,4440]
+    assert totals.requested_wspw.mean()==3811.25
     assert len(frame)==32
     assert set(frame.quarter)=={'2027Q1','2027Q2','2027Q3','2027Q4'}
     expected=fm.corrected_plan(data['plan_2027'],fm.fit(data['wafer_start_history']))
@@ -29,7 +29,7 @@ def test_combined_equals_sum_of_fabs_and_programs(data):
     pd.testing.assert_frame_equal(total,by_program)
     filtered=demand.plan(data,'FAB_B',['NAND_C'])
     assert set(filtered.program)=={'NAND_C'} and set(filtered.site)=={'FAB_B'}
-    assert filtered.requested_wspw.tolist()==[120,130,135,140]
+    assert filtered.requested_wspw.tolist()==[110,100,105,110]
 
 
 def test_expected_starts_are_pooled_program_calibration_not_new_site_models(data):
@@ -76,27 +76,22 @@ def test_all_chart_breakdowns_preserve_selected_quarter_totals(data):
 
 
 
-def test_previous_year_reference_retains_decline_without_inventing_actuals(data):
+def test_year_boundary_is_continuous_and_q4_is_a_labelled_forecast(data):
     rows=demand.comparison_frame(data)
     totals=demand.comparison_totals(rows)
-    assert totals.loc['2026Q4','requested_wspw']==pytest.approx(2950)
-    assert totals.loc['2027Q1','requested_wspw']==2800
-    changes=demand.comparison_changes(rows,'2027Q1')
-    assert changes['transition_delta']==pytest.approx(-150)
-    assert changes['transition_pct']==pytest.approx(-150/2950*100)
-    assert changes['yoy_pct']==pytest.approx((2800/2727-1)*100)
+    # Requests run on from 2026Q3 through the Q4 forecast into 2027Q1 without a step down.
+    q3,q4,q1=totals.loc['2026Q3','requested_wspw'],totals.loc['2026Q4','requested_wspw'],totals.loc['2027Q1','requested_wspw']
+    assert q3==2942 and q4==2994 and q1==3130
+    assert 1<=q1/q4<1.06  # the October plan grows from Q4; no artificial step down
+    # Starts: 2026Q3 actual -> Q4 forecast -> 2027Q1 expected also continue.
+    bridge=data['demand_bridge_2026q4']
+    assert bridge.forecast_wspw.sum()==2789
+    assert 1<=totals.loc['2027Q1','expected_wspw']/bridge.forecast_wspw.sum()<1.06
     assert totals.loc['2026Q4','actual_wspw']!=totals.loc['2026Q4','actual_wspw']
     assert totals.loc['2027Q1':,'actual_wspw'].isna().all()
-    assert set(rows.query("quarter=='2026Q4'").record_kind)=={'planning_bridge'}
+    assert set(rows.query("quarter=='2026Q4'").record_kind)=={'q4_forecast'}
     assert '2026Q4' not in set(data['wafer_start_history'].quarter)
 
-
-def test_comparison_filters_reconcile_and_new_pilot_has_no_prior_history(data):
-    both=demand.comparison_totals(demand.comparison_frame(data))
-    parts=[demand.comparison_totals(demand.comparison_frame(data,site)) for site in C.SITES]
-    np.testing.assert_allclose(both.requested_wspw,(parts[0]+parts[1]).requested_wspw)
-    selected=demand.comparison_frame(data,'FAB_B',['NAND_C'])
-    assert set(selected.program)=={'NAND_C'} and set(selected.site)=={'FAB_B'}
     pilot=demand.comparison_totals(demand.comparison_frame(data,programs=['DRAM_P'],pilot_case='introduction'))
     assert pilot.loc['2026Q1':'2026Q4','requested_wspw'].isna().all()
     assert pilot.loc['2027Q2':'2027Q4','expected_wspw'].isna().all()

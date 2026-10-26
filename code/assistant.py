@@ -84,9 +84,11 @@ def explain_error(exc):
         return 'The AI service could not be reached. Try again or use the guided controls.'
     if name in ('NotFoundError', 'PermissionDeniedError'):
         return 'The configured model is unavailable to this API account. Check OPENAI_MODEL.'
+    if name == 'BadRequestError':
+        return 'The AI service rejected the request (' + str(exc)[:220] + '). Check OPENAI_MODEL supports structured outputs, e.g. gpt-4o-mini.'
     if isinstance(exc, ValueError):
         return str(exc)
-    return 'The AI request failed. Use the guided controls and check the app logs.'
+    return f'The AI request failed ({name}: {str(exc)[:200]}). Guided controls still work.'
 
 
 class ScenarioExplanation(BaseModel):

@@ -1,0 +1,13 @@
+REQ-2027-030 · October 2026 plan submission · SYNTHETIC
+Date: 2026-10-21
+From: DRAM business unit planning, via the TD program office
+To: TD capacity planning (IE)
+
+Program changes submitted in the October 2026 planning cycle, versus the July plan:
+- DRAM Node A: +5% in 2027Q1, +15% from 2027Q2 (both fabs)
+- DRAM Node B (EUV): +10% in 2027Q1, +30% from 2027Q2 (Fab A)
+- HBM test vehicle: +20% in 2027Q1, +50% from 2027Q2 (Fab A)
+Offsetting reductions agreed with the NAND and pathfinding teams:
+- 3D NAND Gen C: -10% in 2027Q1, -25% from 2027Q2
+- Short-loop experiments: -5% in 2027Q1, -15% from 2027Q2
+Protected: HBM test-vehicle qualification lots out 26 Mar 2027.

@@ -9,7 +9,8 @@ import review_model as rm
 
 def planning_state(data,case='baseline'):
     state=fc.base_state(data)
-    rows=data['pilot_plan_quarterly'].query('case==@case').set_index('quarter')
+    pilot=D.pilot_case(case)
+    rows=data['pilot_plan_quarterly'].query('case==@pilot').set_index('quarter')
     for site in C.SITES:
         state['wspw'][site][D.PILOT]=[float(rows.loc[q,'requested_wspw']) if site=='FAB_A' else 0. for q in C.PLAN_QUARTERS]
     return state

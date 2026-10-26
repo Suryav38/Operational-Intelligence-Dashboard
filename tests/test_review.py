@@ -4,16 +4,20 @@ import pytest
 import assistant as ai
 import fab_capacity as fc
 import review_model as rm
+import fab_config as C
+
+A=C.REQUESTED_WSPW_2027['FAB_A']
+B,H=A['DRAM_B'],A['HBM_TV']
 
 def test_known_euv_capacity(data):
     state=fc.base_state(data)
     table=fc.loading_table(state)
     row=rm.select_scope(table,'FAB_A','2027Q1').query("tool_group == 'EUV'").iloc[0]
-    assert row.required_h_wk == pytest.approx((750+150)*7/60,abs=.051)
+    assert row.required_h_wk == pytest.approx((B[0]+H[0])*7/60,abs=.051)
     assert row.available_h_wk == pytest.approx(168*.70)
-    assert row.loading_pct == pytest.approx(89.3,abs=.051)
+    assert row.loading_pct == pytest.approx(round(100*(B[0]+H[0])*7/60/117.6,1),abs=.051)
     detail=rm.program_workload(state,'FAB_A','EUV','2027Q1')
-    assert detail['Required h / week'].sum() == pytest.approx(105.0)
+    assert detail['Required h / week'].sum() == pytest.approx((B[0]+H[0])*7/60)
 
 def test_focus_does_not_remove_other_programs_or_resources(data):
     state=fc.base_state(data)
@@ -23,15 +27,15 @@ def test_focus_does_not_remove_other_programs_or_resources(data):
     summary=rm.capacity_summary(table,state,'FAB_A','2027Q2')
     assert len(focus)==3
     assert summary['groups']==10
-    assert summary['starts']==2050
+    assert summary['starts']==sum(v[1] for v in A.values())
     pd.testing.assert_frame_equal(table,snapshot)
 
 def test_one_quarter_change_preserves_baseline_and_other_periods(data):
     review=rm.run_review(data,'FAB_A','DRAM_B',10,'2027Q2','2027Q2')
     base=review['base_state']['wspw']['FAB_A']['DRAM_B']
     scen=review['scenario_state']['wspw']['FAB_A']['DRAM_B']
-    assert base==[750,830,975,1125]
-    assert scen==pytest.approx([750,913,975,1125])
+    assert base==B
+    assert scen==pytest.approx([B[0],1.1*B[1],B[2],B[3]])
     unchanged=review['comparison'].query("site == 'FAB_B' or quarter != '2027Q2'")
     assert (unchanged.change_pp==0).all()
     assert len(review['comparison'])==len(review['baseline'])
@@ -94,17 +98,17 @@ def test_ai_extract_uses_typed_output_and_source_evidence():
 def test_decision_brief_accounts_for_existing_constraints(data):
     r=rm.run_review(data,'FAB_A','DRAM_B',10,'2027Q2','2027Q2')
     b=rm.decision_brief(r,'2027Q2')
-    assert b['after']['starts']==pytest.approx(b['before']['starts']+83)
+    assert b['after']['starts']==pytest.approx(b['before']['starts']+.1*B[1])
     assert b['after']['at_risk']>=b['before']['at_risk']
     assert 'due dates' in b['limit']
 
 def test_ai_context_has_exact_model_facts_and_period(data):
     r=rm.run_review(data,'FAB_A','DRAM_B',10,'2027Q2','2027Q2')
     c=rm.ai_review_context(r,'2027Q2')
-    assert c['facts']['euv_before']=='99.2%'
-    assert c['facts']['euv_after']=='107.4%'
-    assert c['facts']['dep_after']=='96.5%'
-    assert c['facts']['starts_after']=='2,133 wafers/week'
+    assert c['facts']['euv_before']=='157.7%'
+    assert c['facts']['euv_after']=='170.3%'
+    assert c['facts']['dep_after']=='123.2%'
+    assert c['facts']['starts_after']=='2,752 wafers/week'
     assert len(c['equipment'])==10
     assert c['quarter_is_affected'] is True
     assert rm.ai_review_context(r,'2027Q3')['quarter_is_affected'] is False
@@ -131,8 +135,8 @@ def test_ai_scenario_explanation_is_grounded_and_typed(data):
         return SimpleNamespace(choices=[SimpleNamespace(message=SimpleNamespace(refusal=None,parsed=response))])
     client=SimpleNamespace(chat=SimpleNamespace(completions=SimpleNamespace(parse=parse)))
     out=ai.explain_scenario(context,'mock',client=client)
-    assert '99.2% to 107.4%' in out['summary']
-    assert '96.5%' in out['operating_implication']
+    assert '157.7% to 170.3%' in out['summary']
+    assert '123.2%' in out['operating_implication']
     assert captured['response_format'] is ai.ScenarioExplanation
     assert captured['store'] is False
     context['equipment']=[x for x in context['equipment'] if x['code']!='EUV']

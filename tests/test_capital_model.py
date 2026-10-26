@@ -14,9 +14,10 @@ def test_buy_list_matches_capacity_model_tools_needed(data):
         assert r.net_new == max(0, r.needed_peak - committed)
 
 
-def test_euv_gap_is_a_pull_in_not_a_new_scanner(data):
+def test_on_order_euv_is_pulled_in_before_any_new_scanner(data):
     row = K.buy_list(data).query("site=='FAB_A' and tool_group=='EUV'").iloc[0]
-    assert row.net_new == 0 and row.pull_in == 1 and row.need_by == '2027Q1'
+    assert row.pull_in == 1 and row.need_by == '2027Q1'
+    assert row.net_new == row.needed_peak - (row.installed + row.on_order)
 
 
 def test_expected_basis_never_needs_more_tools_than_requested(data):
@@ -48,3 +49,12 @@ def test_model_check_reproduces_simulation_except_batch_furnace(data):
 
 def test_queue_multiplier():
     assert round(K.queue_multiplier(.85, .90), 2) == 1.59
+
+
+def test_response_plan_steps_and_freed_capacity(data):
+    r = K.response_plan(data)
+    t = r['steps'].tools.tolist()
+    assert t[1] >= t[2] >= t[3]               # reallocation and rebalancing never add tools
+    fv = K.freed_vs_added(data).set_index(['site', 'tool_group'])
+    assert fv.loc[('FAB_A', 'EUV'), 'freed_h_wk'] == 0   # NAND/short loops never use EUV
+    assert fv.loc[('FAB_A', 'ETCH'), 'freed_h_wk'] > 0

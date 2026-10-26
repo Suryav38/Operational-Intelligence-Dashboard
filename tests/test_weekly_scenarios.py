@@ -3,6 +3,11 @@ import pandas as pd
 import pytest
 import fab_capacity as fc
 import weekly_scenarios as w
+import fab_config as C
+
+A=C.REQUESTED_WSPW_2027['FAB_A']
+B,H=A['DRAM_B'],A['HBM_TV']
+Q2_A=sum(v[1] for v in A.values())
 from streamlit.testing.v1 import AppTest
 from pathlib import Path
 
@@ -18,10 +23,11 @@ def test_calendar_covers_year_and_clips_boundary_weeks():
 
 def test_full_week_matches_known_quarter_scenario(data):
     r=w.run(data,'FAB_A','DRAM_B',10,'2027-04-05','2027-04-05')
-    assert w.summary(r,'FAB_A','2027-04-05')['starts']==2050
-    assert w.summary(r,'FAB_A','2027-04-05',True)['starts']==2133
+    assert w.summary(r,'FAB_A','2027-04-05')['starts']==Q2_A
+    assert w.summary(r,'FAB_A','2027-04-05',True)['starts']==pytest.approx(Q2_A+.1*B[1])
     row=r['weekly_comparison'].query("site=='FAB_A' and tool_group=='EUV' and week_start=='2027-04-05'").iloc[0]
-    assert row.loading_pct_base==99.2 and row.loading_pct_scenario==107.4
+    assert row.loading_pct_base==round(100*(B[1]+H[1])*7/60/117.6,1)
+    assert row.loading_pct_scenario==round(100*(1.1*B[1]+H[1])*7/60/117.6,1)
     assert row.available_h_period_base==pytest.approx(117.6)
 
 
@@ -36,21 +42,21 @@ def test_equipment_release_is_prorated_at_quarter_boundary(data):
     frame,_=w.week_table(fc.base_state(data))
     row=frame.query("site=='FAB_A' and tool_group=='EUV' and week_start=='2027-09-27'").iloc[0]
     assert row.available_h_period==pytest.approx(1*24*.7*4+2*24*.7*3)
-    assert row.required_h_period==pytest.approx(((975+200)*7/60)*4/7+((1125+225)*7/60)*3/7)
+    assert row.required_h_period==pytest.approx(((B[2]+H[2])*7/60)*4/7+((B[3]+H[3])*7/60)*3/7)
 
 
 def test_partial_week_uses_partial_hours(data):
     frame,_=w.week_table(fc.base_state(data))
     row=frame.query("site=='FAB_A' and tool_group=='EUV' and week_start=='2026-12-28'").iloc[0]
-    assert row.required_h_period==pytest.approx(105.0*3/7)
+    assert row.required_h_period==pytest.approx((B[0]+H[0])*7/60*3/7)
     assert row.available_h_period==pytest.approx(117.6*3/7)
-    assert row.loading_pct==89.3
+    assert row.loading_pct==round(100*(B[0]+H[0])*7/60/117.6,1)
 
 
 def test_target_crosses_quarter_without_changing_other_weeks(data):
     r=w.run(data,'FAB_A','DRAM_B',0,'2027-06-28','2027-06-28',target_wspw=1000)
     row=r['weekly_scenario'].query("site=='FAB_A' and tool_group=='EUV' and week_start=='2027-06-28'").iloc[0]
-    assert row.required_h_period==pytest.approx(((1000+170)*7/60)*3/7+((1000+200)*7/60)*4/7)
+    assert row.required_h_period==pytest.approx(((1000+H[1])*7/60)*3/7+((1000+H[2])*7/60)*4/7)
     assert r['weekly_comparison'].query("week_start!='2027-06-28'").change_pp.eq(0).all()
 
 
@@ -68,7 +74,7 @@ def test_reversed_and_outside_windows_are_rejected(data):
 
 def test_weekly_hours_reconcile_to_whole_year(data):
     frame,_=w.week_table(fc.base_state(data));euv=frame.query("site=='FAB_A' and tool_group=='EUV'")
-    expected=sum((dram+hbm)*7/60*days/7 for dram,hbm,days in [(750,150,90),(830,170,91),(975,200,92),(1125,225,92)])
+    expected=sum((dram+hbm)*7/60*days/7 for dram,hbm,days in zip(B,H,[90,91,92,92]))
     assert euv.required_h_period.sum()==pytest.approx(expected)
     assert euv.available_h_period.sum()==pytest.approx(273*24*.7+92*2*24*.7)
 

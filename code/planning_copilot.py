@@ -231,15 +231,24 @@ def number_set(text):
     return result
 
 
+def _supported(n,evidence):
+    """A quantity is supported if a cited value equals it, or rounds to it at the precision written."""
+    if n in evidence:return True
+    exponent=n.as_tuple().exponent
+    half=Decimal(1).scaleb(min(exponent,0))/2 if isinstance(exponent,int) else Decimal('0.5')
+    return any(abs(e-n)<=half for e in evidence)
+
+
 def validate_answer(answer,sources):
     refs=set(re.findall(r'\[((?:S|D)\d+)\]',answer))
     known={s['id'] for s in sources}
     if not refs or not refs.issubset(known):
         raise ValueError('The AI answer did not return valid evidence citations. Ask it again with a narrower question.')
     cited=[s for s in sources if s['id'] in refs]
-    evidence='\n'.join(json.dumps(s['data'],default=str) if s['kind']=='structured' else s['text'] for s in cited)
-    if not number_set(answer).issubset(number_set(evidence)):
-        raise ValueError('The AI answer included a quantity absent from its cited evidence. Ask for the exact source values.')
+    evidence=number_set('\n'.join(json.dumps(s['data'],default=str) if s['kind']=='structured' else s['text'] for s in cited))
+    missing=[n for n in number_set(re.sub(r'\[(?:S|D)\d+\]','',answer)) if not _supported(n,evidence)]
+    if missing:
+        raise ValueError('The AI answer included a quantity absent from its cited evidence ('+', '.join(str(m) for m in missing[:4])+'). Ask for the exact source values.')
     return answer
 
 

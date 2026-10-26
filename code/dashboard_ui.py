@@ -3,20 +3,18 @@ from __future__ import annotations
 
 import streamlit as st
 
-PAGES = ['Capital plan', 'Demand', 'Levers', 'Scenarios', '2026 baseline']
+PAGES = ['Demand outlook', 'Fab performance', 'Capacity scenario planning']
 SITES = {'Both': 'Both fabs', 'FAB_A': 'Fab A', 'FAB_B': 'Fab B'}
-CASES = {'baseline': 'Current plan', 'introduction': 'Plan + EUV pilot', 'slower': 'Plan + pilot, slow ramp'}
+CASES = {'baseline': 'October plan'}
 LIMITS = [75, 80, 85, 90, 95]
 # Which global assumptions each page actually uses. Unused ones are disabled, not hidden,
 # so the bar never jumps around between pages.
 USES = {
-    'Capital plan': {'site', 'case', 'limit'},
-    'Demand': {'site', 'case'},
-    'Levers': {'site', 'case', 'limit'},
-    'Scenarios': {'site', 'case', 'limit'},
-    '2026 baseline': {'site'},
+    'Demand outlook': {'site'},
+    'Fab performance': {'site', 'limit'},
+    'Capacity scenario planning': {'site', 'case', 'limit'},
 }
-DEFAULTS = {'page': PAGES[0], 'site': 'Both', 'pilot_case': 'baseline', 'limit_pct': 85}
+DEFAULTS = {'page': PAGES[0], 'site': 'Both', 'limit_pct': 85}
 
 
 def reset():
@@ -37,13 +35,10 @@ def render_header():
     page = st.radio('Page', PAGES, horizontal=True, key='page', label_visibility='collapsed')
     uses = USES[page]
     with st.container(key='assumptions'):
-        a, b, c, d = st.columns([1.35, 1.25, 1, 1.4], vertical_alignment='bottom')
+        a, c, d = st.columns([1.5, 1.1, 2.4], vertical_alignment='bottom')
         site = a.radio('Fab', list(SITES), format_func=SITES.get, horizontal=True, key='site')
-        case = b.selectbox('Plan case', list(CASES), format_func=CASES.get, key='pilot_case',
-                           disabled='case' not in uses,
-                           help='Adds the Fab A DRAM EUV pilot (from 17 May 2027) to the requested plan.')
         limit = c.selectbox('Planning limit', LIMITS, format_func=lambda v: f'{v}% loading', key='limit_pct',
                             disabled='limit' not in uses,
                             help='Highest loading a tool group is planned to run at. Policy, not physics.')
         d.button('Reset', on_click=reset, key='reset_assumptions')
-    return dict(page=page, site=site, pilot_case=case if 'case' in uses else 'baseline', ceiling=limit / 100)
+    return dict(page=page, site=site, pilot_case='baseline', ceiling=limit / 100)

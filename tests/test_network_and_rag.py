@@ -13,7 +13,7 @@ def test_combined_does_not_pool_equipment_capacity(data):
     s=fc.base_state(data);t=fc.loading_table(s)
     a=rm.capacity_summary(t,s,'FAB_A','2027Q2');b=rm.capacity_summary(t,s,'FAB_B','2027Q2')
     both=rm.capacity_summary(t,s,'Both','2027Q2')
-    assert both['starts']==a['starts']+b['starts']==3000
+    assert both['starts']==a['starts']+b['starts']==3645
     assert both['groups']==19
     assert both['at_risk']==a['at_risk']+b['at_risk']
     assert both['worst_load']==max(a['worst_load'],b['worst_load'])
@@ -33,8 +33,8 @@ def test_combined_ai_context_preserves_site_specific_facts(data):
     r=rm.run_review(data,'FAB_A','DRAM_B',10,'2027Q2','2027Q2')
     c=rm.ai_review_context(r,'2027Q2','Both')
     assert len(c['equipment'])==19
-    assert c['facts']['fab_a_euv_after']=='107.4%'
-    assert c['facts']['starts_after']=='3,083 wafers/week'
+    assert c['facts']['fab_a_euv_after']=='170.3%'
+    assert c['facts']['starts_after']=='3,772 wafers/week'
     snap=rag.dashboard_snapshot(data,'Both','2027Q2',review=r)
     assert len(snap['capacity'])==19
     assert snap['scope']['basis']=='reviewed hypothetical scenario'

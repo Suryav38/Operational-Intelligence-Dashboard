@@ -1,0 +1,11 @@
+REQ-2027-021 · Wafer start request · SYNTHETIC
+Date: 2026-10-22
+From: DRAM Node A sustaining team
+To: TD capacity planning (IE)
+
+Request: Add 50 wafers per week of DRAM Node A at Fab B for 2027Q1 to support a deposition-module split experiment.
+
+Constraints:
+- Node A is qualified at both Fab A and Fab B; the team will accept running the added lots at Fab A if Fab B cannot absorb them.
+- The HBM test-vehicle qualification milestone is protected.
+- Short-loop experiments may be deferred if needed.

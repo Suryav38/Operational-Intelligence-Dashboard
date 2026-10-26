@@ -14,9 +14,14 @@ def test_dram_heavy_baseline_and_accelerating_dram_b(data):
     plan=data['plan_2027'];plan=plan.assign(technology=plan.program.map(D.TECHNOLOGY))
     totals=plan.groupby('quarter').requested_wspw.sum()
     dram=plan[plan.technology=='DRAM'].groupby('quarter').requested_wspw.sum()
-    np.testing.assert_allclose(dram/totals,.75)
-    assert totals.tolist()==[2800,3000,3300,3600]
-    assert C.REQUESTED_WSPW_2027['FAB_A']['DRAM_B']==[750,830,975,1125]
+    # The 75% DRAM mix is a run-rate assumption; requests sit higher because DRAM over-requests most.
+    run=pd.DataFrame([dict(quarter=q,program=p,wspw=v[i]) for s in C.JULY_RUN_RATE_WSPW_2027 for p,v in C.JULY_RUN_RATE_WSPW_2027[s].items() for i,q in enumerate(C.PLAN_QUARTERS)])
+    run_dram=run[run.program.map(D.TECHNOLOGY)=='DRAM'].groupby('quarter').wspw.sum()/run.groupby('quarter').wspw.sum()
+    np.testing.assert_allclose(run_dram,.75)
+    assert run.groupby('quarter').wspw.sum().tolist()==[2800,3000,3300,3600]
+    assert totals.tolist()==[3130,3645,4030,4440]
+    assert C.JULY_RUN_RATE_WSPW_2027['FAB_A']['DRAM_B']==[750,830,975,1125]
+    assert C.RUN_RATE_WSPW_2027['FAB_A']['DRAM_B']==[825,1080,1270,1460]
     flow=data['weekly_program_flow'];starts=flow.groupby('program').wafer_starts.sum()
     share=sum(n for p,n in starts.items() if D.TECHNOLOGY[p]=='DRAM')/starts.sum()
     assert share==pytest.approx(.75,abs=.01)

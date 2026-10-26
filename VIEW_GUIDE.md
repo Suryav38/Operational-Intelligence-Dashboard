@@ -1,132 +1,127 @@
-# View guide: what each page answers and how every number is calculated
+# View guide: what each page shows and how the numbers are calculated
 
-The dashboard answers one question: **what tools does the 2027 plan need, by when, and what could we do instead of buying them?** Each page is one step of that argument.
+There are three pages, and they form one planning workflow:
 
-| Page | Question it answers |
+| Page | Question |
 |---|---|
-| Capital plan | How many tools, of which kind, in which fab, by which quarter? |
-| Demand | Is the plan we are sizing to believable? |
-| Levers | What could cut the buy, and what does each option cost us? |
-| Scenarios | What breaks if demand jumps, a tool goes down, work moves, or the EUV pilot launches? |
-| 2026 baseline | Can we trust the model that produced all of the above? |
+| **Demand outlook** (opens first) | What is requested for 2027, how did it change between the July and October plans, and how much of it will actually run? |
+| **Fab performance** | What did the line deliver in 2026Q4 to date? These are the operating conditions every scenario starts from. |
+| **Capacity scenario planning** | Can we accept extra wafers, what happens to the programs sharing the tools, and what is the cheapest response to the October plan? |
 
-All data is synthetic: two development fabs, Fab A (with EUV) and Fab B (DUV only), and six programs.
+All data is synthetic. The model is a two-fab development network: Fab A has EUV, Fab B is DUV only. It runs five established programs.
 
----
-
-## The three assumptions in the grey bar
-
-These apply to every page. When a page doesn't use one, it's greyed out rather than hidden.
-
-- **Fab**: Both fabs, Fab A or Fab B. This filters what you see. It never removes workload from the calculation, because tools are shared by every program running in that fab.
-- **Plan case**: the current plan, the plan plus the DRAM EUV pilot (100 wafers/week from 17 May 2027, rising to 200), or the plan plus a slower pilot ramp (50, then 75).
-- **Planning limit**: the highest loading you are willing to plan a tool group to run at. The default is 85%. This is a policy choice, and the Levers page shows what it costs to change it.
+The grey bar at the top holds two settings: **Fab** (Both, Fab A or Fab B) and **Planning limit** (default 85% loading). The pages have no headline sentences. Each chart heading states what is being compared and over what period.
 
 ---
 
-## 1. Capital plan
+## 1. Demand outlook
 
-**Headline.** The headline is a sentence built from the numbers in the table below it. It is not AI-generated text.
-
-**Size the plan to.** *Requested starts* is what the program teams asked for. *Expected starts* is each request multiplied by the share of its requests that the program has historically run (see Demand).
-
-**Stat strip**
-
-| Number | Calculation |
+| Element | How it is calculated |
 |---|---|
-| Net-new tools to buy | The sum of **Buy** over all tool groups |
-| On-order tools to pull in | The sum of **Pull in** over all tool groups |
-| Tool groups short | The number of groups with Buy > 0 or Pull in > 0, out of all groups |
-| First quarter short | The earliest quarter in which any group needs more tools than are released that quarter |
-| Peak load | The highest loading of any group in any quarter, using the tools actually released in that quarter |
+| KPI tiles | 2026Q3 actual starts; the 2026Q4 forecast; 2027Q4 requested and expected starts under the October plan; the October-vs-July change (2027 average); and the backtest error for the raw request vs. the adjusted request. |
+| Requested vs. actual wafer starts | Quarterly *average weekly* starts. Actual (black) runs 2024Q1–2026Q3 and continues into the 2026Q4 forecast point. Requested is shown in grey. The 2027 lines show the July plan (light grey) and the October plan (blue). |
+| 2026Q4 forecast | Q4 is in progress. For each fab and program, Q4 = the Q3 value × (1 + the average quarter-on-quarter change over the last four quarters). This is done separately for requests and for starts. The forecast is never used to fit the model. |
+| Plan bridge | The July plan's 2027 average, plus each program's change, gives the October plan. |
+| Wafer starts by program and quarter | Each cell shows the October value with its change against July, in units and as a %. Cells are colour-coded by the size of the change. |
+| Requested vs. actual by program | One chart per program, covering 2024–2027. |
+| 2027 wafer-start mix | Stacked by program, family or fab. |
+| Actual vs. requested (realization factor) | `b = Σ(requested × actual) ÷ Σ(requested²)` for each program. This is least squares through the origin, pooled across both fabs and fitted on 2024Q1–2026Q3. **Expected = requested × b.** The backtest refits on data up to 2025Q4 and measures MAPE on 2026Q1–Q3: about 10% for the raw request against about 2% for request × b. |
+| Priorities and milestones | Each program's priority, milestone, date and protected flag. The analyst uses these as constraints. |
 
-**Tool requirement table.** This is the core of the dashboard. For each fab, tool group and quarter:
+**Plan versions.** The July plan is the previous cycle. The October plan applies the program changes submitted in October (REQ-2027-030):
 
-```
-Required hours/week  = Σ programs ( starts/week × visits per wafer × minutes per visit × sampled fraction ) ÷ 60
-Hours per tool/week  = 168 × production availability        (availability = 1 − scheduled down − unscheduled down − engineering time)
-Load (Q1–Q4 cells)   = Required ÷ (tools released that quarter × hours per tool)
-Tools needed         = ⌈ Required ÷ (hours per tool × planning limit) ⌉
-Peak need            = largest Tools needed across 2027
-Buy                  = max(0, Peak need − (installed + all tools on order))
-Pull in              = on-order tools needed before their scheduled arrival quarter
-Need by              = first quarter where Tools needed > tools released that quarter
-```
+- DRAM Node A: +5% in Q1, +15% from Q2.
+- DRAM Node B: +10% in Q1, +30% from Q2.
+- HBM test vehicle: +20% in Q1, +50% from Q2.
+- 3D NAND: −10% in Q1, −25% from Q2.
+- Short-loop experiments: −5% in Q1, −15% from Q2.
 
-Cell colours: no fill means the group is below the limit, amber means between the limit and 100%, and red means over 100% (the plan physically cannot run).
+Requests are stored on the same basis as historical requests (run rate ÷ b). That's why there is no artificial step down at the year boundary: requests go 2,942 (Q3) → 2,994 (Q4 forecast) → 3,130 (2027Q1).
 
-Example: Fab A EUV has 1 scanner installed and 1 arriving in 2027Q4. The requested plan needs 2 from 2027Q1. Buy is **0** and Pull in is **1**. The correct action is to ask for the scanner already on order to arrive three quarters early, not to buy a third.
+## 2. Fab performance: 2026Q4 to date (28 Sep – 25 Oct 2026, simulated)
 
-**What drives the requirement.** Pick a tool group to see a stacked bar for each quarter showing the hours each program consumes. The black tick marks the hours the fleet supplies; it steps up when tools arrive. The dashed amber tick marks the planning limit. The box beside the chart works through the calculation with the real numbers for that group's worst quarter. The table lists each program's starts, visits, minutes per visit and share of the hours. This is the route information that matters for capital, which is why the old route-inspection page was dropped.
-
----
-
-## 2. Demand
+The four weeks after the stored history come from rerunning the same fab simulation (seed 42) for 56 weeks instead of 52. Lots, process times and tool states use per-lot and per-tool random streams, so the first 52 weeks reproduce the stored history exactly. The script checks this before writing anything. Only the new weeks are saved, to the `*_q4` tables (`code/simulate_q4_to_date.py`).
 
 | Element | Calculation |
 |---|---|
-| History and plan | Actual starts (black) and requested starts (dotted) from 2024Q1 to 2026Q3, then 2027 requested (solid blue) and expected (dashed). All values are weekly averages for the quarter, not quarterly totals. |
-| 2027 mix | Stacked starts by program or by fab, as requested or as expected |
-| Realization factor (bar chart) | For each program, the least-squares slope of actual starts on requested starts, through the origin: `b = Σ(req × act) ÷ Σ(req²)`. Fitted on all history and pooled across fabs. |
-| Expected starts | Requested × b. The pilot has no history, so it stays at its request. |
-| Backtest error | Fit b on 2024Q1–2025Q4 only, predict 2026Q1–Q3, then compute MAPE (mean of \|predicted − actual\| ÷ actual) across the 24 fab-program-quarters. The raw request misses by about 10%; request × b misses by about 2%. |
-| DRAM share | DRAM + HBM requested starts ÷ all 2027 requested starts (75% by design) |
+| Starts vs. completions vs. Q4 plan | Weekly wafers. The plan is the 2026Q4 requested starts. |
+| WIP and cycle time | WIP at each week end; the average cycle time of lots completed that week |
+| Cycle time (p90), line yield | Full-flow lots completed in the window; yield = wafers out ÷ wafers in |
+| Tool loading vs. planning limit | Productive hours ÷ (calendar − downtime − engineering). The label shows queue hours per visit. |
+| Availability: measured vs. assumed | Measured (productive + standby) ÷ calendar, against the planning value of 1 − PM − unscheduled downtime − engineering |
+| Starts by program vs. Q4 plan | Average weekly starts ÷ Q4 requested starts |
+| Capacity model vs. lot simulation | 2026Q3 starts run through the capacity formula, compared with the simulated loading. 18 of 19 tool groups agree within ±3 points. Fab B furnace is the exception, because partially filled batches still take a full 6-hour run. |
 
-This is request realization, not a market forecast. It answers "how much of what program teams ask for actually gets started?"
+## 3. Capacity scenario planning
 
----
+### Wafer request analyst (the AI feature)
 
-## 3. Levers
+1. **Request.** You type or paste a request. *Extract inputs with AI* sends it to an LLM together with the top retrieved notes. The LLM must fill a **strict JSON schema**: fab, program, quarter, the new total or the change, weeks, protected programs, and constraints. Each constraint must cite `REQUEST` or a retrieved note ID. Python then validates the output:
+   - unknown values are dropped;
+   - qualification is checked;
+   - a "+50" is converted to a new total;
+   - dates are snapped to planning weeks;
+   - citations to notes that were not retrieved are removed;
+   - anything the request didn't state is listed as missing.
 
-The waterfall applies the levers one after another. Each step keeps the steps before it.
+   Without an API key, choosing an example fills the inputs.
+2. **Inputs.** Every input stays editable:
+   - *Screen against*: planned run rate (default) or the requested plan.
+   - *Acceptance ceiling*: default 95%.
+   - *Tool availability*: the planning assumption, or the value measured in Q4 to date.
+3. **Model.** Weekly through 2027, for both fabs:
 
-1. **Plan to expected starts.** Repeat the Capital plan calculation using requested × b. The risk line comes from a test: buy only the tools the expected plan needs, then run the full request. The line counts how many groups end up above the limit and above 100%.
-2. **Raise the planning limit** by 5 or 10 points. Repeat the calculation at the higher limit. The cost comes from queueing theory: queue time grows with `u ÷ (1 − u)`. Moving from 85% to 90% multiplies queue time by `(0.90/0.10) ÷ (0.85/0.15) ≈ 1.6×`. That extra waiting becomes cycle time.
-3. **Rebalance qualified work.** A grid search over the three programs qualified at both fabs (DRAM Node A, 3D NAND, short loops). It tries every combination of moving 0 to the maximum share (in steps of 5%) in either direction: 9,261 combinations at a 50% cap. It keeps the combination with the fewest net-new tools, and on a tie, the one that moves the fewest wafers. Network starts are conserved. EUV programs can't move because Fab B has no EUV.
+   ```
+   required tool-h = Σ starts × visits × min/visit × sampling ÷ 60   (prorated by days in the week)
+   available tool-h = tools released that week × 168 × availability
+   room = min over the program's tool groups and weeks of (ceiling × available − required) ÷ hours per wafer, rounded down to 5
+   ```
 
-**Why the limit is not 100%.** This chart is the queue-time curve for one tool group, `queue = k × u/(1−u) × process time`. The constant k is calibrated so the curve passes through that group's simulated 2026 operating point (the black diamond). The two markers show queue hours at the current and raised limits.
+   The analyst tests each response through the same weekly model:
+   - accept the full request;
+   - accept what fits and defer the rest (or decline it if no later quarter has room);
+   - cut a lower-priority, unprotected program that shares the bottleneck;
+   - use qualified tools at the other fab.
 
-**Where the savings land.** Net-new tools by group after each step.
+   **Ranking rules**, applied in order:
+   1. Feasible under the ceiling.
+   2. Protected programs are never touched.
+   3. The most wafers started now.
+   4. The fewest wafers taken from other programs.
+   5. The fewest tool groups pushed over the limit.
 
-Limitation: a tool count is not a cost. An EUV scanner and a wet bench both count as one. The project deliberately contains no tool prices.
+   **Decision bands:**
+   - Within limit: at or below the planning limit.
+   - Needs exception: between the limit and the ceiling.
+   - Not accepted: above the ceiling.
+4. **AI explanation.** The LLM gets the computed result as source [S1], plus retrieved notes. It must cite a source for every paragraph, and every number it uses must appear in a cited source (rounding is allowed). If a draft fails, the model gets one repair turn and is told the exact reason.
 
----
+**Examples:**
+- **REQ-2027-014: DRAM Node B 825 → 925 at Fab A, Q1.** EUV supplies 117.6 h/week. The October plan already uses (825 + 180) × 7 ÷ 60 = 117.25 h, which is 99.7%. There is no room, HBM is protected, and Fab B has no EUV, so the request is declined: capacity has to be added (see Response plan).
+- **REQ-2027-021: DRAM Node A +50 at Fab B, Q1.** Wet clean binds. The recommended response cuts short-loop experiments (priority 3) to free the hours.
+- **Short loops +100 at Fab A, Q1.** The excess runs on qualified tools at Fab B.
 
-## 4. Scenarios
+### 2027 capacity
 
-**Demand, tool or transfer.** This tab runs the same capacity calculation with one change: a program's starts up or down (as a percentage or a target), N tools of a group unavailable for a window, or a share of a program moved between fabs. Changes can apply to whole quarters or exact weeks. In weekly mode, hours and tool releases are prorated by the number of days that overlap each week. The results show starts, groups at or above the limit, the peak load and groups over 100%, before and after. HOT priority changes dispatch order, not tool hours, so it doesn't change capacity.
+```
+tools needed = ⌈required h ÷ (168 × availability × limit)⌉
+buy = peak need − (installed + on order)
+pull in = on-order tools needed before their arrival quarter
+```
 
-**EUV pilot study.** This tab shows precomputed discrete-event simulation (DES) results for Fab A. The study covers 16 weeks from 5 Apr 2027, with the pilot released in week 7. Each of 5 random seeds runs three cases from identical starting WIP, and each existing lot keeps its own random stream. Because of that, **delay = the same lot's finish time with the pilot − its finish time without**. The page shows:
+The view shows loading by quarter on the released fleet. A drill-down lists required vs. available hours by program, with the full arithmetic.
 
-- average WIP after release, baseline vs. case (wafers)
-- mean and 90th-percentile delay to existing lots
-- pilot lots completed
-- the WIP curve (mean of the runs, with a min–max band)
-- delay by program and queue by tool group
-- quarter and weekly loading with the pilot added
+### Response plan: July plan → October plan → response
 
-This is the only view that measures WIP and delay. The capacity screen measures hours.
+The view sizes the response step by step:
 
----
+1. **July plan**: net-new tools before the October changes.
+2. **Increases only**: the October plan for programs that grew, with every other program held at July. Nothing gives way.
+3. **Reallocate freed capacity**: the actual October plan, in which NAND and short loops decline and release shared etch, deposition and wet tools. EUV gets nothing back, because NAND doesn't use it. The chart shows hours added against hours freed for each tool group.
+4. **Rebalance fabs**: a grid search over moving 0–50% of each dual-qualified program (DRAM Node A, NAND, short loops) between the fabs, in either direction. That is 9,261 combinations. The search minimises the illustrative cost index, Σ net-new tools × relative cost (wet clean = 1, EUV = 18).
 
-## 5. 2026 baseline
+The view ends with the buy list: tools, need-by quarter, pull-ins and cost index. You can download it as a CSV.
 
-| Element | Calculation |
-|---|---|
-| Capacity model vs. lot simulation | Take the actual starts from the last 13 simulated weeks and run them through the capacity formula (blue dot). Compare with the production loading the lot simulation produced (diamond), which is productive hours ÷ (calendar − downtime − engineering). 18 of 19 groups agree within ±3 pts. The exception is the Fab B furnace (+11 pts): batches rarely fill, and a part-full batch still takes the full 6-hour run. The capacity formula assumes 3-lot batches. |
-| Starts run vs. requested | Σ actual ÷ Σ requested over the last four quarters. This is where the realization factor comes from. |
-| Cycle time | The weekly average cycle time of completed lots, by fab. The planning limit exists to protect this. |
-| Availability table | Assumed downtime + engineering share vs. what the simulation observed, for each group |
+### Other scenarios
 
----
-
-## What was removed, and why
-
-| Removed | Reason |
-|---|---|
-| Equipment health page (time states, queue trends, batch fill) | This is daily operations monitoring, not capital planning. The one part that matters for capital, whether assumed availability holds, is now the baseline availability table and model check. |
-| Lot explorer, WIP aging, HOT vs NORMAL, cycle-time components | Lot-level execution detail with no effect on how many tools to buy |
-| Line yield, completions KPI | Not an input to the capacity model |
-| Program routes page | Replaced by the visits-per-wafer table in the Capital plan drill-down, which is the route information the calculation actually uses |
-| Program/family multiselect, "More filters" popover, filter chips | The program filter changed displayed totals but not tool loading, which was confusing. Global filters are now three assumptions, and local controls sit next to the chart they change. |
-| AI panel on every page | One panel on Capital plan and one on Scenarios, where a question leads to a decision |
+This view runs one change at a time: a demand change, a tool outage, or a qualified transfer. It can be applied by quarter or by exact week, and it compares baseline and scenario loading for every tool group.

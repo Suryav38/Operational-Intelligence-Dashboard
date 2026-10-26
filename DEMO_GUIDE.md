@@ -1,10 +1,16 @@
-# Three-minute walkthrough
+# Five-minute walkthrough
 
-1. **Capital plan** (opens first). Read the headline: the requested plan needs 55 net-new tools at an 85% limit, and the first shortfall is in 2027Q1. Point to the EUV row: Buy is 0 and Pull in is 1. The scanner already on order is needed three quarters early, so the action is to pull it in, not to buy another.
-2. Pick **Fab A · Deposition** in the drill-down. The stacked bars show DRAM Node B and 3D NAND driving the hours. The calculation box under "the arithmetic" shows the full working from starts to tools.
-3. **Demand**. Requests grow 29% through 2027. DRAM Node B and the HBM test vehicle historically run only 80–85% of what they request. Planning on request × factor cut backtest error from about 10% to about 2%.
-4. **Levers**. Planning to expected starts, raising the limit to 90%, and rebalancing qualified work take the buy from 55 to 19 tools. Each lever has a stated cost: exposure if programs run their full request, roughly 1.6× queue time, and the work involved in moving programs between fabs.
-5. **Scenarios → EUV pilot study**. Releasing the pilot adds about 1,460 wafers of WIP and delays existing lots by 0.59 days on average. This is the flow cost that a capacity screen cannot show.
-6. **2026 baseline**. The capacity model agrees with the lot simulation on 18 of 19 tool groups. The exception is the Fab B furnace, where batch fill explains the gap. This is why the 2027 numbers can be trusted.
+1. **Demand outlook.**
+   - The trend chart: actual starts run into the Q4 forecast, then the July and October plans branch from it.
+   - The bridge: Node B and HBM drive the increase, while NAND and short loops give some back.
+   - The program × quarter table shows each cell's change against July.
+   - The realization factor explains the gap between requested and expected starts.
+2. **Fab performance, Q4 to date.** Starts are at 94% of the Q4 plan. EUV is 89% loaded with about 15 hours of queue per visit. Measured availability is compared with the planning assumption, and the model check shows the capacity formula is trustworthy.
+3. **Capacity scenario planning → Wafer request analyst.**
+   - REQ-2027-014 (Node B +100 in Q1) is declined: EUV is already full under the October plan, HBM is protected, and Fab B has no EUV.
+   - REQ-2027-021 (Node A +50 at Fab B) is accepted by cutting short-loop experiments.
+   - With an API key, show the AI extraction with its citations, then the cited explanation.
+4. **Response plan.** Can the current fleet run the October plan? No.
+   - The steps: increases only → reallocate the capacity freed by NAND and short loops → cost-optimal rebalancing → buy list with need-by quarters and the EUV pull-in.
 
-Interview line: *"The capacity model turns routes and starts into tool hours and a buy list. The lot simulation shows what that loading does to WIP and cycle time. The levers page shows what capital we can avoid, and what each choice costs. AI explains and cites the evidence; it doesn't do the math."*
+Interview line: *"AI turns a written request into checked inputs and explains the result with citations. The capacity model and the optimizer do every calculation, so the decision can be reproduced."*

@@ -162,7 +162,7 @@ class FabFlow:
         if not self.historical:
             q=f'{date.year}Q{(date.month-1)//3+1}'
             if q not in C.PLAN_QUARTERS:q=C.PLAN_QUARTERS[0]
-            return C.REQUESTED_WSPW_2027[self.site][program][C.PLAN_QUARTERS.index(q)]
+            return C.PILOT_STUDY_RUN_RATE_2027[self.site][program][C.PLAN_QUARTERS.index(q)]
         # synthetic trend and variation; historical technology-family share is ~75%
         progress=min(1.,max(0.,(date-pd.Timestamp(D.HISTORY_START)).days/(52*7)))
         trend=.86+.14*progress

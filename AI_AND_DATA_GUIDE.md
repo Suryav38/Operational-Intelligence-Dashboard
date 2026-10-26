@@ -32,7 +32,7 @@ The bundle contains 28 tables. They include:
 
 ## Unstructured evidence
 
-There are 36 text notes: 15 archived earlier-prototype records and 21 current records. Current records include five dated capacity-hold incidents, 13 calendar-month flow reviews (the 52-week span includes partial boundary months), one pilot change note, one model/mix policy and one demand-comparison reference policy. The Q4 reference policy distinguishes the user-provided 2,950 WSPW total from its assumed allocation and unavailable actuals.
+There are 36 text notes: 15 archived earlier-prototype records and 21 current records. Current records include five dated capacity-hold incidents, 13 calendar-month flow reviews (the 52-week span includes partial boundary months), one pilot change note, one model/mix policy and one demand-comparison reference policy. v10 adds three dated wafer-start requests (documents/requests: REQ-2027-014, -021, -030). The demand-comparison policy note now describes the trend-based 2026Q4 forecast.
 
 The current notes identify the request and actual realized hold timestamps, affected equipment and duration, with references to source tables. A documented capacity hold does not establish that every observed WIP or queue change was caused by it.
 

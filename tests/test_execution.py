@@ -1,3 +1,4 @@
+import fab_config
 import numpy as np
 import pandas as pd
 import pytest
@@ -72,8 +73,9 @@ def test_queue_and_hold_claim_is_measured(data):
 
 def test_target_wspw_applies_exactly_to_each_selected_quarter(data):
     review=rm.run_review(data,'FAB_A','DRAM_B',0,'2027Q2','2027Q4',target_wspw=1000)
-    assert review['scenario_state']['wspw']['FAB_A']['DRAM_B']==[750,1000,1000,1000]
-    assert review['base_state']['wspw']['FAB_A']['DRAM_B']==[750,830,975,1125]
+    B=fab_config.REQUESTED_WSPW_2027['FAB_A']['DRAM_B']
+    assert review['scenario_state']['wspw']['FAB_A']['DRAM_B']==[B[0],1000,1000,1000]
+    assert review['base_state']['wspw']['FAB_A']['DRAM_B']==B
     for value in [-1,float('nan')]:
         with pytest.raises(ValueError):rm.run_review(data,'FAB_A','DRAM_B',0,'2027Q2','2027Q2',target_wspw=value)
 

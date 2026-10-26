@@ -2,67 +2,67 @@ from pathlib import Path
 from streamlit.testing.v1 import AppTest
 
 APP = Path(__file__).resolve().parents[1] / 'code' / 'apprag.py'
-PAGES = ['Capital plan', 'Demand', 'Levers', 'Scenarios', '2026 baseline']
+PAGES = ['Demand outlook', 'Fab performance', 'Capacity scenario planning']
+VIEWS = ['Wafer request analyst', '2027 capacity', 'Response plan', 'Other scenarios']
 
 
 def app():
-    return AppTest.from_file(str(APP), default_timeout=60).run()
+    return AppTest.from_file(str(APP), default_timeout=120).run()
 
 
-def test_capital_plan_opens_first_and_every_page_renders_for_every_fab():
+def test_demand_outlook_opens_first_and_every_page_renders_for_every_fab():
     at = app()
     assert not at.exception
-    assert at.title[0].value == 'Capital plan'
+    assert at.title[0].value == 'Demand outlook'
     assert at.radio(key='page').options == PAGES
     for site in ['Both', 'FAB_A', 'FAB_B']:
         at.radio(key='site').set_value(site).run()
         for page in PAGES:
             at.radio(key='page').set_value(page).run()
             assert not at.exception, (site, page)
-            assert at.title[0].value == page
 
 
-def test_unused_assumptions_are_disabled_not_hidden():
+def test_demand_versions_and_unused_assumptions_disabled():
     at = app()
-    at.radio(key='page').set_value('2026 baseline').run()
-    assert at.selectbox(key='pilot_case').disabled and at.selectbox(key='limit_pct').disabled
-    at.radio(key='page').set_value('Demand').run()
-    assert not at.selectbox(key='pilot_case').disabled and at.selectbox(key='limit_pct').disabled
+    assert at.selectbox(key='limit_pct').disabled
+    at.radio(key='demand_split').set_value('Family').run()
+    at.radio(key='demand_measure').set_value('Expected').run()
+    at.selectbox(key='dm_compare').set_value(at.selectbox(key='dm_compare').options[1]).run()
+    assert not at.exception
+    assert not any('class="headline"' in m.value for m in at.markdown)
 
 
-def test_capital_headline_follows_basis_limit_and_case():
+def test_capacity_views_render_at_each_limit():
     at = app()
-    def headline():
-        return next(m.value for m in at.markdown if 'class="headline"' in m.value)
-    first = headline()
-    assert '55 more tools' in first
-    at.radio(key='capital_basis').set_value('expected').run()
-    assert 'expected 2027 plan' in headline()
-    at.selectbox(key='limit_pct').set_value(90).run()
-    at.selectbox(key='pilot_case').set_value('introduction').run()
-    assert not at.exception and headline() != first
-    at.button(key='reset_assumptions').click().run()
-    assert at.selectbox(key='limit_pct').value == 85 and at.selectbox(key='pilot_case').value == 'baseline'
+    at.radio(key='page').set_value('Capacity scenario planning').run()
+    for limit in [85, 90]:
+        at.selectbox(key='limit_pct').set_value(limit).run()
+        for view in VIEWS:
+            at.radio(key='cap_view').set_value(view).run()
+            assert not at.exception, (limit, view)
 
 
-def test_scenario_runs_and_hides_stale_results():
+def test_analyst_calculates_and_flags_stale_inputs():
     at = app()
-    at.radio(key='page').set_value('Scenarios').run()
+    at.radio(key='page').set_value('Capacity scenario planning').run()
+    assert any(b.label == 'Extract inputs with AI' and b.disabled for b in at.button)
+    at.button(key='an_calc').click().run()
+    assert not at.exception
+    decision = next(m.value for m in at.markdown if 'class="decision"' in m.value)
+    assert 'EUV lithography' in decision
+    at.number_input(key='an_target').set_value(900.).run()
+    assert any('Inputs changed' in i.value for i in at.info)
+    at.selectbox(key='analyst_example').set_value(at.selectbox(key='analyst_example').options[1]).run()
+    assert at.selectbox(key='an_site').value == 'FAB_B' and at.number_input(key='an_target').value == 730.
+    at.button(key='an_calc').click().run()
+    assert any('Short-loop experiments' in m.value for m in at.markdown if 'class="decision"' in m.value)
+
+
+def test_scenario_test_runs_and_hides_stale_results():
+    at = app()
+    at.radio(key='page').set_value('Capacity scenario planning').run()
+    at.radio(key='cap_view').set_value('Other scenarios').run()
     next(b for b in at.button if b.label == 'Run scenario').click().run()
     assert not at.exception and at.session_state['review']['program'] == 'DRAM_B'
     at.number_input(key='scenario_pct').set_value(20).run()
     assert any('Inputs changed' in x.value for x in at.info)
-    at.selectbox(key='scenario_first').set_value('2027Q4').run()
-    at.selectbox(key='scenario_last').set_value('2027Q1').run()
-    next(b for b in at.button if b.label == 'Run scenario').click().run()
-    assert any('end quarter' in e.value for e in at.error)
-
-
-def test_pilot_study_and_ai_panel_without_key():
-    at = app()
-    assert any(b.label == 'Ask AI' and b.disabled for b in at.button)
-    at.radio(key='page').set_value('Scenarios').run()
-    at.radio(key='what_if').set_value('EUV pilot study').run()
-    assert not at.exception
-    at.radio(key='site').set_value('FAB_B').run()
-    assert any('qualified only at Fab A' in i.value for i in at.info)

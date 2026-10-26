@@ -58,7 +58,7 @@ def test_dated_unstructured_notes_and_archives_are_retrievable():
     assert any('SYN-OPS-003' in h['source'] for h in hits)
     pilot=index.search('DRAM_P pilot 17 May 2027 qualified FAB_A',4)
     assert any('pilot-introduction' in h['source'] for h in pilot)
-    archived=[p for p in fd.DOCS.rglob('*.txt') if 'v6_records' not in p.parts]
+    archived=[p for p in fd.DOCS.rglob('*.txt') if 'v6_records' not in p.parts and 'requests' not in p.parts]
     assert all(p.read_text().startswith('ARCHIVED PROTOTYPE NOTE') for p in archived)
 
 
@@ -68,3 +68,13 @@ def app():return AppTest.from_file(str(Path(__file__).resolve().parents[1]/'code
 
 
 
+
+
+def test_uncited_draft_gets_one_repair_turn(data):
+    messages=iter([Message('EUV is the binding tool group at 89%.'),Message('EUV is the binding tool group at 89% [S1].')])
+    def create(**kwargs):return SimpleNamespace(choices=[SimpleNamespace(message=next(messages))])
+    client=SimpleNamespace(chat=SimpleNamespace(completions=SimpleNamespace(create=create)))
+    agent=DA.ViewCopilot(data,rag.DocumentIndex(fd.DOCS),dict(view='test',site='FAB_A',euv_loading_pct=89.3))
+    out=agent.answer('Which tool group binds?','mock',client=client)
+    assert out['answer'].endswith('[S1].')
+    assert any('rejected' in t['step'] for t in out['trace'])

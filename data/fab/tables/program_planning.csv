@@ -1,0 +1,6 @@
+program,priority,priority_label,milestone,milestone_date,protected,reason
+DRAM_B,1,Ramp,Node B yield-learning gate,2027-06-30,False,Primary DRAM node ramp; requests above plan are reviewed against EUV.
+HBM_TV,1,Qualification,HBM test-vehicle qualification lots out,2027-03-26,True,Customer-facing qualification date; starts and dispatch are protected.
+DRAM_A,2,Sustaining,Node A process-transfer readiness at Fab B,2027-09-30,False,Dual-qualified; can move between fabs.
+NAND_C,2,Module learning,Gen C stack-etch module freeze,2027-08-13,False,Dual-qualified; long etch and deposition loops.
+SHORT,3,Experiments,None (rolling short loops),,False,Deferrable experiments; first to give way.
