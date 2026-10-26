@@ -352,13 +352,19 @@ def version_trend(history, q4, vf, col, shown):
                     text=['Q4 fcst'], textposition='bottom center', textfont=dict(size=10, color=MUTED), showlegend=False,
                     hovertemplate='2026Q4 forecast · %{y:,.0f}<extra></extra>')
     anchor = q4['requested_wspw'] if col == 'requested_wspw' else q4['forecast_wspw']
+    label = 'request' if col == 'requested_wspw' else 'expected'
     for v in PCX.VERSIONS:
-        if v not in shown:
+        if v not in shown or (col == 'expected_wspw' and v == PCX.CURRENT_VERSION):
             continue
         t = vf[vf.version == v].groupby('quarter')[col].sum().reindex(C.PLAN_QUARTERS)
-        fig.add_scatter(x=['2026Q4'] + list(t.index), y=[anchor] + list(t), name=PCX.VERSION_SHORT[v], mode='lines+markers',
+        fig.add_scatter(x=['2026Q4'] + list(t.index), y=[anchor] + list(t), name=f'{PCX.VERSION_SHORT[v]} {label}', mode='lines+markers',
                         line=dict(color=VERSION_COLOR[v], width=2.6 if v == PCX.CURRENT_VERSION else 2),
                         marker=dict(size=6), hovertemplate='%{x} · %{y:,.0f}<extra>' + PCX.VERSION_SHORT[v] + '</extra>')
+    # Starts forecast: actual -> 2026Q4 trend forecast -> 2027 expected starts of the current plan.
+    e = vf[vf.version == PCX.CURRENT_VERSION].groupby('quarter').expected_wspw.sum().reindex(C.PLAN_QUARTERS)
+    fig.add_scatter(x=['2026Q4'] + C.PLAN_QUARTERS, y=[q4['forecast_wspw']] + list(e), name='Starts forecast',
+                    mode='lines+markers', line=dict(color=INK, width=2.2), marker=dict(size=6, symbol='circle-open', line=dict(width=2)),
+                    hovertemplate='%{x} · %{y:,.0f} forecast starts<extra></extra>')
     order = hq + ['2026Q4'] + C.PLAN_QUARTERS
     fig.add_vrect(x0=order.index('2027Q1') - .5, x1=len(order) - .5, fillcolor='#f3f5f8', line_width=0, layer='below',
                   annotation=dict(text='2027 plan', font=dict(size=10, color=MUTED), yanchor='top', y=1, xanchor='left'))
@@ -401,8 +407,10 @@ def program_multiples(hp, bridge, vf, col, shown):
         q4r, q4f = float(q4.requested_wspw.sum()), float(q4.forecast_wspw.sum())
         fig.add_scatter(x=list(h.index) + ['2026Q4'], y=list(h.requested_wspw) + [q4r], mode='lines', line=dict(color='#c3c8ce', width=1.6),
                         showlegend=False, row=1, col=i, hovertemplate='%{x} · %{y:,.0f} requested<extra></extra>')
-        fig.add_scatter(x=list(h.index) + ['2026Q4'], y=list(h.actual_wspw) + [q4f], mode='lines', line=dict(color=INK, width=1.6),
-                        showlegend=False, row=1, col=i, hovertemplate='%{x} · %{y:,.0f} actual / forecast<extra></extra>')
+        e = vf[(vf.version == PCX.CURRENT_VERSION) & (vf.program == p)].groupby('quarter').expected_wspw.sum().reindex(C.PLAN_QUARTERS)
+        fig.add_scatter(x=list(h.index) + ['2026Q4'] + C.PLAN_QUARTERS, y=list(h.actual_wspw) + [q4f] + list(e), mode='lines',
+                        line=dict(color=INK, width=1.6), showlegend=False, row=1, col=i,
+                        hovertemplate='%{x} · %{y:,.0f} starts (actual → forecast)<extra></extra>')
         anchor = q4r if col == 'requested_wspw' else q4f
         for v in PCX.VERSIONS:
             if v not in shown:
@@ -443,7 +451,7 @@ def program_vs_plan(programs):
     f = programs.sort_values('plan_wspw', ascending=True)
     names = [D.NAMES[p] for p in f.program]
     fig = go.Figure()
-    fig.add_bar(y=names, x=f.plan_wspw, orientation='h', name='Q4 plan', marker_color='#d9dde2',
+    fig.add_bar(y=names, x=f.plan_wspw, orientation='h', name='2026Q4 request', marker_color='#d9dde2',
                 hovertemplate='%{y}<br>Plan %{x:,.0f}<extra></extra>')
     fig.add_bar(y=names, x=f.actual_wspw, orientation='h', name='Actual', marker_color=INK, width=.4,
                 text=[f'{a:.0f}%' for a in f.attainment_pct], textposition='outside', textfont=dict(size=11, color=MUTED),

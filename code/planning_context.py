@@ -11,10 +11,10 @@ import pandas as pd
 import fab_config as C
 import fab_data as fd
 
-CURRENT_VERSION = '2026-10 plan (current)'
-PREVIOUS_VERSION = '2026-07 plan'
+CURRENT_VERSION = '2026Q4 plan (current)'
+PREVIOUS_VERSION = '2026Q3 plan'
 VERSIONS = [PREVIOUS_VERSION, CURRENT_VERSION]
-VERSION_SHORT = {PREVIOUS_VERSION: 'July plan', CURRENT_VERSION: 'October plan'}
+VERSION_SHORT = {PREVIOUS_VERSION: '2026Q3 plan', CURRENT_VERSION: '2026Q4 plan'}
 
 PROGRAMS = [
     dict(program='DRAM_B', priority=1, priority_label='Ramp', milestone='Node B yield-learning gate',

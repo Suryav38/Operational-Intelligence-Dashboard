@@ -251,7 +251,7 @@ def outlook_view():
     frame = cached_buy(FP, pilot_case, basis, ceiling)
     view = K.scope(frame, site)
     with top:
-        section('2027 tool requirement vs. installed + on-order fleet', 'October plan · by fab and tool group')
+        section('2027 tool requirement vs. installed + on-order fleet', '2026Q4 plan · by fab and tool group')
     t = K.totals(view)
     loads = view.melt(id_vars=['site', 'tool_group'], value_vars=[f'load_{q}' for q in K.Q]).dropna()
     worst = loads.sort_values('value', ascending=False).iloc[0] if len(loads) else None
@@ -334,9 +334,9 @@ def demand_page():
     stats([
         (number(q3.actual_wspw), '2026Q3 actual starts / week', ''),
         (number(q4['forecast_wspw']), '2026Q4 forecast starts / week', ''),
-        (number(tot.loc[cur].requested_wspw.iloc[-1]), '2027Q4 requested / week · October plan', ''),
-        (number(tot.loc[cur].expected_wspw.iloc[-1]), '2027Q4 expected / week · October plan', ''),
-        (f'{avg(cur) - avg(jul):+,.0f}', 'October vs. July plan · 2027 avg / week', ''),
+        (number(tot.loc[cur].requested_wspw.iloc[-1]), '2027Q4 requested / week · 2026Q4 plan', ''),
+        (number(tot.loc[cur].expected_wspw.iloc[-1]), '2027Q4 expected / week · 2026Q4 plan', ''),
+        (f'{avg(cur) - avg(jul):+,.0f}', '2026Q4 vs. 2026Q3 plan · 2027 avg / week', ''),
         (f"{number(metrics['raw_mape'],0,'%')} → {number(metrics['expected_mape'],0,'%')}", 'Backtest error · raw → adjusted', ''),
     ])
     with st.container(key='demand_controls'):
@@ -351,7 +351,7 @@ def demand_page():
 
     left, right = st.columns([1.45, 1], gap='large')
     with left:
-        section('Requested vs. actual wafer starts · 2024Q1–2027Q4', 'Quarterly average per week · 2026Q4 = forecast')
+        section('Requested vs. actual wafer starts · 2024Q1–2027Q4', 'Quarterly average per week · starts: actual to 2026Q3, forecast from 2026Q4')
         chart(PC.version_trend(history[['requested_wspw', 'actual_wspw']], q4, vf, col, shown), 'dm_trend')
     with right:
         section(f'Plan bridge · {short[base]} → {short[target]}', f'2027 avg {measure.lower()} starts / week by program')
@@ -360,7 +360,7 @@ def demand_page():
     section(f'Wafer starts by program and quarter · {short[target]} vs. {short[base]}', f'{measure} starts / week · value and change')
     st.markdown(demand_matrix(vf, base, target, col, group), unsafe_allow_html=True)
 
-    section('Requested vs. actual starts by program · 2024–2027', f'Black = actual · grey = requested · blue = October plan · light = July plan')
+    section('Requested vs. actual starts by program · 2024–2027', 'Black = starts (actual → forecast) · grey = requested · blue = 2026Q4-plan request · light = 2026Q3-plan request')
     chart(PC.program_multiples(hp, bridge, vf, col, shown), 'dm_multiples')
 
     left, right = st.columns([1.2, 1], gap='large')
@@ -396,8 +396,8 @@ def demand_page():
             f'request × factor missed by {number(metrics["expected_mape"],1,"%")} across {metrics["rows"]} fab-program-quarters. Expected = request × factor.</p>'
             '<p class="note"><b>2026Q4</b> is in progress, so it has no actuals: each fab/program continues its own last-four-quarter trend, '
             'for requests and for starts. It is a labelled forecast and never enters the fit.</p>'
-            '<p class="note"><b>2027 versions.</b> July and October plans are on the same request basis as history (planned run rate ÷ realization factor), '
-            'so the series runs on from 2026 without an artificial step. The October plan applies the program changes submitted in that cycle.</p>',
+            '<p class="note"><b>2027 versions.</b> The 2026Q3 and 2026Q4 plans are on the same request basis as history (planned run rate ÷ realization factor), '
+            'so the series runs on from 2026 without an artificial step. The 2026Q4 plan applies the program changes submitted in that cycle.</p>',
             unsafe_allow_html=True)
         out = vf.assign(Fab=vf.site.map(rm.SITE_LABELS), Program=vf.program.map(D.NAMES), Version=vf.version.map(short))
         cols = {'Version': 'Version', 'quarter': 'Quarter', 'Fab': 'Fab', 'Program': 'Program', 'requested_wspw': 'Requested WSPW',
@@ -464,11 +464,11 @@ def response_view():
     ])
     left, right = st.columns([1.25, 1], gap='large')
     with left:
-        section('Net-new tools: July plan → October plan → response', f'At the {ceiling*100:.0f}% planning limit')
+        section('Net-new tools: 2026Q3 plan → 2026Q4 plan → response', f'At the {ceiling*100:.0f}% planning limit')
         wf = steps[['step', 'net_new']].copy()
         chart(PC.waterfall(wf, final='Tools to buy'), 'response_waterfall')
     with right:
-        section('Tool-hours added vs. freed · July → October plan', '2027Q3 · hours / week')
+        section('Tool-hours added vs. freed · 2026Q3 → 2026Q4 plan', '2027Q3 · hours / week')
         fv = K.freed_vs_added(data, case, basis, '2027Q3')
         fv = fv if BOTH else fv[fv.site == site]
         chart(PC.freed_added(fv, BOTH), 'freed_added')
@@ -638,7 +638,7 @@ def fab_performance_page():
     above = tl[tl.loading_pct >= ceiling * 100]
     page_head(f'{ui.SITES[site].upper()} · 2026Q4 TO DATE · {s["start"]:%d %b} – {s["end"]:%d %b %Y} · SIMULATED', 'Fab performance')
     stats([
-        (number(s['starts_wspw']), f'Starts / week · {s["attainment_pct"]:.0f}% of Q4 plan', 'warn' if s['attainment_pct'] < 95 else ''),
+        (number(s['starts_wspw']), f'Starts / week · {s["attainment_pct"]:.0f}% of Q4 request', 'warn' if s['attainment_pct'] < 95 else ''),
         (number(s['outs_wspw']), 'Completions / week', ''),
         (number(s['wip']), 'WIP · wafers', ''),
         (f'{s["cycle_days"]:.1f} d', f'Cycle time · p90 {s["cycle_p90"]:.1f} d', ''),
@@ -647,7 +647,7 @@ def fab_performance_page():
     ])
     left, right = st.columns([1.2, 1], gap='large')
     with left:
-        section('Wafer starts vs. completions vs. Q4 plan', 'Weekly · wafers')
+        section('Wafer starts vs. completions vs. 2026Q4 request', 'Weekly · wafers')
         chart(PC.month_flow(s['weekly'], s['plan_wspw']), 'month_flow')
     with right:
         section('WIP and cycle time', 'Weekly')
@@ -661,7 +661,7 @@ def fab_performance_page():
         chart(PC.availability(tl, BOTH), 'month_availability')
     left, right = st.columns([1, 1.15], gap='large')
     with left:
-        section('Starts by program: actual vs. Q4 plan', 'Wafers / week')
+        section('Starts by program: actual vs. 2026Q4 request', 'Wafers / week')
         chart(PC.program_vs_plan(s['programs']), 'month_programs')
     with right:
         section('Capacity model vs. lot simulation', '2026Q3 · production loading by tool group')
@@ -669,7 +669,7 @@ def fab_performance_page():
         check = check if BOTH else check[check.site == site]
         chart(PC.model_check(check), 'model_check')
     st.caption('2026Q4 to date is a simulated continuation of the same fab model (seed 42): rerunning it reproduces the stored 52-week history exactly, '
-               'then adds 28 Sep – 25 Oct 2026. Q4 plan = 2026Q4 requested starts.')
+               'then adds 28 Sep – 25 Oct 2026. Request = 2026Q4 requested starts.')
 
 
 # ================================================================== CAPACITY SCENARIO PLANNING · AI WAFER LOADING ANALYST
@@ -922,7 +922,7 @@ def capacity_page():
     frame = cached_buy(FP, pilot_case, 'requested', ceiling)
     t = K.totals(K.scope(frame, site))
     exp = K.totals(K.scope(cached_buy(FP, pilot_case, 'expected', ceiling), site))
-    page_head(f'{ui.SITES[site].upper()} · OCTOBER PLAN · {ceiling*100:.0f}% LIMIT', 'Capacity scenario planning')
+    page_head(f'{ui.SITES[site].upper()} · 2026Q4 PLAN · {ceiling*100:.0f}% LIMIT', 'Capacity scenario planning')
     view = st.radio('View', ['Wafer request analyst', '2027 capacity', 'Response plan', 'Other scenarios'], horizontal=True,
                     key='cap_view', label_visibility='collapsed')
     if view == 'Wafer request analyst':

@@ -285,7 +285,7 @@ def headline(frame, ceiling, basis):
     return text
 
 
-# ------------------------------------------------------------------ response plan (July -> October plan)
+# ------------------------------------------------------------------ response plan (July -> Q4 plan)
 def overloads(state):
     """Tool groups that cannot run the plan on installed + on-order tools (released by date): load > 100%."""
     _, required = tools_needed(_wspw(state), _per_tool_hours(state), 1.)
@@ -349,7 +349,7 @@ def response_plan(data, case='baseline', basis='requested', ceiling=.85, max_sha
     up_only = _increases_only(current, requested)
     transfer = optimize_transfers(requested, ceiling, max_share, weighted=True)
     moved = apply_moves(requested, transfer['moves'])
-    steps = [('July plan', 'Previous planning cycle', current),
+    steps = [('2026Q3 plan', 'Previous planning cycle (2026Q3)', current),
              ('Increases only', 'If nothing else gave way', up_only),
              ('Reallocate freed capacity', 'Declining programs release shared tools', requested),
              ('Rebalance fabs', 'Cost-optimal move of dual-qualified work', moved)]

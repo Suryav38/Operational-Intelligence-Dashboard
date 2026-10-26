@@ -5,7 +5,7 @@ import streamlit as st
 
 PAGES = ['Demand outlook', 'Fab performance', 'Capacity scenario planning']
 SITES = {'Both': 'Both fabs', 'FAB_A': 'Fab A', 'FAB_B': 'Fab B'}
-CASES = {'baseline': 'October plan'}
+CASES = {'baseline': '2026Q4 plan'}
 LIMITS = [75, 80, 85, 90, 95]
 # Which global assumptions each page actually uses. Unused ones are disabled, not hidden,
 # so the bar never jumps around between pages.

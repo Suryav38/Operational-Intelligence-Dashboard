@@ -4,9 +4,9 @@ There are three pages, and they form one planning workflow:
 
 | Page | Question |
 |---|---|
-| **Demand outlook** (opens first) | What is requested for 2027, how did it change between the July and October plans, and how much of it will actually run? |
+| **Demand outlook** (opens first) | What is requested for 2027, how did it change between the 2026Q3 and 2026Q4 plans, and how much of it will actually run? |
 | **Fab performance** | What did the line deliver in 2026Q4 to date? These are the operating conditions every scenario starts from. |
-| **Capacity scenario planning** | Can we accept extra wafers, what happens to the programs sharing the tools, and what is the cheapest response to the October plan? |
+| **Capacity scenario planning** | Can we accept extra wafers, what happens to the programs sharing the tools, and what is the cheapest response to the 2026Q4 plan? |
 
 All data is synthetic. The model is a two-fab development network: Fab A has EUV, Fab B is DUV only. It runs five established programs.
 
@@ -18,17 +18,17 @@ The grey bar at the top holds two settings: **Fab** (Both, Fab A or Fab B) and *
 
 | Element | How it is calculated |
 |---|---|
-| KPI tiles | 2026Q3 actual starts; the 2026Q4 forecast; 2027Q4 requested and expected starts under the October plan; the October-vs-July change (2027 average); and the backtest error for the raw request vs. the adjusted request. |
-| Requested vs. actual wafer starts | Quarterly *average weekly* starts. Actual (black) runs 2024Q1–2026Q3 and continues into the 2026Q4 forecast point. Requested is shown in grey. The 2027 lines show the July plan (light grey) and the October plan (blue). |
+| KPI tiles | 2026Q3 actual starts; the 2026Q4 forecast; 2027Q4 requested and expected starts under the 2026Q4 plan; the 2026Q4-vs-2026Q3 change (2027 average); and the backtest error for the raw request vs. the adjusted request. |
+| Requested vs. actual wafer starts | Quarterly *average weekly* starts. Actual (black) runs 2024Q1–2026Q3 and continues into the 2026Q4 forecast point. Requested is shown in grey. The starts forecast (black, hollow markers) continues through 2027 as the 2026Q4 plan's expected starts (request × realization factor). The 2027 lines show the 2026Q3 plan (light grey) and the 2026Q4 plan (blue). |
 | 2026Q4 forecast | Q4 is in progress. For each fab and program, Q4 = the Q3 value × (1 + the average quarter-on-quarter change over the last four quarters). This is done separately for requests and for starts. The forecast is never used to fit the model. |
-| Plan bridge | The July plan's 2027 average, plus each program's change, gives the October plan. |
-| Wafer starts by program and quarter | Each cell shows the October value with its change against July, in units and as a %. Cells are colour-coded by the size of the change. |
+| Plan bridge | The 2026Q3 plan's 2027 average, plus each program's change, gives the 2026Q4 plan. |
+| Wafer starts by program and quarter | Each cell shows the 2026Q4 plan value with its change against the 2026Q3 plan, in units and as a %. Cells are colour-coded by the size of the change. |
 | Requested vs. actual by program | One chart per program, covering 2024–2027. |
 | 2027 wafer-start mix | Stacked by program, family or fab. |
 | Actual vs. requested (realization factor) | `b = Σ(requested × actual) ÷ Σ(requested²)` for each program. This is least squares through the origin, pooled across both fabs and fitted on 2024Q1–2026Q3. **Expected = requested × b.** The backtest refits on data up to 2025Q4 and measures MAPE on 2026Q1–Q3: about 10% for the raw request against about 2% for request × b. |
 | Priorities and milestones | Each program's priority, milestone, date and protected flag. The analyst uses these as constraints. |
 
-**Plan versions.** The July plan is the previous cycle. The October plan applies the program changes submitted in October (REQ-2027-030):
+**Plan versions.** The 2026Q3 plan is the previous cycle. The 2026Q4 plan applies the program changes submitted in the 2026Q4 planning cycle (REQ-2027-030):
 
 - DRAM Node A: +5% in Q1, +15% from Q2.
 - DRAM Node B: +10% in Q1, +30% from Q2.
@@ -97,7 +97,7 @@ The four weeks after the stored history come from rerunning the same fab simulat
 4. **AI explanation.** The LLM gets the computed result as source [S1], plus retrieved notes. It must cite a source for every paragraph, and every number it uses must appear in a cited source (rounding is allowed). If a draft fails, the model gets one repair turn and is told the exact reason.
 
 **Examples:**
-- **REQ-2027-014: DRAM Node B 825 → 925 at Fab A, Q1.** EUV supplies 117.6 h/week. The October plan already uses (825 + 180) × 7 ÷ 60 = 117.25 h, which is 99.7%. There is no room, HBM is protected, and Fab B has no EUV, so the request is declined: capacity has to be added (see Response plan).
+- **REQ-2027-014: DRAM Node B 825 → 925 at Fab A, Q1.** EUV supplies 117.6 h/week. The 2026Q4 plan already uses (825 + 180) × 7 ÷ 60 = 117.25 h, which is 99.7%. There is no room, HBM is protected, and Fab B has no EUV, so the request is declined: capacity has to be added (see Response plan).
 - **REQ-2027-021: DRAM Node A +50 at Fab B, Q1.** Wet clean binds. The recommended response cuts short-loop experiments (priority 3) to free the hours.
 - **Short loops +100 at Fab A, Q1.** The excess runs on qualified tools at Fab B.
 
@@ -111,13 +111,13 @@ pull in = on-order tools needed before their arrival quarter
 
 The view shows loading by quarter on the released fleet. A drill-down lists required vs. available hours by program, with the full arithmetic.
 
-### Response plan: July plan → October plan → response
+### Response plan: 2026Q3 plan → 2026Q4 plan → response
 
 The view sizes the response step by step:
 
-1. **July plan**: net-new tools before the October changes.
-2. **Increases only**: the October plan for programs that grew, with every other program held at July. Nothing gives way.
-3. **Reallocate freed capacity**: the actual October plan, in which NAND and short loops decline and release shared etch, deposition and wet tools. EUV gets nothing back, because NAND doesn't use it. The chart shows hours added against hours freed for each tool group.
+1. **2026Q3 plan**: net-new tools before the 2026Q4 plan changes.
+2. **Increases only**: the 2026Q4 plan for programs that grew, with every other program held at the 2026Q3 plan. Nothing gives way.
+3. **Reallocate freed capacity**: the actual 2026Q4 plan, in which NAND and short loops decline and release shared etch, deposition and wet tools. EUV gets nothing back, because NAND doesn't use it. The chart shows hours added against hours freed for each tool group.
 4. **Rebalance fabs**: a grid search over moving 0–50% of each dual-qualified program (DRAM Node A, NAND, short loops) between the fabs, in either direction. That is 9,261 combinations. The search minimises the illustrative cost index, Σ net-new tools × relative cost (wet clean = 1, EUV = 18).
 
 The view ends with the buy list: tools, need-by quarter, pull-ins and cost index. You can download it as a CSV.
