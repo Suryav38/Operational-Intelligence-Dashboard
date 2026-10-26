@@ -58,7 +58,7 @@ def test_dated_unstructured_notes_and_archives_are_retrievable():
     assert any('SYN-OPS-003' in h['source'] for h in hits)
     pilot=index.search('DRAM_P pilot 17 May 2027 qualified FAB_A',4)
     assert any('pilot-introduction' in h['source'] for h in pilot)
-    archived=[p for p in fd.DOCS.rglob('*.txt') if 'v6_records' not in p.parts and 'requests' not in p.parts]
+    archived=[p for p in fd.DOCS.rglob('*.txt') if not {'v6_records','requests','tool_logs'} & set(p.parts)]
     assert all(p.read_text().startswith('ARCHIVED PROTOTYPE NOTE') for p in archived)
 
 

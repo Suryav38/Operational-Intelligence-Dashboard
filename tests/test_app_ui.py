@@ -54,17 +54,20 @@ def test_manual_scenario_runs_and_hides_stale_results():
     assert any('Inputs changed' in x.value for x in at.info)
 
 
-def test_assistant_fills_the_manual_form_for_every_type():
+def test_every_scenario_type_runs():
     at = app()
     at.radio(key='page').set_value('Capacity scenario planning').run()
     at.radio(key='cap_view').set_value('Scenarios').run()
-    assert any(b.label == 'Fill the form with AI' and b.disabled for b in at.button)
-    seen = set()
-    for option in at.selectbox(key='sc_example').options:
-        at.selectbox(key='sc_example').set_value(option).run()
-        seen.add(at.selectbox(key='scenario_operation').value)
+    assert not any(b.label == 'Fill the form with AI' for b in at.button)
+    for op in ['Product mix shift', 'Tool unavailability', 'Qualified load transfer']:
+        at.selectbox(key='scenario_operation').set_value(op).run()
         next(b for b in at.button if b.label == 'Run scenario').click().run()
-        assert not at.exception and not at.error and at.session_state['review'] is not None
-    assert seen == {'Demand growth', 'Product mix shift', 'Tool unavailability', 'Qualified load transfer'}
-    at.selectbox(key='sc_example').set_value(at.selectbox(key='sc_example').options[0]).run()
-    assert at.radio(key='demand_mode').value == 'Target WSPW' and at.number_input(key='target_FAB_A_DRAM_B_2027Q1').value == 1070.
+        assert not at.exception and at.session_state['review']['operation'] == op
+
+
+def test_fab_performance_has_the_fab_assistant():
+    at = app()
+    at.radio(key='page').set_value('Fab performance').run()
+    assert not at.exception
+    assert any('Fab assistant' in e.label for e in at.expander)
+    assert any('deposition tools at Fab A' in o for o in at.selectbox(key='ai_fab_example').options)

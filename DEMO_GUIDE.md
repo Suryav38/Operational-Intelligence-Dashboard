@@ -6,11 +6,11 @@
    - The program × quarter table shows each cell's change against 2026Q4 (blue = up, red = down).
    - The realization factor explains the gap between requested and expected starts.
 2. **Fab performance, Q4 to date.** Four of 13 weeks are done. Starts are running at 94% of the requested weekly rate. EUV is 89% loaded with about 15 hours of queue per visit. Measured availability is compared with the planning assumption, and the model check shows the capacity formula is trustworthy.
+   - Ask the fab assistant: "What problems did the deposition tools at Fab A have in Q4 so far?" It pulls the weekly equipment reviews and the event table, and answers with tool IDs, causes and hours, each cited.
 3. **Capacity scenario planning → Scenarios.**
    - Run a manual demand-growth test. Show where the gaps are (the tool groups above the limit), then the ranked responses.
-   - Open the *AI assistant*. Type "Add 100 wafers a week of Node B at Fab A in Q1" and press *Fill the form with AI*. The form fills in, with a citation for each constraint. Press *Run scenario*.
-   - Switch *Tools assumed* to the current fleet: the request is declined because EUV is full. Then try the EUV-outage and Node A transfer examples.
+   - Switch *Tools assumed* to the current fleet: the request is declined because EUV is full. Then try a tool outage and a Node A transfer.
 4. **Response plan.** Can the current fleet run the 2027 plan? No.
    - The steps: growth only → reallocate the capacity freed by NAND and short loops → cost-optimal rebalancing → buy list with need-by quarters and the EUV pull-in.
 
-Interview line: *"AI turns a written request into checked inputs and explains the result with citations. The capacity model and the optimizer do every calculation, so the decision can be reproduced."*
+Interview line: *"The AI is used where engineers lose time: searching tool logs and downtime events. It retrieves and cites them, and it can query the event table. The capacity model and the optimizer do every planning calculation, so every decision can be reproduced."*

@@ -29,7 +29,6 @@ import launch_model as L
 import plan_charts as PC
 import planning_copilot as rag
 import planning_context as PCX
-import request_parser as P
 import review_model as rm
 import scenario_requests as request_model
 import wafer_analyst as WA
@@ -132,10 +131,13 @@ def note_index(fingerprint, api_key, semantic):
     return index
 
 
-def ai_panel(key, context, examples, title='Ask the planning assistant', expanded=False):
+AI_NOTE = ('Answers from the numbers on this page, the bundled tables and dated operating notes. '
+           'The capacity model does the arithmetic; the assistant explains and cites it.')
+
+
+def ai_panel(key, context, examples, title='Ask the planning assistant', expanded=False, note=AI_NOTE):
     with st.expander(title, expanded=expanded):
-        st.caption('Answers from the numbers on this page, the bundled tables and dated operating notes. '
-                   'The capacity model does the arithmetic; the assistant explains and cites it.')
+        st.caption(note)
         choice = st.selectbox('Example question', examples, key=key + '_example')
         question = st.text_area('Question', choice, height=80, max_chars=4000, key=key + '_question_' + str(examples.index(choice)))
         semantic = st.checkbox('Use semantic + keyword note retrieval', value=True, key=key + '_semantic')
@@ -527,117 +529,38 @@ def fab_performance_page():
         chart(PC.model_check(check), 'model_check')
     st.caption('2026Q4 to date is a simulated continuation of the same fab model (seed 42): rerunning it reproduces the stored 52-week history exactly, '
                'then adds 28 Sep – 25 Oct 2026. Request = 2026Q4 requested starts.')
+    fab_assistant(s, tl)
 
 
-# ================================================================== CAPACITY SCENARIO PLANNING · AI ASSISTANT (fills the scenario form)
-OP_FROM_TYPE = {'Demand change': 'Demand growth', 'Product mix shift': 'Product mix shift',
-                'Tool unavailability': 'Tool unavailability', 'Qualified load transfer': 'Qualified load transfer'}
-SC_EXAMPLES = {
-    'Node B +100 at Fab A, 2027Q1 (REQ-2027-014)': (
-        'Add 100 wafers per week of DRAM Node B at Fab A in 2027Q1 (REQ-2027-014). Keep the HBM test vehicle qualification milestone unchanged.',
-        dict(scenario_type='Demand change', site='FAB_A', program='DRAM_B', quarter='2027Q1', change_wspw=100.)),
-    'Node A +50 at Fab B, 2027Q1 (REQ-2027-021)': (
-        'Add 50 wafers per week of DRAM Node A at Fab B in 2027Q1 (REQ-2027-021). Short loops may be deferred; HBM is protected.',
-        dict(scenario_type='Demand change', site='FAB_B', program='DRAM_A', quarter='2027Q1', change_wspw=50.)),
-    'Shift 50 WSPW NAND → HBM at Fab A, 2027Q2': (
-        'What if we move 50 wafers a week from 3D NAND to the HBM test vehicle at Fab A in 2027Q2, keeping total starts the same?',
-        dict(scenario_type='Product mix shift', site='FAB_A', program='NAND_C', to_program='HBM_TV', quarter='2027Q2', wafers_shift=50.)),
-    'One EUV scanner down at Fab A, 2027Q3': (
-        'One EUV scanner at Fab A is down for 2027Q3. What happens to loading?',
-        dict(scenario_type='Tool unavailability', site='FAB_A', tool_group='EUV', quarter='2027Q3', tools_unavailable=1)),
-    'Move 20% of Node A from Fab A to Fab B, 2027Q2': (
-        'Move 20% of DRAM Node A from Fab A to Fab B in 2027Q2. Does Fab B become the constraint?',
-        dict(scenario_type='Qualified load transfer', site='FAB_A', program='DRAM_A', quarter='2027Q2', transfer_pct=20.)),
-}
+def fab_assistant(s, tl):
+    ev = data['tool_events_q4']
+    ev = ev if BOTH else ev[ev.site == site]
+    by_group = (ev.groupby(['site', 'tool_group']).agg(events=('event_id', 'size'), down_hours=('down_hours', 'sum'))
+                .reset_index().sort_values('down_hours', ascending=False))
+    by_cause = (ev.groupby(['site', 'tool_group', 'cause']).down_hours.sum().round(1).reset_index()
+                .sort_values('down_hours', ascending=False).head(12))
+    context = dict(view='Fab performance · 2026Q4 to date (simulated)', site=site, planning_limit=ceiling,
+                   period=f'{s["start"]:%d %b} – {s["end"]:%d %b %Y}', weeks_done=s['weeks_done'],
+                   line=dict(starts_per_week=round(s['starts_wspw']), completions_per_week=round(s['outs_wspw']), wip=round(s['wip']),
+                             cycle_time_days=round(s['cycle_days'], 1), cycle_time_p90_days=round(s['cycle_p90'], 1), line_yield_pct=round(s['yield_pct'], 1)),
+                   tool_groups=tl.round(1).to_dict('records'),
+                   unscheduled_down_by_group=by_group.round(1).to_dict('records'),
+                   top_causes_by_hours=by_cause.to_dict('records'),
+                   data_available='Table tool_events_q4 has one row per unscheduled-down event (tool_id, start_time, down_hours, cause, action). '
+                                  'Weekly equipment reviews for each fab are in the notes (tool_logs/2026Q4).')
+    section('Ask about the fab', 'Searches the Q4 tool logbook and event table · answers cite their sources')
+    ai_panel('ai_fab', context, [
+        'What problems did the deposition tools at Fab A have in Q4 so far, and how many hours were lost?',
+        'Which tool groups lost the most time to unscheduled downtime, and what were the main causes?',
+        'Which single tools went down most often, and for what reasons?',
+        'Why is measured availability below the planning assumption for metal deposition at Fab A?',
+        'Summarize the equipment review for Fab B for the week of 12 Oct.'],
+        title='Fab assistant · tool logbook and events', expanded=True,
+        note='Retrieves the weekly equipment reviews and queries the event table (read-only SQL), then answers with citations. '
+             'The data is a simulated continuation of the fab model; every number must come from a cited source.')
 
 
-def _fill_form(i):
-    """Write assistant inputs into the manual scenario form's own widget keys."""
-    op = OP_FROM_TYPE.get(i.get('scenario_type'), 'Demand growth')
-    s = i.get('site') if i.get('site') in C.SITES else 'FAB_A'
-    q = i.get('quarter') if i.get('quarter') in C.PLAN_QUARTERS else '2027Q1'
-    ss['scenario_operation'] = op
-    ss['scenario_site'] = s
-    if ss.get('site') not in ('Both', s):
-        ss['site'] = s
-    ss['scenario_timing'] = 'Quarter range'
-    ss['scenario_first'] = ss['scenario_last'] = q
-    prog = i.get('program') if i.get('program') in C.PROGRAMS else None
-    if op == 'Product mix shift':
-        if prog: ss['mix_from'] = prog
-        if i.get('to_program') in C.PROGRAMS: ss['scenario_to_program'] = i['to_program']
-        if i.get('wafers_shift'): ss['mix_wafers'] = float(i['wafers_shift'])
-    elif op == 'Tool unavailability':
-        if i.get('tool_group') in C.TOOL_GROUPS: ss['outage_group_' + s] = i['tool_group']
-        if i.get('tools_unavailable'): ss['unavailable_tools'] = int(i['tools_unavailable'])
-    elif op == 'Qualified load transfer':
-        if prog: ss['scenario_program'] = prog
-        if i.get('transfer_pct'): ss['transfer_pct'] = float(i['transfer_pct'])
-    else:
-        if prog: ss['scenario_program'] = prog
-        p_ = prog or ss.get('scenario_program', 'DRAM_B')
-        base = float(L.planning_state(data, pilot_case)['wspw'][s].get(p_, [0.] * 4)[C.PLAN_QUARTERS.index(q)])
-        target = i.get('requested_wspw')
-        if target is None and i.get('change_wspw') is not None:
-            target = base + float(i['change_wspw'])
-        if target is not None:
-            ss['demand_mode'] = 'Target WSPW'
-            ss[f'target_{s}_{p_}_{q}'] = max(0., float(target))
-    ss['review'] = None
-
-
-def _assist_example():
-    ss['sc_extraction'], ss['sc_error'] = None, None
-    text, inputs = SC_EXAMPLES[ss['sc_example']]
-    ss['sc_text'] = text
-    _fill_form(inputs)
-
-
-def _assist_extract():
-    ss['sc_error'] = None
-    try:
-        key = secret('OPENAI_API_KEY')
-        out = P.extract(ss['sc_text'], data, note_index(rag.documents_fingerprint(fd.DOCS), key, False), key,
-                        secret('OPENAI_MODEL', 'gpt-4o-mini'), case=pilot_case, basis='requested')
-        ss['sc_extraction'] = out
-        _fill_form(out['inputs'])
-    except Exception as exc:
-        ss['sc_error'] = str(exc) if isinstance(exc, ValueError) else ai_errors.explain_error(exc)
-
-
-def scenario_assistant():
-    key_ok = bool(secret('OPENAI_API_KEY'))
-    ss.setdefault('sc_example', list(SC_EXAMPLES)[0])
-    ss.setdefault('sc_text', SC_EXAMPLES[ss['sc_example']][0])
-    with st.expander('AI assistant · describe a scenario and it fills the form below', expanded=ss.get('sc_open', False)):
-        left, right = st.columns([1.3, 1], gap='large')
-        with left:
-            st.selectbox('Example', list(SC_EXAMPLES), key='sc_example', on_change=_assist_example)
-            st.text_area('Scenario', key='sc_text', height=80, label_visibility='collapsed')
-            st.button('Fill the form with AI', type='primary', disabled=not key_ok, on_click=_assist_extract, key='sc_extract')
-            if not key_ok:
-                st.caption('Needs OPENAI_API_KEY in the app secrets. Choosing an example fills the form without it.')
-            if ss.get('sc_error'):
-                st.error(ss['sc_error'])
-        with right:
-            ext = ss.get('sc_extraction')
-            if not ext:
-                st.markdown('<p class="note">The AI reads the text, picks the scenario type and fills the form, citing the request or a '
-                            'retrieved note for each constraint. Python checks every field against the plan. You can still edit '
-                            'everything before running.</p>', unsafe_allow_html=True)
-            else:
-                i = ext['inputs']
-                chips = [('Type', i['scenario_type']), ('Fab', rm.SITE_LABELS.get(i['site'], '—')),
-                         ('Program', D.NAMES.get(i['program'], '—')), ('Quarter', i['quarter'] or '—')]
-                st.markdown('<div class="chips">' + ''.join(f'<span><i>{k}</i>{esc(v)}</span>' for k, v in chips) + '</div>', unsafe_allow_html=True)
-                if i['missing']:
-                    st.caption('Missing — fill by hand: ' + ', '.join(i['missing']))
-                for c in i['constraints']:
-                    st.markdown(f'<p class="note">• {esc(c["text"])} <span class="src">[{esc(c["source_id"] or "no source")}]</span></p>', unsafe_allow_html=True)
-                for w in ext['warnings']:
-                    st.caption('⚠ ' + w)
-
-
+# ================================================================== CAPACITY SCENARIO PLANNING · SCENARIOS
 @st.cache_data(show_spinner=False, max_entries=24)
 def cached_analysis(fingerprint, request_json, limit, ceiling_, fleet):
     return WA.analyze(load_data(fingerprint), json.loads(request_json), 'baseline', limit, ceiling_, 'plan', 'requested', fleet)
@@ -840,7 +763,6 @@ def scenario_test():
 
 
 def scenarios_view():
-    scenario_assistant()
     scenario_test()
 
 

@@ -47,68 +47,13 @@ The four weeks after the stored history come from rerunning the same fab simulat
 | Starts by program vs. Q4 plan | Average weekly starts ÷ Q4 requested starts |
 | Capacity model vs. lot simulation | 2026Q3 starts run through the capacity formula, compared with the simulated loading. 18 of 19 tool groups agree within ±3 points. Fab B furnace is the exception, because partially filled batches still take a full 6-hour run. |
 
-## 3. Capacity scenario planning
+**Fab assistant: tool logbook and events.** At the bottom of the page you ask in plain English, for example:
+- "What problems did the deposition tools at Fab A have in Q4, and how many hours were lost?"
+- "Which tools went down most often?"
 
-### Views, in order: 2027 capacity · Response plan · Scenarios
+The assistant:
+1. retrieves the matching weekly equipment reviews, using keyword or keyword + embedding search;
+2. can run read-only SQL on `tool_events_q4` (one row per unscheduled-down event: tool ID, start, hours, cause, action) and on the other tables;
+3. answers with a citation on every paragraph. Numbers must come from a cited source, and a failed draft gets one repair turn.
 
-### 2027 capacity (first view)
-
-```
-tools needed (quarter) = ⌈required h ÷ (168 × availability × limit)⌉
-fleet needed by quarter = running maximum of tools needed (tools are never removed)
-add (quarter) = increase in fleet needed beyond installed + on order, quarter by quarter
-buy · 2027 = sum of the quarterly adds = peak need − (installed + on order)
-pull in = on-order tools needed before their scheduled arrival, with the quarter they're needed by
-```
-
-Each quarter cell shows the tools to add that quarter, with the load *before* adding them underneath (required hours ÷ hours from installed + on-order tools released by then). For example, Fab A Deposition needs 50 → 59 → 66 → 73 tools against 42 installed: **+8, +9, +7, +7** by quarter, 31 for the year. A drill-down lists required vs. available hours by program, with the full arithmetic.
-
-### Response plan: 2026Q4 rate → 2027 plan → response
-
-The view sizes the response step by step:
-
-1. **2026Q4 rate**: net-new tools if today's rate were held flat through 2027.
-2. **Growth only**: the 2027 plan for programs that grow, with every other program held at today's rate. Nothing gives way.
-3. **Reallocate freed capacity**: the actual 2027 plan, in which NAND and short loops decline in some quarters and release shared etch, deposition and wet tools. EUV gets nothing back, because NAND doesn't use it. The chart shows hours added against hours freed for each tool group.
-4. **Rebalance fabs**: a grid search over moving 0–50% of each dual-qualified program (DRAM Node A, NAND, short loops) between the fabs, in either direction. That is 9,261 combinations. The search minimises the illustrative cost index, Σ net-new tools × relative cost (wet clean = 1, EUV = 18).
-
-The view ends with the buy list: tools, need-by quarter, pull-ins and cost index. You can download it as a CSV.
-
-### Scenarios (manual form + AI assistant)
-
-The manual scenario form works as before: test type, fab, program, priority, quarter or week range, % or target WSPW, availability recovery, *Tools assumed* (planned fleet by default, or current fleet). The results are also as before:
-- stats;
-- baseline vs. scenario load by tool group;
-- groups above the limit across 2027;
-- the full table, with a CSV download;
-- the planning assistant.
-
-**AI assistant (collapsible, above the form):** describe a scenario in plain English, or pick an example, and press *Fill the form with AI*. The LLM must return a strict JSON schema: scenario type, fab, program, quarter, the new total or the change, target program, wafers shifted, tool group, tools down, transfer % and constraints. Python then validates it:
-- it drops unknown values and checks qualification;
-- it turns "+100" into a target on the 2027 requested plan;
-- it removes citations to notes that weren't retrieved;
-- it lists anything missing.
-
-The assistant only **fills the manual form**. You still review the inputs and press *Run scenario*, and Python does the calculation. Without an API key, the examples fill the form.
-
-**Responses tested (demand growth only):** after a demand-growth run, the first quarter of the request also goes through the ranked responses:
-- accept in full;
-- accept part and defer or decline the rest;
-- cut a lower-priority, unprotected program on the bottleneck;
-- run the excess on qualified tools at the other fab.
-
-The ranking rules, in order:
-1. Feasible under the 95% ceiling.
-2. Protected programs are never touched.
-3. The most wafers started now.
-4. The fewest wafers taken from other programs.
-5. The fewest groups over the limit.
-
-The decision is *Within limit*, *Needs exception* (between the limit and the ceiling) or *Not accepted*.
-
-**Examples (planned fleet):**
-- **REQ-2027-014: Node B +100 at Fab A, Q1** (970 → 1,070). Needs an exception: wet clean goes 85% → 89%. On the current fleet it is declined, because EUV is full.
-- **REQ-2027-021: Node A +50 at Fab B, Q1.** Needs an exception: etch goes 84% → 88%. On the current fleet only +20 fits.
-- **NAND → HBM, 50 WSPW at Fab A, Q2:** EUV goes 78.9% → 81.3%.
-- **One EUV down at Fab A, Q3:** EUV goes 61.7% → 92.5%.
-- **20% of Node A moved Fab A → Fab B, Q2:** Fab B wet clean goes 84.6% → 96.3%.
+`code/make_tool_logs.py` writes the reviews and the event table from the simulated tool states (seed 42). The event hours add up to the simulated unscheduled downtime for every fab, week and tool group. Like the rest of the data, it is synthetic.

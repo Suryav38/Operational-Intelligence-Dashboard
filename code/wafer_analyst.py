@@ -1,7 +1,7 @@
 """Wafer loading analyst: can we accept more wafers for a program, and what does it do to the others?
 
-Everything here is deterministic Python. An LLM may *prepare* the request (request_parser.py)
-and *explain* the result, but every number comes from this module.
+Everything here is deterministic Python; the Scenarios tab ranks these responses after a
+demand-growth run. Every number comes from this module.
 
 Request  ->  weekly loading (route hours vs. available hours, both fabs, exact calendar overlap)
          ->  how much of the increase fits under the acceptance ceiling, week by week

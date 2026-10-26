@@ -1,0 +1,577 @@
+event_id,site,week_start,tool_group,tool_id,start_time,down_hours,cause,action,state
+EV-A-0001,FAB_A,2026-09-28,CMP,CMP-A04,2026-09-30 04:12,7.78,Wafer breakage on platen,Platen cleaned; head inspected,unsched_down
+EV-A-0002,FAB_A,2026-09-28,CMP,CMP-A05,2026-09-30 10:32,9.96,Wafer breakage on platen,Platen cleaned; head inspected,unsched_down
+EV-A-0003,FAB_A,2026-09-28,CMP,CMP-A05,2026-10-01 03:35,7.02,Slurry delivery flow alarm,Slurry pump serviced,unsched_down
+EV-A-0004,FAB_A,2026-09-28,CMP,CMP-A01,2026-09-29 06:36,6.43,Wafer breakage on platen,Platen cleaned; head inspected,unsched_down
+EV-A-0005,FAB_A,2026-09-28,CMP,CMP-A06,2026-09-28 20:26,10.66,Wafer breakage on platen,Platen cleaned; head inspected,unsched_down
+EV-A-0006,FAB_A,2026-09-28,CMP,CMP-A02,2026-10-01 04:42,6.76,Slurry delivery flow alarm,Slurry pump serviced,unsched_down
+EV-A-0007,FAB_A,2026-09-28,CMP,CMP-A08,2026-09-29 12:11,8.54,Wafer breakage on platen,Platen cleaned; head inspected,unsched_down
+EV-A-0008,FAB_A,2026-09-28,CMP,CMP-A07,2026-10-02 11:07,8.07,Pad conditioner disk wear,Disk replaced; removal rate requalified,unsched_down
+EV-A-0009,FAB_A,2026-09-28,CMP,CMP-A10,2026-09-30 20:47,10.65,Pad conditioner disk wear,Disk replaced; removal rate requalified,unsched_down
+EV-A-0010,FAB_A,2026-09-28,CMP,CMP-A08,2026-10-03 15:04,5.79,Wafer breakage on platen,Platen cleaned; head inspected,unsched_down
+EV-A-0011,FAB_A,2026-09-28,CMP,CMP-A04,2026-10-02 12:46,12.67,Slurry delivery flow alarm,Slurry pump serviced,unsched_down
+EV-A-0012,FAB_A,2026-09-28,CMP,CMP-A10,2026-09-30 02:56,4.94,Pad conditioner disk wear,Disk replaced; removal rate requalified,unsched_down
+EV-A-0013,FAB_A,2026-09-28,DEP,DEP-A07,2026-09-30 06:35,45.65,Particle excursion after chamber clean,Additional seasoning; particle monitor passed,unsched_down
+EV-A-0014,FAB_A,2026-09-28,DEP,DEP-A37,2026-09-30 02:00,36.73,Heater zone failure,Heater replaced; temperature profile requalified,unsched_down
+EV-A-0015,FAB_A,2026-09-28,DEP,DEP-A04,2026-09-29 23:25,10.72,ALD precursor valve fault,Valve replaced; delivery line purged,unsched_down
+EV-A-0016,FAB_A,2026-09-28,DEP,DEP-A26,2026-10-01 19:29,22.85,Particle excursion after chamber clean,Additional seasoning; particle monitor passed,unsched_down
+EV-A-0017,FAB_A,2026-09-28,DEP,DEP-A16,2026-09-30 03:22,26.0,ALD precursor valve fault,Valve replaced; delivery line purged,unsched_down
+EV-A-0018,FAB_A,2026-09-28,DEP,DEP-A13,2026-09-28 13:12,17.26,Showerhead clogging: PM pulled in,Showerhead replaced; film uniformity requalified,unsched_down
+EV-A-0019,FAB_A,2026-09-28,DEP,DEP-A14,2026-09-28 18:47,8.75,Showerhead clogging: PM pulled in,Showerhead replaced; film uniformity requalified,unsched_down
+EV-A-0020,FAB_A,2026-09-28,DEP,DEP-A23,2026-10-03 08:47,34.11,ALD precursor valve fault,Valve replaced; delivery line purged,unsched_down
+EV-A-0021,FAB_A,2026-09-28,DEP,DEP-A33,2026-10-02 14:26,46.45,Heater zone failure,Heater replaced; temperature profile requalified,unsched_down
+EV-A-0022,FAB_A,2026-09-28,DEP,DEP-A15,2026-10-02 04:12,24.78,Showerhead clogging: PM pulled in,Showerhead replaced; film uniformity requalified,unsched_down
+EV-A-0023,FAB_A,2026-09-28,DEP,DEP-A36,2026-09-29 07:19,50.19,ALD precursor valve fault,Valve replaced; delivery line purged,unsched_down
+EV-A-0024,FAB_A,2026-09-28,DEP,DEP-A31,2026-10-04 06:41,12.51,Particle excursion after chamber clean,Additional seasoning; particle monitor passed,unsched_down
+EV-A-0025,FAB_A,2026-09-28,DEP,DEP-A01,2026-10-02 21:55,16.58,Showerhead clogging: PM pulled in,Showerhead replaced; film uniformity requalified,unsched_down
+EV-A-0026,FAB_A,2026-09-28,DEP,DEP-A17,2026-10-02 00:16,33.7,Particle excursion after chamber clean,Additional seasoning; particle monitor passed,unsched_down
+EV-A-0027,FAB_A,2026-09-28,DUV,DUV-A04,2026-09-28 06:36,9.09,Wafer stage interferometer fault,Interferometer board replaced,unsched_down
+EV-A-0028,FAB_A,2026-09-28,DUV,DUV-A02,2026-10-01 09:37,2.76,Track coater nozzle clog,Nozzle cleaned; coat thickness verified,unsched_down
+EV-A-0029,FAB_A,2026-09-28,DUV,DUV-A01,2026-09-30 05:34,5.59,Lens heating drift beyond spec,Lens model re-baselined,unsched_down
+EV-A-0030,FAB_A,2026-09-28,DUV,DUV-A03,2026-09-28 23:07,7.99,Lens heating drift beyond spec,Lens model re-baselined,unsched_down
+EV-A-0031,FAB_A,2026-09-28,ETCH,ETCH-A25,2026-10-02 18:45,20.39,Chamber particle excursion,Wet clean and seasoning wafers run,unsched_down
+EV-A-0032,FAB_A,2026-09-28,ETCH,ETCH-A02,2026-10-04 05:59,13.65,Electrostatic chuck helium leak,Chuck O-rings replaced; leak check passed,unsched_down
+EV-A-0033,FAB_A,2026-09-28,ETCH,ETCH-A27,2026-10-01 07:14,9.76,Chamber particle excursion,Wet clean and seasoning wafers run,unsched_down
+EV-A-0034,FAB_A,2026-09-28,ETCH,ETCH-A01,2026-09-28 16:10,55.63,Electrostatic chuck helium leak,Chuck O-rings replaced; leak check passed,unsched_down
+EV-A-0035,FAB_A,2026-09-28,ETCH,ETCH-A10,2026-09-28 01:55,30.28,Endpoint detector failure,Optical endpoint sensor replaced,unsched_down
+EV-A-0036,FAB_A,2026-09-28,ETCH,ETCH-A07,2026-09-29 07:17,31.77,Chamber particle excursion,Wet clean and seasoning wafers run,unsched_down
+EV-A-0037,FAB_A,2026-09-28,ETCH,ETCH-A09,2026-09-28 19:53,17.1,RF generator fault,RF generator swapped,unsched_down
+EV-A-0038,FAB_A,2026-09-28,ETCH,ETCH-A21,2026-10-02 09:32,12.26,Chamber particle excursion,Wet clean and seasoning wafers run,unsched_down
+EV-A-0039,FAB_A,2026-09-28,ETCH,ETCH-A15,2026-09-28 18:45,14.07,Electrostatic chuck helium leak,Chuck O-rings replaced; leak check passed,unsched_down
+EV-A-0040,FAB_A,2026-09-28,ETCH,ETCH-A04,2026-10-01 09:12,7.61,Endpoint detector failure,Optical endpoint sensor replaced,unsched_down
+EV-A-0041,FAB_A,2026-09-28,ETCH,ETCH-A24,2026-10-01 14:22,43.58,Chamber particle excursion,Wet clean and seasoning wafers run,unsched_down
+EV-A-0042,FAB_A,2026-09-28,ETCH,ETCH-A16,2026-10-01 15:27,17.51,RF generator fault,RF generator swapped,unsched_down
+EV-A-0043,FAB_A,2026-09-28,ETCH,ETCH-A03,2026-09-29 01:54,38.3,Endpoint detector failure,Optical endpoint sensor replaced,unsched_down
+EV-A-0044,FAB_A,2026-09-28,ETCH,ETCH-A28,2026-10-03 03:26,14.49,RF generator fault,RF generator swapped,unsched_down
+EV-A-0045,FAB_A,2026-09-28,FURN,FURN-A12,2026-10-03 14:07,13.38,Boat elevator fault,Elevator drive serviced,unsched_down
+EV-A-0046,FAB_A,2026-09-28,FURN,FURN-A14,2026-09-30 21:05,15.79,Thermocouple drift,Thermocouple replaced; profile requalified,unsched_down
+EV-A-0047,FAB_A,2026-09-28,FURN,FURN-A10,2026-09-29 16:26,4.83,Mass-flow controller failure,MFC replaced; leak check passed,unsched_down
+EV-A-0048,FAB_A,2026-09-28,FURN,FURN-A03,2026-09-29 13:39,8.85,Thermocouple drift,Thermocouple replaced; profile requalified,unsched_down
+EV-A-0049,FAB_A,2026-09-28,FURN,FURN-A06,2026-10-03 02:38,3.61,Thermocouple drift,Thermocouple replaced; profile requalified,unsched_down
+EV-A-0050,FAB_A,2026-09-28,FURN,FURN-A02,2026-10-03 10:01,8.77,Mass-flow controller failure,MFC replaced; leak check passed,unsched_down
+EV-A-0051,FAB_A,2026-09-28,FURN,FURN-A15,2026-09-28 15:33,20.25,Thermocouple drift,Thermocouple replaced; profile requalified,unsched_down
+EV-A-0052,FAB_A,2026-09-28,FURN,FURN-A04,2026-09-28 10:45,6.38,Mass-flow controller failure,MFC replaced; leak check passed,unsched_down
+EV-A-0053,FAB_A,2026-09-28,FURN,FURN-A11,2026-10-02 00:46,5.2,Mass-flow controller failure,MFC replaced; leak check passed,unsched_down
+EV-A-0054,FAB_A,2026-09-28,FURN,FURN-A08,2026-09-28 22:23,14.81,Boat elevator fault,Elevator drive serviced,unsched_down
+EV-A-0055,FAB_A,2026-09-28,IMPL,IMPL-A01,2026-09-29 16:16,6.52,Ion source filament failure,Source rebuilt; beam tuned,unsched_down
+EV-A-0056,FAB_A,2026-09-28,IMPL,IMPL-A03,2026-10-01 22:12,3.08,Wafer handler vacuum fault,Vacuum pump serviced,unsched_down
+EV-A-0057,FAB_A,2026-09-28,IMPL,IMPL-A01,2026-09-30 19:00,7.0,Ion source filament failure,Source rebuilt; beam tuned,unsched_down
+EV-A-0058,FAB_A,2026-09-28,IMPL,IMPL-A03,2026-09-28 07:59,5.77,Ion source filament failure,Source rebuilt; beam tuned,unsched_down
+EV-A-0059,FAB_A,2026-09-28,IMPL,IMPL-A01,2026-09-30 09:19,14.56,Beamline arcing,Beamline cleaned; arc count normal,unsched_down
+EV-A-0060,FAB_A,2026-09-28,IMPL,IMPL-A05,2026-10-01 10:38,10.2,Wafer handler vacuum fault,Vacuum pump serviced,unsched_down
+EV-A-0061,FAB_A,2026-09-28,IMPL,IMPL-A02,2026-09-28 16:14,8.28,Wafer handler vacuum fault,Vacuum pump serviced,unsched_down
+EV-A-0062,FAB_A,2026-09-28,METRO,METRO-A01,2026-09-29 22:21,7.11,Light source end of life,Light source replaced,unsched_down
+EV-A-0063,FAB_A,2026-09-28,METRO,METRO-A07,2026-10-03 02:01,1.95,Stage calibration out of tolerance,Stage recalibrated,unsched_down
+EV-A-0064,FAB_A,2026-09-28,METRO,METRO-A03,2026-09-29 09:00,4.95,Light source end of life,Light source replaced,unsched_down
+EV-A-0065,FAB_A,2026-09-28,METRO,METRO-A05,2026-10-02 18:17,3.51,Stage calibration out of tolerance,Stage recalibrated,unsched_down
+EV-A-0066,FAB_A,2026-09-28,METRO,METRO-A05,2026-10-03 21:29,3.61,Light source end of life,Light source replaced,unsched_down
+EV-A-0067,FAB_A,2026-09-28,METRO,METRO-A09,2026-09-28 20:57,9.29,Light source end of life,Light source replaced,unsched_down
+EV-A-0068,FAB_A,2026-09-28,METRO,METRO-A08,2026-10-02 04:58,3.64,Light source end of life,Light source replaced,unsched_down
+EV-A-0069,FAB_A,2026-09-28,METRO,METRO-A05,2026-09-28 15:29,5.04,Light source end of life,Light source replaced,unsched_down
+EV-A-0070,FAB_A,2026-09-28,METRO,METRO-A06,2026-10-03 01:06,1.12,Light source end of life,Light source replaced,unsched_down
+EV-A-0071,FAB_A,2026-09-28,METRO,METRO-A02,2026-09-28 13:18,10.46,Stage calibration out of tolerance,Stage recalibrated,unsched_down
+EV-A-0072,FAB_A,2026-09-28,METRO,METRO-A08,2026-10-04 06:47,6.88,Stage calibration out of tolerance,Stage recalibrated,unsched_down
+EV-A-0073,FAB_A,2026-09-28,METRO,METRO-A05,2026-09-28 22:31,4.07,Light source end of life,Light source replaced,unsched_down
+EV-A-0074,FAB_A,2026-09-28,METRO,METRO-A05,2026-10-04 13:48,3.42,Light source end of life,Light source replaced,unsched_down
+EV-A-0075,FAB_A,2026-09-28,METRO,METRO-A07,2026-10-03 09:48,5.92,Stage calibration out of tolerance,Stage recalibrated,unsched_down
+EV-A-0076,FAB_A,2026-09-28,PVD,PVD-A01,2026-10-01 21:41,4.32,Magnetron rotation fault,Magnetron drive repaired,unsched_down
+EV-A-0077,FAB_A,2026-09-28,WET,WET-A09,2026-10-03 16:45,7.21,Bath chemistry out of spec,Bath dumped and refilled; chemistry verified,unsched_down
+EV-A-0078,FAB_A,2026-09-28,WET,WET-A15,2026-10-02 06:08,7.68,Bath chemistry out of spec,Bath dumped and refilled; chemistry verified,unsched_down
+EV-A-0079,FAB_A,2026-09-28,WET,WET-A10,2026-09-28 19:26,8.47,Robot handoff error,Robot taught; handoff verified,unsched_down
+EV-A-0080,FAB_A,2026-09-28,WET,WET-A12,2026-10-01 19:01,13.27,Megasonic transducer fault,Transducer replaced,unsched_down
+EV-A-0081,FAB_A,2026-09-28,WET,WET-A17,2026-10-02 12:36,9.71,Megasonic transducer fault,Transducer replaced,unsched_down
+EV-A-0082,FAB_A,2026-09-28,WET,WET-A08,2026-09-28 01:56,9.55,Megasonic transducer fault,Transducer replaced,unsched_down
+EV-A-0083,FAB_A,2026-09-28,WET,WET-A05,2026-10-01 01:10,6.92,Robot handoff error,Robot taught; handoff verified,unsched_down
+EV-A-0084,FAB_A,2026-09-28,WET,WET-A06,2026-10-03 12:49,7.07,Bath chemistry out of spec,Bath dumped and refilled; chemistry verified,unsched_down
+EV-A-0085,FAB_A,2026-09-28,WET,WET-A14,2026-09-29 23:59,5.49,Robot handoff error,Robot taught; handoff verified,unsched_down
+EV-A-0086,FAB_A,2026-09-28,WET,WET-A03,2026-10-01 01:34,7.55,Megasonic transducer fault,Transducer replaced,unsched_down
+EV-A-0087,FAB_A,2026-09-28,WET,WET-A02,2026-10-01 01:01,2.9,Bath chemistry out of spec,Bath dumped and refilled; chemistry verified,unsched_down
+EV-A-0088,FAB_A,2026-10-05,CMP,CMP-A09,2026-10-06 01:11,5.67,Wafer breakage on platen,Platen cleaned; head inspected,unsched_down
+EV-A-0089,FAB_A,2026-10-05,CMP,CMP-A05,2026-10-09 18:59,11.48,Wafer breakage on platen,Platen cleaned; head inspected,unsched_down
+EV-A-0090,FAB_A,2026-10-05,CMP,CMP-A01,2026-10-06 07:28,4.97,Pad conditioner disk wear,Disk replaced; removal rate requalified,unsched_down
+EV-A-0091,FAB_A,2026-10-05,CMP,CMP-A05,2026-10-06 18:16,11.84,Slurry delivery flow alarm,Slurry pump serviced,unsched_down
+EV-A-0092,FAB_A,2026-10-05,CMP,CMP-A03,2026-10-09 15:50,10.45,Wafer breakage on platen,Platen cleaned; head inspected,unsched_down
+EV-A-0093,FAB_A,2026-10-05,CMP,CMP-A02,2026-10-11 13:56,6.87,Slurry delivery flow alarm,Slurry pump serviced,unsched_down
+EV-A-0094,FAB_A,2026-10-05,CMP,CMP-A02,2026-10-08 23:15,12.22,Slurry delivery flow alarm,Slurry pump serviced,unsched_down
+EV-A-0095,FAB_A,2026-10-05,CMP,CMP-A07,2026-10-05 08:35,10.4,Slurry delivery flow alarm,Slurry pump serviced,unsched_down
+EV-A-0096,FAB_A,2026-10-05,CMP,CMP-A06,2026-10-09 03:08,7.14,Wafer breakage on platen,Platen cleaned; head inspected,unsched_down
+EV-A-0097,FAB_A,2026-10-05,CMP,CMP-A06,2026-10-05 07:02,1.6,Pad conditioner disk wear,Disk replaced; removal rate requalified,unsched_down
+EV-A-0098,FAB_A,2026-10-05,CMP,CMP-A08,2026-10-11 02:13,2.61,Slurry delivery flow alarm,Slurry pump serviced,unsched_down
+EV-A-0099,FAB_A,2026-10-05,CMP,CMP-A06,2026-10-09 19:43,4.91,Wafer breakage on platen,Platen cleaned; head inspected,unsched_down
+EV-A-0100,FAB_A,2026-10-05,CMP,CMP-A07,2026-10-06 03:58,6.42,Slurry delivery flow alarm,Slurry pump serviced,unsched_down
+EV-A-0101,FAB_A,2026-10-05,CMP,CMP-A01,2026-10-05 14:07,14.03,Slurry delivery flow alarm,Slurry pump serviced,unsched_down
+EV-A-0102,FAB_A,2026-10-05,DEP,DEP-A22,2026-10-07 07:16,51.94,Heater zone failure,Heater replaced; temperature profile requalified,unsched_down
+EV-A-0103,FAB_A,2026-10-05,DEP,DEP-A12,2026-10-10 08:42,38.6,Heater zone failure,Heater replaced; temperature profile requalified,unsched_down
+EV-A-0104,FAB_A,2026-10-05,DEP,DEP-A23,2026-10-08 19:50,31.87,Particle excursion after chamber clean,Additional seasoning; particle monitor passed,unsched_down
+EV-A-0105,FAB_A,2026-10-05,DEP,DEP-A07,2026-10-10 09:11,9.42,Showerhead clogging: PM pulled in,Showerhead replaced; film uniformity requalified,unsched_down
+EV-A-0106,FAB_A,2026-10-05,DEP,DEP-A33,2026-10-10 07:08,27.13,ALD precursor valve fault,Valve replaced; delivery line purged,unsched_down
+EV-A-0107,FAB_A,2026-10-05,DEP,DEP-A01,2026-10-09 11:43,31.22,Showerhead clogging: PM pulled in,Showerhead replaced; film uniformity requalified,unsched_down
+EV-A-0108,FAB_A,2026-10-05,DEP,DEP-A30,2026-10-06 04:06,16.18,Showerhead clogging: PM pulled in,Showerhead replaced; film uniformity requalified,unsched_down
+EV-A-0109,FAB_A,2026-10-05,DEP,DEP-A14,2026-10-07 22:47,42.07,Showerhead clogging: PM pulled in,Showerhead replaced; film uniformity requalified,unsched_down
+EV-A-0110,FAB_A,2026-10-05,DEP,DEP-A40,2026-10-05 13:10,38.73,Particle excursion after chamber clean,Additional seasoning; particle monitor passed,unsched_down
+EV-A-0111,FAB_A,2026-10-05,DEP,DEP-A08,2026-10-08 19:10,28.35,Showerhead clogging: PM pulled in,Showerhead replaced; film uniformity requalified,unsched_down
+EV-A-0112,FAB_A,2026-10-05,DEP,DEP-A05,2026-10-10 07:36,34.43,Heater zone failure,Heater replaced; temperature profile requalified,unsched_down
+EV-A-0113,FAB_A,2026-10-05,DEP,DEP-A10,2026-10-07 23:46,28.01,ALD precursor valve fault,Valve replaced; delivery line purged,unsched_down
+EV-A-0114,FAB_A,2026-10-05,DEP,DEP-A20,2026-10-07 20:33,9.64,ALD precursor valve fault,Valve replaced; delivery line purged,unsched_down
+EV-A-0115,FAB_A,2026-10-05,DEP,DEP-A24,2026-10-05 04:22,46.13,Particle excursion after chamber clean,Additional seasoning; particle monitor passed,unsched_down
+EV-A-0116,FAB_A,2026-10-05,DUV,DUV-A04,2026-10-05 17:42,10.0,Wafer stage interferometer fault,Interferometer board replaced,unsched_down
+EV-A-0117,FAB_A,2026-10-05,DUV,DUV-A03,2026-10-10 22:38,2.66,Wafer stage interferometer fault,Interferometer board replaced,unsched_down
+EV-A-0118,FAB_A,2026-10-05,DUV,DUV-A01,2026-10-05 00:11,9.68,Lens heating drift beyond spec,Lens model re-baselined,unsched_down
+EV-A-0119,FAB_A,2026-10-05,DUV,DUV-A02,2026-10-08 11:53,2.92,Wafer stage interferometer fault,Interferometer board replaced,unsched_down
+EV-A-0120,FAB_A,2026-10-05,ETCH,ETCH-A08,2026-10-08 12:00,28.15,Endpoint detector failure,Optical endpoint sensor replaced,unsched_down
+EV-A-0121,FAB_A,2026-10-05,ETCH,ETCH-A16,2026-10-06 10:18,9.42,Chamber particle excursion,Wet clean and seasoning wafers run,unsched_down
+EV-A-0122,FAB_A,2026-10-05,ETCH,ETCH-A13,2026-10-07 06:54,35.38,Electrostatic chuck helium leak,Chuck O-rings replaced; leak check passed,unsched_down
+EV-A-0123,FAB_A,2026-10-05,ETCH,ETCH-A30,2026-10-07 03:20,6.37,Chamber particle excursion,Wet clean and seasoning wafers run,unsched_down
+EV-A-0124,FAB_A,2026-10-05,ETCH,ETCH-A29,2026-10-05 09:52,41.58,Chamber particle excursion,Wet clean and seasoning wafers run,unsched_down
+EV-A-0125,FAB_A,2026-10-05,ETCH,ETCH-A10,2026-10-05 04:08,29.4,Endpoint detector failure,Optical endpoint sensor replaced,unsched_down
+EV-A-0126,FAB_A,2026-10-05,ETCH,ETCH-A11,2026-10-07 07:11,8.72,Chamber particle excursion,Wet clean and seasoning wafers run,unsched_down
+EV-A-0127,FAB_A,2026-10-05,ETCH,ETCH-A05,2026-10-05 02:49,19.69,Electrostatic chuck helium leak,Chuck O-rings replaced; leak check passed,unsched_down
+EV-A-0128,FAB_A,2026-10-05,ETCH,ETCH-A25,2026-10-06 01:00,16.9,Electrostatic chuck helium leak,Chuck O-rings replaced; leak check passed,unsched_down
+EV-A-0129,FAB_A,2026-10-05,ETCH,ETCH-A23,2026-10-09 10:40,20.9,Chamber particle excursion,Wet clean and seasoning wafers run,unsched_down
+EV-A-0130,FAB_A,2026-10-05,ETCH,ETCH-A21,2026-10-09 01:41,30.02,Chamber particle excursion,Wet clean and seasoning wafers run,unsched_down
+EV-A-0131,FAB_A,2026-10-05,ETCH,ETCH-A28,2026-10-10 01:51,3.01,Endpoint detector failure,Optical endpoint sensor replaced,unsched_down
+EV-A-0132,FAB_A,2026-10-05,ETCH,ETCH-A04,2026-10-06 17:43,36.44,Electrostatic chuck helium leak,Chuck O-rings replaced; leak check passed,unsched_down
+EV-A-0133,FAB_A,2026-10-05,ETCH,ETCH-A19,2026-10-11 01:29,4.54,Chamber particle excursion,Wet clean and seasoning wafers run,unsched_down
+EV-A-0134,FAB_A,2026-10-05,EUV,EUV-A01,2026-10-11 15:14,7.65,Dose uniformity drift,Illuminator recalibrated,unsched_down
+EV-A-0135,FAB_A,2026-10-05,FURN,FURN-A02,2026-10-09 13:49,16.67,Mass-flow controller failure,MFC replaced; leak check passed,unsched_down
+EV-A-0136,FAB_A,2026-10-05,FURN,FURN-A11,2026-10-08 16:36,11.7,Thermocouple drift,Thermocouple replaced; profile requalified,unsched_down
+EV-A-0137,FAB_A,2026-10-05,FURN,FURN-A04,2026-10-10 00:40,8.88,Mass-flow controller failure,MFC replaced; leak check passed,unsched_down
+EV-A-0138,FAB_A,2026-10-05,FURN,FURN-A15,2026-10-11 12:11,9.18,Boat elevator fault,Elevator drive serviced,unsched_down
+EV-A-0139,FAB_A,2026-10-05,FURN,FURN-A10,2026-10-07 20:41,4.17,Boat elevator fault,Elevator drive serviced,unsched_down
+EV-A-0140,FAB_A,2026-10-05,FURN,FURN-A03,2026-10-08 07:55,12.7,Boat elevator fault,Elevator drive serviced,unsched_down
+EV-A-0141,FAB_A,2026-10-05,FURN,FURN-A13,2026-10-05 01:58,9.34,Boat elevator fault,Elevator drive serviced,unsched_down
+EV-A-0142,FAB_A,2026-10-05,IMPL,IMPL-A03,2026-10-06 09:06,5.98,Ion source filament failure,Source rebuilt; beam tuned,unsched_down
+EV-A-0143,FAB_A,2026-10-05,IMPL,IMPL-A01,2026-10-09 23:43,6.99,Beamline arcing,Beamline cleaned; arc count normal,unsched_down
+EV-A-0144,FAB_A,2026-10-05,IMPL,IMPL-A04,2026-10-05 03:38,10.63,Beamline arcing,Beamline cleaned; arc count normal,unsched_down
+EV-A-0145,FAB_A,2026-10-05,IMPL,IMPL-A05,2026-10-11 14:01,6.62,Beamline arcing,Beamline cleaned; arc count normal,unsched_down
+EV-A-0146,FAB_A,2026-10-05,IMPL,IMPL-A04,2026-10-07 13:50,4.01,Beamline arcing,Beamline cleaned; arc count normal,unsched_down
+EV-A-0147,FAB_A,2026-10-05,IMPL,IMPL-A05,2026-10-09 23:17,2.15,Beamline arcing,Beamline cleaned; arc count normal,unsched_down
+EV-A-0148,FAB_A,2026-10-05,IMPL,IMPL-A05,2026-10-10 20:56,9.2,Beamline arcing,Beamline cleaned; arc count normal,unsched_down
+EV-A-0149,FAB_A,2026-10-05,IMPL,IMPL-A04,2026-10-07 11:22,17.55,Ion source filament failure,Source rebuilt; beam tuned,unsched_down
+EV-A-0150,FAB_A,2026-10-05,IMPL,IMPL-A03,2026-10-07 01:58,11.4,Beamline arcing,Beamline cleaned; arc count normal,unsched_down
+EV-A-0151,FAB_A,2026-10-05,METRO,METRO-A08,2026-10-10 04:55,4.66,Stage calibration out of tolerance,Stage recalibrated,unsched_down
+EV-A-0152,FAB_A,2026-10-05,METRO,METRO-A03,2026-10-10 18:43,9.77,Light source end of life,Light source replaced,unsched_down
+EV-A-0153,FAB_A,2026-10-05,METRO,METRO-A06,2026-10-11 01:13,6.93,Stage calibration out of tolerance,Stage recalibrated,unsched_down
+EV-A-0154,FAB_A,2026-10-05,METRO,METRO-A05,2026-10-11 14:21,7.16,Stage calibration out of tolerance,Stage recalibrated,unsched_down
+EV-A-0155,FAB_A,2026-10-05,METRO,METRO-A02,2026-10-11 18:05,3.0,Light source end of life,Light source replaced,unsched_down
+EV-A-0156,FAB_A,2026-10-05,METRO,METRO-A01,2026-10-11 10:42,5.66,Light source end of life,Light source replaced,unsched_down
+EV-A-0157,FAB_A,2026-10-05,METRO,METRO-A09,2026-10-05 11:47,3.71,Light source end of life,Light source replaced,unsched_down
+EV-A-0158,FAB_A,2026-10-05,METRO,METRO-A04,2026-10-05 22:50,2.25,Light source end of life,Light source replaced,unsched_down
+EV-A-0159,FAB_A,2026-10-05,METRO,METRO-A07,2026-10-07 01:55,4.01,Stage calibration out of tolerance,Stage recalibrated,unsched_down
+EV-A-0160,FAB_A,2026-10-05,PVD,PVD-A03,2026-10-11 08:08,6.4,Target reached end of life early,Target swapped; burn-in completed,unsched_down
+EV-A-0161,FAB_A,2026-10-05,PVD,PVD-A01,2026-10-05 19:26,6.83,Shield flaking particles,Shield kit replaced,unsched_down
+EV-A-0162,FAB_A,2026-10-05,PVD,PVD-A04,2026-10-11 01:46,5.33,Magnetron rotation fault,Magnetron drive repaired,unsched_down
+EV-A-0163,FAB_A,2026-10-05,PVD,PVD-A01,2026-10-05 15:45,11.0,Target reached end of life early,Target swapped; burn-in completed,unsched_down
+EV-A-0164,FAB_A,2026-10-05,PVD,PVD-A01,2026-10-06 17:40,10.46,Magnetron rotation fault,Magnetron drive repaired,unsched_down
+EV-A-0165,FAB_A,2026-10-05,WET,WET-A01,2026-10-07 05:43,10.64,Megasonic transducer fault,Transducer replaced,unsched_down
+EV-A-0166,FAB_A,2026-10-05,WET,WET-A10,2026-10-05 07:44,13.37,Bath chemistry out of spec,Bath dumped and refilled; chemistry verified,unsched_down
+EV-A-0167,FAB_A,2026-10-05,WET,WET-A15,2026-10-07 03:48,16.67,Robot handoff error,Robot taught; handoff verified,unsched_down
+EV-A-0168,FAB_A,2026-10-05,WET,WET-A03,2026-10-10 00:40,16.1,Robot handoff error,Robot taught; handoff verified,unsched_down
+EV-A-0169,FAB_A,2026-10-05,WET,WET-A04,2026-10-09 04:41,6.3,Megasonic transducer fault,Transducer replaced,unsched_down
+EV-A-0170,FAB_A,2026-10-05,WET,WET-A12,2026-10-09 23:55,8.29,Bath chemistry out of spec,Bath dumped and refilled; chemistry verified,unsched_down
+EV-A-0171,FAB_A,2026-10-05,WET,WET-A19,2026-10-10 07:48,6.95,Robot handoff error,Robot taught; handoff verified,unsched_down
+EV-A-0172,FAB_A,2026-10-05,WET,WET-A11,2026-10-06 10:08,6.93,Bath chemistry out of spec,Bath dumped and refilled; chemistry verified,unsched_down
+EV-A-0173,FAB_A,2026-10-05,WET,WET-A13,2026-10-11 05:02,6.66,Megasonic transducer fault,Transducer replaced,unsched_down
+EV-A-0174,FAB_A,2026-10-05,WET,WET-A07,2026-10-07 22:11,7.74,Robot handoff error,Robot taught; handoff verified,unsched_down
+EV-A-0175,FAB_A,2026-10-05,WET,WET-A02,2026-10-09 02:00,14.62,Robot handoff error,Robot taught; handoff verified,unsched_down
+EV-A-0176,FAB_A,2026-10-05,WET,WET-A09,2026-10-05 00:21,9.26,Robot handoff error,Robot taught; handoff verified,unsched_down
+EV-A-0177,FAB_A,2026-10-05,WET,WET-A16,2026-10-11 19:27,3.45,Bath chemistry out of spec,Bath dumped and refilled; chemistry verified,unsched_down
+EV-A-0178,FAB_A,2026-10-05,WET,WET-A08,2026-10-06 19:31,13.05,Megasonic transducer fault,Transducer replaced,unsched_down
+EV-A-0179,FAB_A,2026-10-12,CMP,CMP-A07,2026-10-12 03:14,3.93,Wafer breakage on platen,Platen cleaned; head inspected,unsched_down
+EV-A-0180,FAB_A,2026-10-12,CMP,CMP-A05,2026-10-14 02:10,14.34,Slurry delivery flow alarm,Slurry pump serviced,unsched_down
+EV-A-0181,FAB_A,2026-10-12,CMP,CMP-A05,2026-10-13 08:40,2.8,Slurry delivery flow alarm,Slurry pump serviced,unsched_down
+EV-A-0182,FAB_A,2026-10-12,CMP,CMP-A05,2026-10-17 02:46,10.22,Wafer breakage on platen,Platen cleaned; head inspected,unsched_down
+EV-A-0183,FAB_A,2026-10-12,CMP,CMP-A03,2026-10-17 16:53,8.94,Wafer breakage on platen,Platen cleaned; head inspected,unsched_down
+EV-A-0184,FAB_A,2026-10-12,CMP,CMP-A02,2026-10-13 15:02,9.72,Wafer breakage on platen,Platen cleaned; head inspected,unsched_down
+EV-A-0185,FAB_A,2026-10-12,CMP,CMP-A09,2026-10-16 14:18,2.83,Slurry delivery flow alarm,Slurry pump serviced,unsched_down
+EV-A-0186,FAB_A,2026-10-12,CMP,CMP-A01,2026-10-12 20:54,6.43,Slurry delivery flow alarm,Slurry pump serviced,unsched_down
+EV-A-0187,FAB_A,2026-10-12,CMP,CMP-A04,2026-10-13 18:43,12.73,Wafer breakage on platen,Platen cleaned; head inspected,unsched_down
+EV-A-0188,FAB_A,2026-10-12,CMP,CMP-A07,2026-10-12 20:32,19.87,Pad conditioner disk wear,Disk replaced; removal rate requalified,unsched_down
+EV-A-0189,FAB_A,2026-10-12,CMP,CMP-A02,2026-10-13 21:34,7.28,Pad conditioner disk wear,Disk replaced; removal rate requalified,unsched_down
+EV-A-0190,FAB_A,2026-10-12,CMP,CMP-A07,2026-10-16 09:13,12.05,Slurry delivery flow alarm,Slurry pump serviced,unsched_down
+EV-A-0191,FAB_A,2026-10-12,CMP,CMP-A08,2026-10-18 01:15,8.43,Pad conditioner disk wear,Disk replaced; removal rate requalified,unsched_down
+EV-A-0192,FAB_A,2026-10-12,CMP,CMP-A07,2026-10-13 08:30,7.51,Pad conditioner disk wear,Disk replaced; removal rate requalified,unsched_down
+EV-A-0193,FAB_A,2026-10-12,DEP,DEP-A04,2026-10-17 16:17,9.68,Showerhead clogging: PM pulled in,Showerhead replaced; film uniformity requalified,unsched_down
+EV-A-0194,FAB_A,2026-10-12,DEP,DEP-A20,2026-10-16 10:30,38.6,Particle excursion after chamber clean,Additional seasoning; particle monitor passed,unsched_down
+EV-A-0195,FAB_A,2026-10-12,DEP,DEP-A40,2026-10-15 08:51,17.97,Showerhead clogging: PM pulled in,Showerhead replaced; film uniformity requalified,unsched_down
+EV-A-0196,FAB_A,2026-10-12,DEP,DEP-A01,2026-10-16 07:31,41.63,Particle excursion after chamber clean,Additional seasoning; particle monitor passed,unsched_down
+EV-A-0197,FAB_A,2026-10-12,DEP,DEP-A10,2026-10-12 13:13,25.44,Heater zone failure,Heater replaced; temperature profile requalified,unsched_down
+EV-A-0198,FAB_A,2026-10-12,DEP,DEP-A35,2026-10-14 04:18,35.38,Heater zone failure,Heater replaced; temperature profile requalified,unsched_down
+EV-A-0199,FAB_A,2026-10-12,DEP,DEP-A11,2026-10-15 13:25,52.23,Showerhead clogging: PM pulled in,Showerhead replaced; film uniformity requalified,unsched_down
+EV-A-0200,FAB_A,2026-10-12,DEP,DEP-A29,2026-10-13 09:31,37.79,Heater zone failure,Heater replaced; temperature profile requalified,unsched_down
+EV-A-0201,FAB_A,2026-10-12,DEP,DEP-A03,2026-10-16 03:23,35.88,Showerhead clogging: PM pulled in,Showerhead replaced; film uniformity requalified,unsched_down
+EV-A-0202,FAB_A,2026-10-12,DEP,DEP-A17,2026-10-14 16:44,39.6,ALD precursor valve fault,Valve replaced; delivery line purged,unsched_down
+EV-A-0203,FAB_A,2026-10-12,DEP,DEP-A37,2026-10-16 18:20,15.59,Showerhead clogging: PM pulled in,Showerhead replaced; film uniformity requalified,unsched_down
+EV-A-0204,FAB_A,2026-10-12,DEP,DEP-A39,2026-10-14 10:15,42.63,Showerhead clogging: PM pulled in,Showerhead replaced; film uniformity requalified,unsched_down
+EV-A-0205,FAB_A,2026-10-12,DEP,DEP-A06,2026-10-14 05:35,22.34,Showerhead clogging: PM pulled in,Showerhead replaced; film uniformity requalified,unsched_down
+EV-A-0206,FAB_A,2026-10-12,DEP,DEP-A27,2026-10-13 07:49,22.8,Showerhead clogging: PM pulled in,Showerhead replaced; film uniformity requalified,unsched_down
+EV-A-0207,FAB_A,2026-10-12,DUV,DUV-A04,2026-10-13 22:28,7.26,Wafer stage interferometer fault,Interferometer board replaced,unsched_down
+EV-A-0208,FAB_A,2026-10-12,DUV,DUV-A03,2026-10-16 21:48,7.65,Track coater nozzle clog,Nozzle cleaned; coat thickness verified,unsched_down
+EV-A-0209,FAB_A,2026-10-12,DUV,DUV-A01,2026-10-15 17:40,9.69,Wafer stage interferometer fault,Interferometer board replaced,unsched_down
+EV-A-0210,FAB_A,2026-10-12,DUV,DUV-A02,2026-10-15 16:58,6.5,Lens heating drift beyond spec,Lens model re-baselined,unsched_down
+EV-A-0211,FAB_A,2026-10-12,DUV,DUV-A03,2026-10-17 18:31,0.81,Track coater nozzle clog,Nozzle cleaned; coat thickness verified,unsched_down
+EV-A-0212,FAB_A,2026-10-12,ETCH,ETCH-A24,2026-10-13 09:10,6.5,Chamber particle excursion,Wet clean and seasoning wafers run,unsched_down
+EV-A-0213,FAB_A,2026-10-12,ETCH,ETCH-A23,2026-10-17 17:16,13.48,RF generator fault,RF generator swapped,unsched_down
+EV-A-0214,FAB_A,2026-10-12,ETCH,ETCH-A10,2026-10-17 23:24,13.75,Chamber particle excursion,Wet clean and seasoning wafers run,unsched_down
+EV-A-0215,FAB_A,2026-10-12,ETCH,ETCH-A03,2026-10-12 15:54,8.73,RF generator fault,RF generator swapped,unsched_down
+EV-A-0216,FAB_A,2026-10-12,ETCH,ETCH-A18,2026-10-12 16:06,17.99,RF generator fault,RF generator swapped,unsched_down
+EV-A-0217,FAB_A,2026-10-12,ETCH,ETCH-A11,2026-10-12 18:43,5.65,Endpoint detector failure,Optical endpoint sensor replaced,unsched_down
+EV-A-0218,FAB_A,2026-10-12,ETCH,ETCH-A14,2026-10-16 02:49,8.49,Chamber particle excursion,Wet clean and seasoning wafers run,unsched_down
+EV-A-0219,FAB_A,2026-10-12,ETCH,ETCH-A01,2026-10-12 18:44,14.4,Electrostatic chuck helium leak,Chuck O-rings replaced; leak check passed,unsched_down
+EV-A-0220,FAB_A,2026-10-12,ETCH,ETCH-A30,2026-10-17 13:05,11.86,Endpoint detector failure,Optical endpoint sensor replaced,unsched_down
+EV-A-0221,FAB_A,2026-10-12,ETCH,ETCH-A27,2026-10-16 15:09,20.64,Endpoint detector failure,Optical endpoint sensor replaced,unsched_down
+EV-A-0222,FAB_A,2026-10-12,ETCH,ETCH-A28,2026-10-16 14:51,32.78,Endpoint detector failure,Optical endpoint sensor replaced,unsched_down
+EV-A-0223,FAB_A,2026-10-12,ETCH,ETCH-A20,2026-10-15 09:53,12.33,Chamber particle excursion,Wet clean and seasoning wafers run,unsched_down
+EV-A-0224,FAB_A,2026-10-12,ETCH,ETCH-A05,2026-10-17 08:15,39.32,Endpoint detector failure,Optical endpoint sensor replaced,unsched_down
+EV-A-0225,FAB_A,2026-10-12,ETCH,ETCH-A04,2026-10-12 07:09,6.1,Endpoint detector failure,Optical endpoint sensor replaced,unsched_down
+EV-A-0226,FAB_A,2026-10-12,EUV,EUV-A01,2026-10-14 10:53,3.82,Reticle stage position error,Stage recalibrated; overlay check passed,unsched_down
+EV-A-0227,FAB_A,2026-10-12,EUV,EUV-A01,2026-10-14 20:06,1.33,Collector mirror contamination,Collector swapped; imaging requalified,unsched_down
+EV-A-0228,FAB_A,2026-10-12,EUV,EUV-A01,2026-10-14 19:54,10.63,Dose uniformity drift,Illuminator recalibrated,unsched_down
+EV-A-0229,FAB_A,2026-10-12,EUV,EUV-A01,2026-10-16 04:44,8.9,Collector mirror contamination,Collector swapped; imaging requalified,unsched_down
+EV-A-0230,FAB_A,2026-10-12,EUV,EUV-A01,2026-10-18 00:06,12.51,Collector mirror contamination,Collector swapped; imaging requalified,unsched_down
+EV-A-0231,FAB_A,2026-10-12,EUV,EUV-A01,2026-10-17 20:20,17.54,Collector mirror contamination,Collector swapped; imaging requalified,unsched_down
+EV-A-0232,FAB_A,2026-10-12,FURN,FURN-A06,2026-10-14 10:12,19.7,Mass-flow controller failure,MFC replaced; leak check passed,unsched_down
+EV-A-0233,FAB_A,2026-10-12,FURN,FURN-A03,2026-10-18 01:31,10.49,Thermocouple drift,Thermocouple replaced; profile requalified,unsched_down
+EV-A-0234,FAB_A,2026-10-12,FURN,FURN-A14,2026-10-15 21:54,5.81,Thermocouple drift,Thermocouple replaced; profile requalified,unsched_down
+EV-A-0235,FAB_A,2026-10-12,FURN,FURN-A15,2026-10-12 00:44,8.56,Boat elevator fault,Elevator drive serviced,unsched_down
+EV-A-0236,FAB_A,2026-10-12,FURN,FURN-A10,2026-10-12 06:13,6.43,Mass-flow controller failure,MFC replaced; leak check passed,unsched_down
+EV-A-0237,FAB_A,2026-10-12,FURN,FURN-A05,2026-10-16 11:58,9.3,Thermocouple drift,Thermocouple replaced; profile requalified,unsched_down
+EV-A-0238,FAB_A,2026-10-12,FURN,FURN-A13,2026-10-15 18:49,6.58,Mass-flow controller failure,MFC replaced; leak check passed,unsched_down
+EV-A-0239,FAB_A,2026-10-12,IMPL,IMPL-A05,2026-10-15 17:21,1.45,Beamline arcing,Beamline cleaned; arc count normal,unsched_down
+EV-A-0240,FAB_A,2026-10-12,IMPL,IMPL-A01,2026-10-18 11:04,7.37,Wafer handler vacuum fault,Vacuum pump serviced,unsched_down
+EV-A-0241,FAB_A,2026-10-12,IMPL,IMPL-A04,2026-10-18 15:13,2.76,Ion source filament failure,Source rebuilt; beam tuned,unsched_down
+EV-A-0242,FAB_A,2026-10-12,IMPL,IMPL-A03,2026-10-17 06:44,19.88,Wafer handler vacuum fault,Vacuum pump serviced,unsched_down
+EV-A-0243,FAB_A,2026-10-12,METRO,METRO-A06,2026-10-15 13:51,3.59,Stage calibration out of tolerance,Stage recalibrated,unsched_down
+EV-A-0244,FAB_A,2026-10-12,METRO,METRO-A06,2026-10-13 10:51,5.33,Stage calibration out of tolerance,Stage recalibrated,unsched_down
+EV-A-0245,FAB_A,2026-10-12,METRO,METRO-A07,2026-10-12 23:23,0.42,Stage calibration out of tolerance,Stage recalibrated,unsched_down
+EV-A-0246,FAB_A,2026-10-12,METRO,METRO-A02,2026-10-13 06:22,6.81,Light source end of life,Light source replaced,unsched_down
+EV-A-0247,FAB_A,2026-10-12,METRO,METRO-A04,2026-10-14 08:51,2.78,Light source end of life,Light source replaced,unsched_down
+EV-A-0248,FAB_A,2026-10-12,METRO,METRO-A08,2026-10-12 15:44,5.48,Light source end of life,Light source replaced,unsched_down
+EV-A-0249,FAB_A,2026-10-12,METRO,METRO-A06,2026-10-18 10:58,4.4,Light source end of life,Light source replaced,unsched_down
+EV-A-0250,FAB_A,2026-10-12,METRO,METRO-A02,2026-10-14 16:23,9.02,Light source end of life,Light source replaced,unsched_down
+EV-A-0251,FAB_A,2026-10-12,METRO,METRO-A01,2026-10-17 12:24,4.33,Light source end of life,Light source replaced,unsched_down
+EV-A-0252,FAB_A,2026-10-12,METRO,METRO-A06,2026-10-18 13:12,6.67,Stage calibration out of tolerance,Stage recalibrated,unsched_down
+EV-A-0253,FAB_A,2026-10-12,PVD,PVD-A04,2026-10-17 14:46,7.07,Shield flaking particles,Shield kit replaced,unsched_down
+EV-A-0254,FAB_A,2026-10-12,PVD,PVD-A03,2026-10-12 19:16,3.91,Shield flaking particles,Shield kit replaced,unsched_down
+EV-A-0255,FAB_A,2026-10-12,PVD,PVD-A01,2026-10-12 09:00,17.53,Target reached end of life early,Target swapped; burn-in completed,unsched_down
+EV-A-0256,FAB_A,2026-10-12,PVD,PVD-A02,2026-10-17 17:24,3.39,Shield flaking particles,Shield kit replaced,unsched_down
+EV-A-0257,FAB_A,2026-10-12,WET,WET-A16,2026-10-18 07:11,6.5,Robot handoff error,Robot taught; handoff verified,unsched_down
+EV-A-0258,FAB_A,2026-10-12,WET,WET-A08,2026-10-18 12:39,7.69,Megasonic transducer fault,Transducer replaced,unsched_down
+EV-A-0259,FAB_A,2026-10-12,WET,WET-A12,2026-10-13 12:08,15.09,Robot handoff error,Robot taught; handoff verified,unsched_down
+EV-A-0260,FAB_A,2026-10-12,WET,WET-A17,2026-10-12 07:31,14.67,Megasonic transducer fault,Transducer replaced,unsched_down
+EV-A-0261,FAB_A,2026-10-12,WET,WET-A01,2026-10-13 00:04,11.27,Bath chemistry out of spec,Bath dumped and refilled; chemistry verified,unsched_down
+EV-A-0262,FAB_A,2026-10-12,WET,WET-A11,2026-10-12 09:27,18.53,Robot handoff error,Robot taught; handoff verified,unsched_down
+EV-A-0263,FAB_A,2026-10-12,WET,WET-A19,2026-10-13 05:46,15.43,Bath chemistry out of spec,Bath dumped and refilled; chemistry verified,unsched_down
+EV-A-0264,FAB_A,2026-10-12,WET,WET-A15,2026-10-15 15:19,14.42,Bath chemistry out of spec,Bath dumped and refilled; chemistry verified,unsched_down
+EV-A-0265,FAB_A,2026-10-12,WET,WET-A13,2026-10-18 06:47,2.74,Robot handoff error,Robot taught; handoff verified,unsched_down
+EV-A-0266,FAB_A,2026-10-12,WET,WET-A18,2026-10-15 12:14,11.19,Bath chemistry out of spec,Bath dumped and refilled; chemistry verified,unsched_down
+EV-A-0267,FAB_A,2026-10-12,WET,WET-A09,2026-10-16 02:52,10.04,Robot handoff error,Robot taught; handoff verified,unsched_down
+EV-A-0268,FAB_A,2026-10-12,WET,WET-A04,2026-10-13 05:54,19.86,Robot handoff error,Robot taught; handoff verified,unsched_down
+EV-A-0269,FAB_A,2026-10-12,WET,WET-A02,2026-10-17 13:58,0.64,Robot handoff error,Robot taught; handoff verified,unsched_down
+EV-A-0270,FAB_A,2026-10-12,WET,WET-A14,2026-10-16 02:45,8.14,Megasonic transducer fault,Transducer replaced,unsched_down
+EV-A-0271,FAB_A,2026-10-19,CMP,CMP-A10,2026-10-22 03:16,7.51,Wafer breakage on platen,Platen cleaned; head inspected,unsched_down
+EV-A-0272,FAB_A,2026-10-19,CMP,CMP-A01,2026-10-25 00:50,6.48,Pad conditioner disk wear,Disk replaced; removal rate requalified,unsched_down
+EV-A-0273,FAB_A,2026-10-19,CMP,CMP-A08,2026-10-22 00:25,15.71,Slurry delivery flow alarm,Slurry pump serviced,unsched_down
+EV-A-0274,FAB_A,2026-10-19,CMP,CMP-A06,2026-10-19 09:53,3.98,Slurry delivery flow alarm,Slurry pump serviced,unsched_down
+EV-A-0275,FAB_A,2026-10-19,CMP,CMP-A03,2026-10-24 07:57,12.38,Slurry delivery flow alarm,Slurry pump serviced,unsched_down
+EV-A-0276,FAB_A,2026-10-19,CMP,CMP-A03,2026-10-23 05:34,11.29,Wafer breakage on platen,Platen cleaned; head inspected,unsched_down
+EV-A-0277,FAB_A,2026-10-19,CMP,CMP-A08,2026-10-24 08:15,3.93,Wafer breakage on platen,Platen cleaned; head inspected,unsched_down
+EV-A-0278,FAB_A,2026-10-19,CMP,CMP-A07,2026-10-21 22:59,2.18,Wafer breakage on platen,Platen cleaned; head inspected,unsched_down
+EV-A-0279,FAB_A,2026-10-19,CMP,CMP-A07,2026-10-23 06:41,7.01,Wafer breakage on platen,Platen cleaned; head inspected,unsched_down
+EV-A-0280,FAB_A,2026-10-19,CMP,CMP-A01,2026-10-24 23:27,0.46,Wafer breakage on platen,Platen cleaned; head inspected,unsched_down
+EV-A-0281,FAB_A,2026-10-19,CMP,CMP-A06,2026-10-23 01:22,13.7,Slurry delivery flow alarm,Slurry pump serviced,unsched_down
+EV-A-0282,FAB_A,2026-10-19,DEP,DEP-A25,2026-10-23 07:40,30.1,Showerhead clogging: PM pulled in,Showerhead replaced; film uniformity requalified,unsched_down
+EV-A-0283,FAB_A,2026-10-19,DEP,DEP-A14,2026-10-20 21:19,23.57,ALD precursor valve fault,Valve replaced; delivery line purged,unsched_down
+EV-A-0284,FAB_A,2026-10-19,DEP,DEP-A37,2026-10-20 19:27,8.67,Particle excursion after chamber clean,Additional seasoning; particle monitor passed,unsched_down
+EV-A-0285,FAB_A,2026-10-19,DEP,DEP-A17,2026-10-19 21:12,6.01,ALD precursor valve fault,Valve replaced; delivery line purged,unsched_down
+EV-A-0286,FAB_A,2026-10-19,DEP,DEP-A41,2026-10-21 06:57,42.76,Heater zone failure,Heater replaced; temperature profile requalified,unsched_down
+EV-A-0287,FAB_A,2026-10-19,DEP,DEP-A19,2026-10-20 20:36,20.78,Heater zone failure,Heater replaced; temperature profile requalified,unsched_down
+EV-A-0288,FAB_A,2026-10-19,DEP,DEP-A29,2026-10-21 11:05,7.98,Heater zone failure,Heater replaced; temperature profile requalified,unsched_down
+EV-A-0289,FAB_A,2026-10-19,DEP,DEP-A22,2026-10-20 02:20,56.36,Particle excursion after chamber clean,Additional seasoning; particle monitor passed,unsched_down
+EV-A-0290,FAB_A,2026-10-19,DEP,DEP-A38,2026-10-23 07:52,31.88,Heater zone failure,Heater replaced; temperature profile requalified,unsched_down
+EV-A-0291,FAB_A,2026-10-19,DEP,DEP-A33,2026-10-24 10:13,27.96,ALD precursor valve fault,Valve replaced; delivery line purged,unsched_down
+EV-A-0292,FAB_A,2026-10-19,DEP,DEP-A05,2026-10-22 04:59,13.38,ALD precursor valve fault,Valve replaced; delivery line purged,unsched_down
+EV-A-0293,FAB_A,2026-10-19,DEP,DEP-A03,2026-10-23 06:30,8.57,Heater zone failure,Heater replaced; temperature profile requalified,unsched_down
+EV-A-0294,FAB_A,2026-10-19,DEP,DEP-A39,2026-10-24 03:28,25.61,Showerhead clogging: PM pulled in,Showerhead replaced; film uniformity requalified,unsched_down
+EV-A-0295,FAB_A,2026-10-19,DEP,DEP-A09,2026-10-25 01:08,22.68,Particle excursion after chamber clean,Additional seasoning; particle monitor passed,unsched_down
+EV-A-0296,FAB_A,2026-10-19,DUV,DUV-A01,2026-10-25 04:44,0.86,Track coater nozzle clog,Nozzle cleaned; coat thickness verified,unsched_down
+EV-A-0297,FAB_A,2026-10-19,DUV,DUV-A04,2026-10-21 02:44,6.59,Reticle handler jam,Handler gripper realigned,unsched_down
+EV-A-0298,FAB_A,2026-10-19,DUV,DUV-A04,2026-10-21 16:09,8.25,Wafer stage interferometer fault,Interferometer board replaced,unsched_down
+EV-A-0299,FAB_A,2026-10-19,DUV,DUV-A03,2026-10-20 17:27,13.38,Wafer stage interferometer fault,Interferometer board replaced,unsched_down
+EV-A-0300,FAB_A,2026-10-19,DUV,DUV-A04,2026-10-23 01:25,7.31,Reticle handler jam,Handler gripper realigned,unsched_down
+EV-A-0301,FAB_A,2026-10-19,ETCH,ETCH-A21,2026-10-21 05:29,37.53,Chamber particle excursion,Wet clean and seasoning wafers run,unsched_down
+EV-A-0302,FAB_A,2026-10-19,ETCH,ETCH-A22,2026-10-22 04:25,8.57,Chamber particle excursion,Wet clean and seasoning wafers run,unsched_down
+EV-A-0303,FAB_A,2026-10-19,ETCH,ETCH-A25,2026-10-24 08:42,18.65,Chamber particle excursion,Wet clean and seasoning wafers run,unsched_down
+EV-A-0304,FAB_A,2026-10-19,ETCH,ETCH-A10,2026-10-23 05:23,10.14,Chamber particle excursion,Wet clean and seasoning wafers run,unsched_down
+EV-A-0305,FAB_A,2026-10-19,ETCH,ETCH-A23,2026-10-23 08:22,16.81,RF generator fault,RF generator swapped,unsched_down
+EV-A-0306,FAB_A,2026-10-19,ETCH,ETCH-A01,2026-10-24 02:45,43.11,RF generator fault,RF generator swapped,unsched_down
+EV-A-0307,FAB_A,2026-10-19,ETCH,ETCH-A27,2026-10-21 12:26,21.22,Chamber particle excursion,Wet clean and seasoning wafers run,unsched_down
+EV-A-0308,FAB_A,2026-10-19,ETCH,ETCH-A08,2026-10-21 13:24,15.77,RF generator fault,RF generator swapped,unsched_down
+EV-A-0309,FAB_A,2026-10-19,ETCH,ETCH-A16,2026-10-24 21:50,14.38,Chamber particle excursion,Wet clean and seasoning wafers run,unsched_down
+EV-A-0310,FAB_A,2026-10-19,ETCH,ETCH-A12,2026-10-20 14:20,12.08,Endpoint detector failure,Optical endpoint sensor replaced,unsched_down
+EV-A-0311,FAB_A,2026-10-19,ETCH,ETCH-A30,2026-10-22 20:26,41.34,Chamber particle excursion,Wet clean and seasoning wafers run,unsched_down
+EV-A-0312,FAB_A,2026-10-19,ETCH,ETCH-A13,2026-10-23 09:53,27.68,Endpoint detector failure,Optical endpoint sensor replaced,unsched_down
+EV-A-0313,FAB_A,2026-10-19,ETCH,ETCH-A06,2026-10-19 13:09,33.36,Electrostatic chuck helium leak,Chuck O-rings replaced; leak check passed,unsched_down
+EV-A-0314,FAB_A,2026-10-19,ETCH,ETCH-A26,2026-10-22 02:13,9.48,Endpoint detector failure,Optical endpoint sensor replaced,unsched_down
+EV-A-0315,FAB_A,2026-10-19,EUV,EUV-A01,2026-10-20 11:06,11.76,Collector mirror contamination,Collector swapped; imaging requalified,unsched_down
+EV-A-0316,FAB_A,2026-10-19,EUV,EUV-A01,2026-10-24 14:04,9.65,Source power drop: droplet generator instability,Droplet generator replaced; dose re-baselined,unsched_down
+EV-A-0317,FAB_A,2026-10-19,EUV,EUV-A01,2026-10-21 16:32,6.34,Source power drop: droplet generator instability,Droplet generator replaced; dose re-baselined,unsched_down
+EV-A-0318,FAB_A,2026-10-19,FURN,FURN-A01,2026-10-23 19:44,7.66,Boat elevator fault,Elevator drive serviced,unsched_down
+EV-A-0319,FAB_A,2026-10-19,FURN,FURN-A14,2026-10-24 21:10,14.2,Mass-flow controller failure,MFC replaced; leak check passed,unsched_down
+EV-A-0320,FAB_A,2026-10-19,FURN,FURN-A10,2026-10-25 07:40,13.89,Boat elevator fault,Elevator drive serviced,unsched_down
+EV-A-0321,FAB_A,2026-10-19,FURN,FURN-A15,2026-10-21 05:03,17.31,Mass-flow controller failure,MFC replaced; leak check passed,unsched_down
+EV-A-0322,FAB_A,2026-10-19,FURN,FURN-A12,2026-10-23 02:35,13.52,Mass-flow controller failure,MFC replaced; leak check passed,unsched_down
+EV-A-0323,FAB_A,2026-10-19,FURN,FURN-A03,2026-10-22 05:35,4.26,Thermocouple drift,Thermocouple replaced; profile requalified,unsched_down
+EV-A-0324,FAB_A,2026-10-19,FURN,FURN-A08,2026-10-25 14:28,7.37,Thermocouple drift,Thermocouple replaced; profile requalified,unsched_down
+EV-A-0325,FAB_A,2026-10-19,FURN,FURN-A07,2026-10-19 14:29,13.57,Mass-flow controller failure,MFC replaced; leak check passed,unsched_down
+EV-A-0326,FAB_A,2026-10-19,FURN,FURN-A05,2026-10-21 15:59,12.83,Thermocouple drift,Thermocouple replaced; profile requalified,unsched_down
+EV-A-0327,FAB_A,2026-10-19,FURN,FURN-A09,2026-10-24 21:21,6.56,Boat elevator fault,Elevator drive serviced,unsched_down
+EV-A-0328,FAB_A,2026-10-19,FURN,FURN-A04,2026-10-20 20:53,9.98,Thermocouple drift,Thermocouple replaced; profile requalified,unsched_down
+EV-A-0329,FAB_A,2026-10-19,FURN,FURN-A11,2026-10-24 07:59,5.54,Boat elevator fault,Elevator drive serviced,unsched_down
+EV-A-0330,FAB_A,2026-10-19,FURN,FURN-A13,2026-10-21 15:20,2.5,Thermocouple drift,Thermocouple replaced; profile requalified,unsched_down
+EV-A-0331,FAB_A,2026-10-19,IMPL,IMPL-A04,2026-10-24 18:36,8.06,Ion source filament failure,Source rebuilt; beam tuned,unsched_down
+EV-A-0332,FAB_A,2026-10-19,IMPL,IMPL-A05,2026-10-24 02:05,4.35,Wafer handler vacuum fault,Vacuum pump serviced,unsched_down
+EV-A-0333,FAB_A,2026-10-19,IMPL,IMPL-A01,2026-10-24 20:39,9.19,Ion source filament failure,Source rebuilt; beam tuned,unsched_down
+EV-A-0334,FAB_A,2026-10-19,IMPL,IMPL-A02,2026-10-20 10:25,8.57,Wafer handler vacuum fault,Vacuum pump serviced,unsched_down
+EV-A-0335,FAB_A,2026-10-19,IMPL,IMPL-A04,2026-10-22 12:22,9.19,Ion source filament failure,Source rebuilt; beam tuned,unsched_down
+EV-A-0336,FAB_A,2026-10-19,IMPL,IMPL-A03,2026-10-24 01:36,11.94,Beamline arcing,Beamline cleaned; arc count normal,unsched_down
+EV-A-0337,FAB_A,2026-10-19,METRO,METRO-A02,2026-10-21 07:01,2.34,Stage calibration out of tolerance,Stage recalibrated,unsched_down
+EV-A-0338,FAB_A,2026-10-19,METRO,METRO-A05,2026-10-20 03:28,5.6,Light source end of life,Light source replaced,unsched_down
+EV-A-0339,FAB_A,2026-10-19,METRO,METRO-A04,2026-10-20 10:19,5.92,Stage calibration out of tolerance,Stage recalibrated,unsched_down
+EV-A-0340,FAB_A,2026-10-19,METRO,METRO-A07,2026-10-19 14:46,3.84,Stage calibration out of tolerance,Stage recalibrated,unsched_down
+EV-A-0341,FAB_A,2026-10-19,METRO,METRO-A01,2026-10-19 19:05,9.09,Stage calibration out of tolerance,Stage recalibrated,unsched_down
+EV-A-0342,FAB_A,2026-10-19,METRO,METRO-A03,2026-10-19 11:43,3.52,Stage calibration out of tolerance,Stage recalibrated,unsched_down
+EV-A-0343,FAB_A,2026-10-19,PVD,PVD-A02,2026-10-21 08:17,5.35,Magnetron rotation fault,Magnetron drive repaired,unsched_down
+EV-A-0344,FAB_A,2026-10-19,PVD,PVD-A01,2026-10-22 01:36,10.6,Magnetron rotation fault,Magnetron drive repaired,unsched_down
+EV-A-0345,FAB_A,2026-10-19,PVD,PVD-A04,2026-10-20 02:53,9.58,Shield flaking particles,Shield kit replaced,unsched_down
+EV-A-0346,FAB_A,2026-10-19,WET,WET-A15,2026-10-23 19:59,10.72,Robot handoff error,Robot taught; handoff verified,unsched_down
+EV-A-0347,FAB_A,2026-10-19,WET,WET-A09,2026-10-19 10:29,22.09,Robot handoff error,Robot taught; handoff verified,unsched_down
+EV-A-0348,FAB_A,2026-10-19,WET,WET-A02,2026-10-22 12:36,3.93,Megasonic transducer fault,Transducer replaced,unsched_down
+EV-A-0349,FAB_A,2026-10-19,WET,WET-A04,2026-10-22 06:01,5.98,Robot handoff error,Robot taught; handoff verified,unsched_down
+EV-A-0350,FAB_A,2026-10-19,WET,WET-A03,2026-10-24 23:43,12.07,Megasonic transducer fault,Transducer replaced,unsched_down
+EV-A-0351,FAB_A,2026-10-19,WET,WET-A13,2026-10-22 02:44,16.56,Megasonic transducer fault,Transducer replaced,unsched_down
+EV-A-0352,FAB_A,2026-10-19,WET,WET-A17,2026-10-22 03:32,6.68,Bath chemistry out of spec,Bath dumped and refilled; chemistry verified,unsched_down
+EV-A-0353,FAB_A,2026-10-19,WET,WET-A12,2026-10-25 10:58,6.93,Bath chemistry out of spec,Bath dumped and refilled; chemistry verified,unsched_down
+EV-A-0354,FAB_A,2026-10-19,WET,WET-A08,2026-10-21 21:12,14.39,Robot handoff error,Robot taught; handoff verified,unsched_down
+EV-A-0355,FAB_A,2026-10-19,WET,WET-A06,2026-10-20 00:42,31.37,Megasonic transducer fault,Transducer replaced,unsched_down
+EV-A-0356,FAB_A,2026-10-19,WET,WET-A11,2026-10-20 10:10,10.46,Bath chemistry out of spec,Bath dumped and refilled; chemistry verified,unsched_down
+EV-A-0357,FAB_A,2026-10-19,WET,WET-A01,2026-10-19 15:25,5.97,Bath chemistry out of spec,Bath dumped and refilled; chemistry verified,unsched_down
+EV-A-0358,FAB_A,2026-10-19,WET,WET-A10,2026-10-19 00:05,4.83,Megasonic transducer fault,Transducer replaced,unsched_down
+EV-A-0359,FAB_A,2026-10-19,WET,WET-A19,2026-10-21 20:36,9.16,Megasonic transducer fault,Transducer replaced,unsched_down
+EV-B-0360,FAB_B,2026-09-28,CMP,CMP-B01,2026-10-03 17:13,8.44,Slurry delivery flow alarm,Slurry pump serviced,unsched_down
+EV-B-0361,FAB_B,2026-09-28,CMP,CMP-B04,2026-10-04 06:04,7.13,Slurry delivery flow alarm,Slurry pump serviced,unsched_down
+EV-B-0362,FAB_B,2026-09-28,CMP,CMP-B04,2026-09-29 08:23,9.15,Wafer breakage on platen,Platen cleaned; head inspected,unsched_down
+EV-B-0363,FAB_B,2026-09-28,CMP,CMP-B01,2026-10-01 10:45,11.43,Wafer breakage on platen,Platen cleaned; head inspected,unsched_down
+EV-B-0364,FAB_B,2026-09-28,CMP,CMP-B04,2026-10-03 12:32,8.86,Wafer breakage on platen,Platen cleaned; head inspected,unsched_down
+EV-B-0365,FAB_B,2026-09-28,CMP,CMP-B01,2026-09-30 02:22,1.88,Slurry delivery flow alarm,Slurry pump serviced,unsched_down
+EV-B-0366,FAB_B,2026-09-28,CMP,CMP-B03,2026-09-30 21:24,10.18,Wafer breakage on platen,Platen cleaned; head inspected,unsched_down
+EV-B-0367,FAB_B,2026-09-28,CMP,CMP-B02,2026-10-04 12:08,9.58,Wafer breakage on platen,Platen cleaned; head inspected,unsched_down
+EV-B-0368,FAB_B,2026-09-28,DEP,DEP-B13,2026-09-29 01:08,6.19,Particle excursion after chamber clean,Additional seasoning; particle monitor passed,unsched_down
+EV-B-0369,FAB_B,2026-09-28,DEP,DEP-B02,2026-10-01 18:30,18.8,Heater zone failure,Heater replaced; temperature profile requalified,unsched_down
+EV-B-0370,FAB_B,2026-09-28,DEP,DEP-B15,2026-09-30 19:53,15.34,ALD precursor valve fault,Valve replaced; delivery line purged,unsched_down
+EV-B-0371,FAB_B,2026-09-28,DEP,DEP-B18,2026-09-30 13:15,29.66,Particle excursion after chamber clean,Additional seasoning; particle monitor passed,unsched_down
+EV-B-0372,FAB_B,2026-09-28,DEP,DEP-B10,2026-09-28 11:24,9.17,Particle excursion after chamber clean,Additional seasoning; particle monitor passed,unsched_down
+EV-B-0373,FAB_B,2026-09-28,DEP,DEP-B04,2026-10-02 21:09,22.06,Showerhead clogging: PM pulled in,Showerhead replaced; film uniformity requalified,unsched_down
+EV-B-0374,FAB_B,2026-09-28,DEP,DEP-B05,2026-10-04 01:18,5.29,Heater zone failure,Heater replaced; temperature profile requalified,unsched_down
+EV-B-0375,FAB_B,2026-09-28,DEP,DEP-B19,2026-09-28 01:41,13.72,Showerhead clogging: PM pulled in,Showerhead replaced; film uniformity requalified,unsched_down
+EV-B-0376,FAB_B,2026-09-28,DEP,DEP-B03,2026-09-29 04:07,10.52,Heater zone failure,Heater replaced; temperature profile requalified,unsched_down
+EV-B-0377,FAB_B,2026-09-28,DUV,DUV-B01,2026-10-01 04:16,8.19,Wafer stage interferometer fault,Interferometer board replaced,unsched_down
+EV-B-0378,FAB_B,2026-09-28,DUV,DUV-B02,2026-09-30 10:18,5.88,Track coater nozzle clog,Nozzle cleaned; coat thickness verified,unsched_down
+EV-B-0379,FAB_B,2026-09-28,ETCH,ETCH-B03,2026-09-28 01:41,27.75,Endpoint detector failure,Optical endpoint sensor replaced,unsched_down
+EV-B-0380,FAB_B,2026-09-28,ETCH,ETCH-B07,2026-10-02 21:45,13.67,Electrostatic chuck helium leak,Chuck O-rings replaced; leak check passed,unsched_down
+EV-B-0381,FAB_B,2026-09-28,ETCH,ETCH-B09,2026-10-04 15:20,3.77,RF generator fault,RF generator swapped,unsched_down
+EV-B-0382,FAB_B,2026-09-28,ETCH,ETCH-B11,2026-10-04 00:13,8.8,RF generator fault,RF generator swapped,unsched_down
+EV-B-0383,FAB_B,2026-09-28,ETCH,ETCH-B01,2026-10-04 13:26,5.8,Electrostatic chuck helium leak,Chuck O-rings replaced; leak check passed,unsched_down
+EV-B-0384,FAB_B,2026-09-28,ETCH,ETCH-B02,2026-10-01 02:36,32.42,Electrostatic chuck helium leak,Chuck O-rings replaced; leak check passed,unsched_down
+EV-B-0385,FAB_B,2026-09-28,ETCH,ETCH-B08,2026-09-28 12:28,8.31,Electrostatic chuck helium leak,Chuck O-rings replaced; leak check passed,unsched_down
+EV-B-0386,FAB_B,2026-09-28,ETCH,ETCH-B12,2026-10-03 09:35,15.51,Chamber particle excursion,Wet clean and seasoning wafers run,unsched_down
+EV-B-0387,FAB_B,2026-09-28,ETCH,ETCH-B06,2026-10-02 03:31,5.85,Electrostatic chuck helium leak,Chuck O-rings replaced; leak check passed,unsched_down
+EV-B-0388,FAB_B,2026-09-28,FURN,FURN-B03,2026-09-29 11:00,5.36,Boat elevator fault,Elevator drive serviced,unsched_down
+EV-B-0389,FAB_B,2026-09-28,FURN,FURN-B04,2026-10-03 22:11,2.57,Boat elevator fault,Elevator drive serviced,unsched_down
+EV-B-0390,FAB_B,2026-09-28,FURN,FURN-B02,2026-09-30 11:21,11.05,Boat elevator fault,Elevator drive serviced,unsched_down
+EV-B-0391,FAB_B,2026-09-28,FURN,FURN-B06,2026-10-03 16:25,7.82,Mass-flow controller failure,MFC replaced; leak check passed,unsched_down
+EV-B-0392,FAB_B,2026-09-28,FURN,FURN-B05,2026-09-29 12:06,18.63,Thermocouple drift,Thermocouple replaced; profile requalified,unsched_down
+EV-B-0393,FAB_B,2026-09-28,IMPL,IMPL-B01,2026-09-30 07:10,5.59,Wafer handler vacuum fault,Vacuum pump serviced,unsched_down
+EV-B-0394,FAB_B,2026-09-28,IMPL,IMPL-B02,2026-09-28 11:13,10.43,Beamline arcing,Beamline cleaned; arc count normal,unsched_down
+EV-B-0395,FAB_B,2026-09-28,METRO,METRO-B02,2026-10-01 07:40,5.17,Light source end of life,Light source replaced,unsched_down
+EV-B-0396,FAB_B,2026-09-28,METRO,METRO-B03,2026-09-28 23:36,1.29,Stage calibration out of tolerance,Stage recalibrated,unsched_down
+EV-B-0397,FAB_B,2026-09-28,METRO,METRO-B04,2026-09-29 00:47,5.68,Stage calibration out of tolerance,Stage recalibrated,unsched_down
+EV-B-0398,FAB_B,2026-09-28,METRO,METRO-B01,2026-10-02 13:47,8.31,Light source end of life,Light source replaced,unsched_down
+EV-B-0399,FAB_B,2026-09-28,PVD,PVD-B01,2026-09-28 02:14,4.99,Target reached end of life early,Target swapped; burn-in completed,unsched_down
+EV-B-0400,FAB_B,2026-09-28,PVD,PVD-B01,2026-09-29 15:39,8.28,Shield flaking particles,Shield kit replaced,unsched_down
+EV-B-0401,FAB_B,2026-09-28,PVD,PVD-B02,2026-10-01 02:43,4.34,Shield flaking particles,Shield kit replaced,unsched_down
+EV-B-0402,FAB_B,2026-09-28,PVD,PVD-B02,2026-09-30 13:08,12.86,Target reached end of life early,Target swapped; burn-in completed,unsched_down
+EV-B-0403,FAB_B,2026-09-28,WET,WET-B02,2026-10-02 04:34,8.94,Megasonic transducer fault,Transducer replaced,unsched_down
+EV-B-0404,FAB_B,2026-09-28,WET,WET-B07,2026-10-04 03:59,8.73,Robot handoff error,Robot taught; handoff verified,unsched_down
+EV-B-0405,FAB_B,2026-09-28,WET,WET-B04,2026-10-04 14:38,6.29,Robot handoff error,Robot taught; handoff verified,unsched_down
+EV-B-0406,FAB_B,2026-09-28,WET,WET-B05,2026-09-28 06:56,3.95,Bath chemistry out of spec,Bath dumped and refilled; chemistry verified,unsched_down
+EV-B-0407,FAB_B,2026-09-28,WET,WET-B08,2026-09-30 20:21,14.38,Megasonic transducer fault,Transducer replaced,unsched_down
+EV-B-0408,FAB_B,2026-10-05,CMP,CMP-B02,2026-10-06 22:30,13.71,Slurry delivery flow alarm,Slurry pump serviced,unsched_down
+EV-B-0409,FAB_B,2026-10-05,CMP,CMP-B02,2026-10-05 05:06,3.41,Slurry delivery flow alarm,Slurry pump serviced,unsched_down
+EV-B-0410,FAB_B,2026-10-05,CMP,CMP-B04,2026-10-07 13:40,10.59,Slurry delivery flow alarm,Slurry pump serviced,unsched_down
+EV-B-0411,FAB_B,2026-10-05,CMP,CMP-B04,2026-10-06 05:53,18.68,Slurry delivery flow alarm,Slurry pump serviced,unsched_down
+EV-B-0412,FAB_B,2026-10-05,CMP,CMP-B02,2026-10-09 13:15,7.34,Pad conditioner disk wear,Disk replaced; removal rate requalified,unsched_down
+EV-B-0413,FAB_B,2026-10-05,CMP,CMP-B02,2026-10-06 04:59,8.13,Wafer breakage on platen,Platen cleaned; head inspected,unsched_down
+EV-B-0414,FAB_B,2026-10-05,CMP,CMP-B03,2026-10-09 14:08,4.78,Pad conditioner disk wear,Disk replaced; removal rate requalified,unsched_down
+EV-B-0415,FAB_B,2026-10-05,CMP,CMP-B04,2026-10-06 17:41,9.75,Slurry delivery flow alarm,Slurry pump serviced,unsched_down
+EV-B-0416,FAB_B,2026-10-05,CMP,CMP-B04,2026-10-07 10:07,4.36,Pad conditioner disk wear,Disk replaced; removal rate requalified,unsched_down
+EV-B-0417,FAB_B,2026-10-05,CMP,CMP-B01,2026-10-07 08:08,7.07,Pad conditioner disk wear,Disk replaced; removal rate requalified,unsched_down
+EV-B-0418,FAB_B,2026-10-05,CMP,CMP-B01,2026-10-09 22:36,2.53,Pad conditioner disk wear,Disk replaced; removal rate requalified,unsched_down
+EV-B-0419,FAB_B,2026-10-05,DEP,DEP-B13,2026-10-11 06:21,6.08,ALD precursor valve fault,Valve replaced; delivery line purged,unsched_down
+EV-B-0420,FAB_B,2026-10-05,DEP,DEP-B01,2026-10-08 09:53,5.6,Showerhead clogging: PM pulled in,Showerhead replaced; film uniformity requalified,unsched_down
+EV-B-0421,FAB_B,2026-10-05,DEP,DEP-B19,2026-10-07 13:20,52.67,Heater zone failure,Heater replaced; temperature profile requalified,unsched_down
+EV-B-0422,FAB_B,2026-10-05,DEP,DEP-B17,2026-10-07 00:32,13.71,Heater zone failure,Heater replaced; temperature profile requalified,unsched_down
+EV-B-0423,FAB_B,2026-10-05,DEP,DEP-B06,2026-10-10 02:33,9.65,ALD precursor valve fault,Valve replaced; delivery line purged,unsched_down
+EV-B-0424,FAB_B,2026-10-05,DEP,DEP-B03,2026-10-10 01:38,8.95,Heater zone failure,Heater replaced; temperature profile requalified,unsched_down
+EV-B-0425,FAB_B,2026-10-05,DEP,DEP-B08,2026-10-10 17:55,4.64,Showerhead clogging: PM pulled in,Showerhead replaced; film uniformity requalified,unsched_down
+EV-B-0426,FAB_B,2026-10-05,DEP,DEP-B16,2026-10-10 16:27,15.61,Showerhead clogging: PM pulled in,Showerhead replaced; film uniformity requalified,unsched_down
+EV-B-0427,FAB_B,2026-10-05,DEP,DEP-B12,2026-10-07 20:13,10.91,ALD precursor valve fault,Valve replaced; delivery line purged,unsched_down
+EV-B-0428,FAB_B,2026-10-05,DEP,DEP-B07,2026-10-09 15:23,22.75,Particle excursion after chamber clean,Additional seasoning; particle monitor passed,unsched_down
+EV-B-0429,FAB_B,2026-10-05,DEP,DEP-B18,2026-10-10 00:54,18.07,Showerhead clogging: PM pulled in,Showerhead replaced; film uniformity requalified,unsched_down
+EV-B-0430,FAB_B,2026-10-05,DEP,DEP-B04,2026-10-07 00:31,10.68,Showerhead clogging: PM pulled in,Showerhead replaced; film uniformity requalified,unsched_down
+EV-B-0431,FAB_B,2026-10-05,DEP,DEP-B11,2026-10-11 09:29,2.81,Particle excursion after chamber clean,Additional seasoning; particle monitor passed,unsched_down
+EV-B-0432,FAB_B,2026-10-05,DUV,DUV-B02,2026-10-08 00:50,5.49,Reticle handler jam,Handler gripper realigned,unsched_down
+EV-B-0433,FAB_B,2026-10-05,DUV,DUV-B02,2026-10-06 19:34,3.72,Wafer stage interferometer fault,Interferometer board replaced,unsched_down
+EV-B-0434,FAB_B,2026-10-05,DUV,DUV-B01,2026-10-07 14:34,8.68,Lens heating drift beyond spec,Lens model re-baselined,unsched_down
+EV-B-0435,FAB_B,2026-10-05,ETCH,ETCH-B02,2026-10-08 08:32,10.76,RF generator fault,RF generator swapped,unsched_down
+EV-B-0436,FAB_B,2026-10-05,ETCH,ETCH-B09,2026-10-06 15:23,15.65,Chamber particle excursion,Wet clean and seasoning wafers run,unsched_down
+EV-B-0437,FAB_B,2026-10-05,ETCH,ETCH-B13,2026-10-09 08:30,10.36,Electrostatic chuck helium leak,Chuck O-rings replaced; leak check passed,unsched_down
+EV-B-0438,FAB_B,2026-10-05,ETCH,ETCH-B08,2026-10-05 18:41,10.51,Chamber particle excursion,Wet clean and seasoning wafers run,unsched_down
+EV-B-0439,FAB_B,2026-10-05,ETCH,ETCH-B12,2026-10-11 02:48,11.32,Electrostatic chuck helium leak,Chuck O-rings replaced; leak check passed,unsched_down
+EV-B-0440,FAB_B,2026-10-05,ETCH,ETCH-B06,2026-10-10 23:53,7.18,Endpoint detector failure,Optical endpoint sensor replaced,unsched_down
+EV-B-0441,FAB_B,2026-10-05,ETCH,ETCH-B11,2026-10-06 03:51,18.22,Endpoint detector failure,Optical endpoint sensor replaced,unsched_down
+EV-B-0442,FAB_B,2026-10-05,ETCH,ETCH-B03,2026-10-06 19:48,32.5,RF generator fault,RF generator swapped,unsched_down
+EV-B-0443,FAB_B,2026-10-05,ETCH,ETCH-B05,2026-10-08 19:32,12.22,RF generator fault,RF generator swapped,unsched_down
+EV-B-0444,FAB_B,2026-10-05,ETCH,ETCH-B10,2026-10-09 18:50,8.06,Endpoint detector failure,Optical endpoint sensor replaced,unsched_down
+EV-B-0445,FAB_B,2026-10-05,ETCH,ETCH-B07,2026-10-07 19:10,16.26,RF generator fault,RF generator swapped,unsched_down
+EV-B-0446,FAB_B,2026-10-05,FURN,FURN-B02,2026-10-05 10:10,16.55,Boat elevator fault,Elevator drive serviced,unsched_down
+EV-B-0447,FAB_B,2026-10-05,FURN,FURN-B06,2026-10-05 06:13,7.15,Boat elevator fault,Elevator drive serviced,unsched_down
+EV-B-0448,FAB_B,2026-10-05,FURN,FURN-B07,2026-10-09 09:31,6.58,Boat elevator fault,Elevator drive serviced,unsched_down
+EV-B-0449,FAB_B,2026-10-05,FURN,FURN-B03,2026-10-07 05:40,9.66,Thermocouple drift,Thermocouple replaced; profile requalified,unsched_down
+EV-B-0450,FAB_B,2026-10-05,IMPL,IMPL-B02,2026-10-07 11:49,5.57,Beamline arcing,Beamline cleaned; arc count normal,unsched_down
+EV-B-0451,FAB_B,2026-10-05,IMPL,IMPL-B01,2026-10-08 12:13,11.19,Ion source filament failure,Source rebuilt; beam tuned,unsched_down
+EV-B-0452,FAB_B,2026-10-05,METRO,METRO-B02,2026-10-11 05:22,3.81,Light source end of life,Light source replaced,unsched_down
+EV-B-0453,FAB_B,2026-10-05,METRO,METRO-B03,2026-10-10 07:30,7.33,Stage calibration out of tolerance,Stage recalibrated,unsched_down
+EV-B-0454,FAB_B,2026-10-05,METRO,METRO-B02,2026-10-05 09:45,1.72,Stage calibration out of tolerance,Stage recalibrated,unsched_down
+EV-B-0455,FAB_B,2026-10-05,METRO,METRO-B04,2026-10-07 20:59,7.23,Stage calibration out of tolerance,Stage recalibrated,unsched_down
+EV-B-0456,FAB_B,2026-10-05,METRO,METRO-B02,2026-10-09 18:24,4.16,Stage calibration out of tolerance,Stage recalibrated,unsched_down
+EV-B-0457,FAB_B,2026-10-05,METRO,METRO-B03,2026-10-11 15:25,6.42,Light source end of life,Light source replaced,unsched_down
+EV-B-0458,FAB_B,2026-10-05,WET,WET-B06,2026-10-10 15:47,11.74,Megasonic transducer fault,Transducer replaced,unsched_down
+EV-B-0459,FAB_B,2026-10-05,WET,WET-B05,2026-10-05 05:43,10.96,Megasonic transducer fault,Transducer replaced,unsched_down
+EV-B-0460,FAB_B,2026-10-05,WET,WET-B04,2026-10-08 19:14,3.94,Bath chemistry out of spec,Bath dumped and refilled; chemistry verified,unsched_down
+EV-B-0461,FAB_B,2026-10-12,CMP,CMP-B01,2026-10-16 15:56,20.04,Wafer breakage on platen,Platen cleaned; head inspected,unsched_down
+EV-B-0462,FAB_B,2026-10-12,CMP,CMP-B03,2026-10-15 03:05,8.79,Slurry delivery flow alarm,Slurry pump serviced,unsched_down
+EV-B-0463,FAB_B,2026-10-12,CMP,CMP-B03,2026-10-15 08:21,2.66,Wafer breakage on platen,Platen cleaned; head inspected,unsched_down
+EV-B-0464,FAB_B,2026-10-12,CMP,CMP-B01,2026-10-14 23:43,3.54,Wafer breakage on platen,Platen cleaned; head inspected,unsched_down
+EV-B-0465,FAB_B,2026-10-12,CMP,CMP-B04,2026-10-14 04:26,6.47,Pad conditioner disk wear,Disk replaced; removal rate requalified,unsched_down
+EV-B-0466,FAB_B,2026-10-12,CMP,CMP-B01,2026-10-15 13:46,3.6,Slurry delivery flow alarm,Slurry pump serviced,unsched_down
+EV-B-0467,FAB_B,2026-10-12,CMP,CMP-B04,2026-10-14 18:50,12.97,Slurry delivery flow alarm,Slurry pump serviced,unsched_down
+EV-B-0468,FAB_B,2026-10-12,CMP,CMP-B03,2026-10-16 03:02,2.43,Pad conditioner disk wear,Disk replaced; removal rate requalified,unsched_down
+EV-B-0469,FAB_B,2026-10-12,CMP,CMP-B04,2026-10-17 22:57,8.83,Pad conditioner disk wear,Disk replaced; removal rate requalified,unsched_down
+EV-B-0470,FAB_B,2026-10-12,DEP,DEP-B06,2026-10-15 12:11,14.46,Showerhead clogging: PM pulled in,Showerhead replaced; film uniformity requalified,unsched_down
+EV-B-0471,FAB_B,2026-10-12,DEP,DEP-B02,2026-10-14 16:59,15.54,Heater zone failure,Heater replaced; temperature profile requalified,unsched_down
+EV-B-0472,FAB_B,2026-10-12,DEP,DEP-B01,2026-10-17 11:32,2.65,ALD precursor valve fault,Valve replaced; delivery line purged,unsched_down
+EV-B-0473,FAB_B,2026-10-12,DEP,DEP-B05,2026-10-15 03:18,13.97,Heater zone failure,Heater replaced; temperature profile requalified,unsched_down
+EV-B-0474,FAB_B,2026-10-12,DEP,DEP-B13,2026-10-15 04:14,15.73,ALD precursor valve fault,Valve replaced; delivery line purged,unsched_down
+EV-B-0475,FAB_B,2026-10-12,DEP,DEP-B09,2026-10-18 10:29,11.81,Showerhead clogging: PM pulled in,Showerhead replaced; film uniformity requalified,unsched_down
+EV-B-0476,FAB_B,2026-10-12,DEP,DEP-B19,2026-10-13 00:33,4.42,ALD precursor valve fault,Valve replaced; delivery line purged,unsched_down
+EV-B-0477,FAB_B,2026-10-12,DEP,DEP-B07,2026-10-17 13:11,7.67,ALD precursor valve fault,Valve replaced; delivery line purged,unsched_down
+EV-B-0478,FAB_B,2026-10-12,DEP,DEP-B17,2026-10-12 07:34,21.47,Particle excursion after chamber clean,Additional seasoning; particle monitor passed,unsched_down
+EV-B-0479,FAB_B,2026-10-12,DEP,DEP-B03,2026-10-14 22:37,20.13,ALD precursor valve fault,Valve replaced; delivery line purged,unsched_down
+EV-B-0480,FAB_B,2026-10-12,DEP,DEP-B12,2026-10-17 16:13,14.3,ALD precursor valve fault,Valve replaced; delivery line purged,unsched_down
+EV-B-0481,FAB_B,2026-10-12,DEP,DEP-B15,2026-10-16 04:54,16.3,ALD precursor valve fault,Valve replaced; delivery line purged,unsched_down
+EV-B-0482,FAB_B,2026-10-12,DEP,DEP-B18,2026-10-16 06:13,18.81,ALD precursor valve fault,Valve replaced; delivery line purged,unsched_down
+EV-B-0483,FAB_B,2026-10-12,DUV,DUV-B01,2026-10-16 19:26,16.56,Lens heating drift beyond spec,Lens model re-baselined,unsched_down
+EV-B-0484,FAB_B,2026-10-12,DUV,DUV-B01,2026-10-18 20:39,1.2,Reticle handler jam,Handler gripper realigned,unsched_down
+EV-B-0485,FAB_B,2026-10-12,DUV,DUV-B02,2026-10-12 07:28,1.45,Track coater nozzle clog,Nozzle cleaned; coat thickness verified,unsched_down
+EV-B-0486,FAB_B,2026-10-12,DUV,DUV-B01,2026-10-16 22:21,9.79,Wafer stage interferometer fault,Interferometer board replaced,unsched_down
+EV-B-0487,FAB_B,2026-10-12,DUV,DUV-B01,2026-10-12 11:43,4.8,Reticle handler jam,Handler gripper realigned,unsched_down
+EV-B-0488,FAB_B,2026-10-12,ETCH,ETCH-B05,2026-10-15 16:59,2.4,RF generator fault,RF generator swapped,unsched_down
+EV-B-0489,FAB_B,2026-10-12,ETCH,ETCH-B04,2026-10-15 00:22,19.42,Endpoint detector failure,Optical endpoint sensor replaced,unsched_down
+EV-B-0490,FAB_B,2026-10-12,ETCH,ETCH-B07,2026-10-12 16:50,10.98,Chamber particle excursion,Wet clean and seasoning wafers run,unsched_down
+EV-B-0491,FAB_B,2026-10-12,ETCH,ETCH-B10,2026-10-13 09:17,27.35,Chamber particle excursion,Wet clean and seasoning wafers run,unsched_down
+EV-B-0492,FAB_B,2026-10-12,ETCH,ETCH-B12,2026-10-15 07:14,17.83,Chamber particle excursion,Wet clean and seasoning wafers run,unsched_down
+EV-B-0493,FAB_B,2026-10-12,ETCH,ETCH-B03,2026-10-12 10:30,11.98,Endpoint detector failure,Optical endpoint sensor replaced,unsched_down
+EV-B-0494,FAB_B,2026-10-12,ETCH,ETCH-B13,2026-10-18 07:30,5.34,Endpoint detector failure,Optical endpoint sensor replaced,unsched_down
+EV-B-0495,FAB_B,2026-10-12,FURN,FURN-B05,2026-10-14 17:08,18.99,Boat elevator fault,Elevator drive serviced,unsched_down
+EV-B-0496,FAB_B,2026-10-12,FURN,FURN-B06,2026-10-17 06:14,1.03,Mass-flow controller failure,MFC replaced; leak check passed,unsched_down
+EV-B-0497,FAB_B,2026-10-12,FURN,FURN-B04,2026-10-18 18:28,5.14,Boat elevator fault,Elevator drive serviced,unsched_down
+EV-B-0498,FAB_B,2026-10-12,FURN,FURN-B02,2026-10-13 01:42,7.73,Boat elevator fault,Elevator drive serviced,unsched_down
+EV-B-0499,FAB_B,2026-10-12,FURN,FURN-B07,2026-10-13 07:25,12.78,Boat elevator fault,Elevator drive serviced,unsched_down
+EV-B-0500,FAB_B,2026-10-12,IMPL,IMPL-B01,2026-10-16 10:50,5.46,Ion source filament failure,Source rebuilt; beam tuned,unsched_down
+EV-B-0501,FAB_B,2026-10-12,IMPL,IMPL-B02,2026-10-16 17:06,10.95,Beamline arcing,Beamline cleaned; arc count normal,unsched_down
+EV-B-0502,FAB_B,2026-10-12,METRO,METRO-B02,2026-10-15 13:48,2.91,Light source end of life,Light source replaced,unsched_down
+EV-B-0503,FAB_B,2026-10-12,METRO,METRO-B02,2026-10-14 11:29,6.44,Stage calibration out of tolerance,Stage recalibrated,unsched_down
+EV-B-0504,FAB_B,2026-10-12,METRO,METRO-B03,2026-10-12 08:23,1.35,Light source end of life,Light source replaced,unsched_down
+EV-B-0505,FAB_B,2026-10-12,METRO,METRO-B02,2026-10-12 23:29,3.68,Stage calibration out of tolerance,Stage recalibrated,unsched_down
+EV-B-0506,FAB_B,2026-10-12,METRO,METRO-B04,2026-10-13 07:47,3.26,Stage calibration out of tolerance,Stage recalibrated,unsched_down
+EV-B-0507,FAB_B,2026-10-12,METRO,METRO-B04,2026-10-14 10:45,10.65,Stage calibration out of tolerance,Stage recalibrated,unsched_down
+EV-B-0508,FAB_B,2026-10-12,METRO,METRO-B01,2026-10-18 13:05,1.62,Stage calibration out of tolerance,Stage recalibrated,unsched_down
+EV-B-0509,FAB_B,2026-10-12,METRO,METRO-B03,2026-10-15 08:00,9.6,Light source end of life,Light source replaced,unsched_down
+EV-B-0510,FAB_B,2026-10-12,PVD,PVD-B01,2026-10-18 05:34,12.04,Target reached end of life early,Target swapped; burn-in completed,unsched_down
+EV-B-0511,FAB_B,2026-10-12,PVD,PVD-B02,2026-10-14 17:11,5.89,Target reached end of life early,Target swapped; burn-in completed,unsched_down
+EV-B-0512,FAB_B,2026-10-12,WET,WET-B03,2026-10-12 23:40,5.62,Bath chemistry out of spec,Bath dumped and refilled; chemistry verified,unsched_down
+EV-B-0513,FAB_B,2026-10-12,WET,WET-B07,2026-10-13 12:09,8.48,Megasonic transducer fault,Transducer replaced,unsched_down
+EV-B-0514,FAB_B,2026-10-12,WET,WET-B05,2026-10-15 15:04,9.29,Robot handoff error,Robot taught; handoff verified,unsched_down
+EV-B-0515,FAB_B,2026-10-12,WET,WET-B06,2026-10-13 07:26,21.88,Bath chemistry out of spec,Bath dumped and refilled; chemistry verified,unsched_down
+EV-B-0516,FAB_B,2026-10-12,WET,WET-B04,2026-10-13 02:40,4.54,Megasonic transducer fault,Transducer replaced,unsched_down
+EV-B-0517,FAB_B,2026-10-12,WET,WET-B08,2026-10-15 17:10,9.69,Megasonic transducer fault,Transducer replaced,unsched_down
+EV-B-0518,FAB_B,2026-10-12,WET,WET-B02,2026-10-14 12:06,4.71,Bath chemistry out of spec,Bath dumped and refilled; chemistry verified,unsched_down
+EV-B-0519,FAB_B,2026-10-12,WET,WET-B01,2026-10-16 07:00,3.5,Megasonic transducer fault,Transducer replaced,unsched_down
+EV-B-0520,FAB_B,2026-10-19,CMP,CMP-B01,2026-10-22 10:14,3.28,Slurry delivery flow alarm,Slurry pump serviced,unsched_down
+EV-B-0521,FAB_B,2026-10-19,CMP,CMP-B04,2026-10-23 11:21,1.22,Wafer breakage on platen,Platen cleaned; head inspected,unsched_down
+EV-B-0522,FAB_B,2026-10-19,CMP,CMP-B02,2026-10-25 06:41,9.37,Slurry delivery flow alarm,Slurry pump serviced,unsched_down
+EV-B-0523,FAB_B,2026-10-19,CMP,CMP-B01,2026-10-20 19:27,15.65,Slurry delivery flow alarm,Slurry pump serviced,unsched_down
+EV-B-0524,FAB_B,2026-10-19,CMP,CMP-B03,2026-10-23 15:35,6.92,Wafer breakage on platen,Platen cleaned; head inspected,unsched_down
+EV-B-0525,FAB_B,2026-10-19,CMP,CMP-B02,2026-10-19 04:03,5.71,Pad conditioner disk wear,Disk replaced; removal rate requalified,unsched_down
+EV-B-0526,FAB_B,2026-10-19,CMP,CMP-B04,2026-10-20 18:22,6.48,Wafer breakage on platen,Platen cleaned; head inspected,unsched_down
+EV-B-0527,FAB_B,2026-10-19,CMP,CMP-B02,2026-10-21 23:58,12.77,Pad conditioner disk wear,Disk replaced; removal rate requalified,unsched_down
+EV-B-0528,FAB_B,2026-10-19,CMP,CMP-B03,2026-10-19 04:59,6.97,Slurry delivery flow alarm,Slurry pump serviced,unsched_down
+EV-B-0529,FAB_B,2026-10-19,DEP,DEP-B03,2026-10-19 13:16,18.38,Heater zone failure,Heater replaced; temperature profile requalified,unsched_down
+EV-B-0530,FAB_B,2026-10-19,DEP,DEP-B04,2026-10-21 17:19,7.46,ALD precursor valve fault,Valve replaced; delivery line purged,unsched_down
+EV-B-0531,FAB_B,2026-10-19,DEP,DEP-B17,2026-10-25 02:29,12.58,Particle excursion after chamber clean,Additional seasoning; particle monitor passed,unsched_down
+EV-B-0532,FAB_B,2026-10-19,DEP,DEP-B13,2026-10-25 04:23,11.91,Heater zone failure,Heater replaced; temperature profile requalified,unsched_down
+EV-B-0533,FAB_B,2026-10-19,DEP,DEP-B09,2026-10-21 16:30,11.12,Showerhead clogging: PM pulled in,Showerhead replaced; film uniformity requalified,unsched_down
+EV-B-0534,FAB_B,2026-10-19,DEP,DEP-B07,2026-10-23 05:56,15.25,Heater zone failure,Heater replaced; temperature profile requalified,unsched_down
+EV-B-0535,FAB_B,2026-10-19,DEP,DEP-B14,2026-10-22 00:19,9.66,Particle excursion after chamber clean,Additional seasoning; particle monitor passed,unsched_down
+EV-B-0536,FAB_B,2026-10-19,DEP,DEP-B15,2026-10-23 23:17,9.66,Showerhead clogging: PM pulled in,Showerhead replaced; film uniformity requalified,unsched_down
+EV-B-0537,FAB_B,2026-10-19,DEP,DEP-B16,2026-10-19 04:22,29.44,ALD precursor valve fault,Valve replaced; delivery line purged,unsched_down
+EV-B-0538,FAB_B,2026-10-19,DEP,DEP-B02,2026-10-19 22:41,10.58,ALD precursor valve fault,Valve replaced; delivery line purged,unsched_down
+EV-B-0539,FAB_B,2026-10-19,DUV,DUV-B02,2026-10-20 23:20,3.93,Lens heating drift beyond spec,Lens model re-baselined,unsched_down
+EV-B-0540,FAB_B,2026-10-19,DUV,DUV-B01,2026-10-20 14:57,6.53,Wafer stage interferometer fault,Interferometer board replaced,unsched_down
+EV-B-0541,FAB_B,2026-10-19,DUV,DUV-B01,2026-10-19 13:46,0.97,Lens heating drift beyond spec,Lens model re-baselined,unsched_down
+EV-B-0542,FAB_B,2026-10-19,DUV,DUV-B02,2026-10-22 05:50,11.22,Wafer stage interferometer fault,Interferometer board replaced,unsched_down
+EV-B-0543,FAB_B,2026-10-19,DUV,DUV-B02,2026-10-24 23:26,6.42,Track coater nozzle clog,Nozzle cleaned; coat thickness verified,unsched_down
+EV-B-0544,FAB_B,2026-10-19,DUV,DUV-B01,2026-10-23 03:08,10.66,Lens heating drift beyond spec,Lens model re-baselined,unsched_down
+EV-B-0545,FAB_B,2026-10-19,DUV,DUV-B01,2026-10-22 10:28,9.7,Lens heating drift beyond spec,Lens model re-baselined,unsched_down
+EV-B-0546,FAB_B,2026-10-19,ETCH,ETCH-B08,2026-10-22 20:24,7.23,Electrostatic chuck helium leak,Chuck O-rings replaced; leak check passed,unsched_down
+EV-B-0547,FAB_B,2026-10-19,ETCH,ETCH-B04,2026-10-22 00:11,13.49,Electrostatic chuck helium leak,Chuck O-rings replaced; leak check passed,unsched_down
+EV-B-0548,FAB_B,2026-10-19,ETCH,ETCH-B09,2026-10-22 19:45,18.64,Chamber particle excursion,Wet clean and seasoning wafers run,unsched_down
+EV-B-0549,FAB_B,2026-10-19,ETCH,ETCH-B10,2026-10-21 20:26,14.97,RF generator fault,RF generator swapped,unsched_down
+EV-B-0550,FAB_B,2026-10-19,ETCH,ETCH-B12,2026-10-21 12:09,17.11,Electrostatic chuck helium leak,Chuck O-rings replaced; leak check passed,unsched_down
+EV-B-0551,FAB_B,2026-10-19,ETCH,ETCH-B07,2026-10-22 03:26,8.14,Endpoint detector failure,Optical endpoint sensor replaced,unsched_down
+EV-B-0552,FAB_B,2026-10-19,ETCH,ETCH-B11,2026-10-22 14:52,18.74,Electrostatic chuck helium leak,Chuck O-rings replaced; leak check passed,unsched_down
+EV-B-0553,FAB_B,2026-10-19,ETCH,ETCH-B03,2026-10-22 10:00,4.32,Endpoint detector failure,Optical endpoint sensor replaced,unsched_down
+EV-B-0554,FAB_B,2026-10-19,ETCH,ETCH-B05,2026-10-21 18:06,27.99,RF generator fault,RF generator swapped,unsched_down
+EV-B-0555,FAB_B,2026-10-19,ETCH,ETCH-B02,2026-10-24 14:45,3.22,Chamber particle excursion,Wet clean and seasoning wafers run,unsched_down
+EV-B-0556,FAB_B,2026-10-19,FURN,FURN-B07,2026-10-22 10:52,5.88,Thermocouple drift,Thermocouple replaced; profile requalified,unsched_down
+EV-B-0557,FAB_B,2026-10-19,FURN,FURN-B05,2026-10-24 22:46,17.49,Boat elevator fault,Elevator drive serviced,unsched_down
+EV-B-0558,FAB_B,2026-10-19,IMPL,IMPL-B01,2026-10-24 22:20,5.29,Ion source filament failure,Source rebuilt; beam tuned,unsched_down
+EV-B-0559,FAB_B,2026-10-19,METRO,METRO-B01,2026-10-22 16:46,8.47,Stage calibration out of tolerance,Stage recalibrated,unsched_down
+EV-B-0560,FAB_B,2026-10-19,METRO,METRO-B04,2026-10-22 12:06,3.82,Stage calibration out of tolerance,Stage recalibrated,unsched_down
+EV-B-0561,FAB_B,2026-10-19,METRO,METRO-B01,2026-10-24 13:14,2.98,Light source end of life,Light source replaced,unsched_down
+EV-B-0562,FAB_B,2026-10-19,METRO,METRO-B02,2026-10-21 10:12,4.14,Light source end of life,Light source replaced,unsched_down
+EV-B-0563,FAB_B,2026-10-19,METRO,METRO-B03,2026-10-21 20:00,2.28,Light source end of life,Light source replaced,unsched_down
+EV-B-0564,FAB_B,2026-10-19,METRO,METRO-B03,2026-10-20 03:32,3.97,Stage calibration out of tolerance,Stage recalibrated,unsched_down
+EV-B-0565,FAB_B,2026-10-19,METRO,METRO-B04,2026-10-24 02:08,3.14,Light source end of life,Light source replaced,unsched_down
+EV-B-0566,FAB_B,2026-10-19,METRO,METRO-B02,2026-10-24 00:31,14.41,Stage calibration out of tolerance,Stage recalibrated,unsched_down
+EV-B-0567,FAB_B,2026-10-19,METRO,METRO-B01,2026-10-19 22:49,1.01,Stage calibration out of tolerance,Stage recalibrated,unsched_down
+EV-B-0568,FAB_B,2026-10-19,PVD,PVD-B02,2026-10-23 15:11,10.66,Magnetron rotation fault,Magnetron drive repaired,unsched_down
+EV-B-0569,FAB_B,2026-10-19,PVD,PVD-B01,2026-10-22 20:53,6.54,Shield flaking particles,Shield kit replaced,unsched_down
+EV-B-0570,FAB_B,2026-10-19,WET,WET-B01,2026-10-24 22:12,13.28,Bath chemistry out of spec,Bath dumped and refilled; chemistry verified,unsched_down
+EV-B-0571,FAB_B,2026-10-19,WET,WET-B08,2026-10-19 15:59,8.86,Megasonic transducer fault,Transducer replaced,unsched_down
+EV-B-0572,FAB_B,2026-10-19,WET,WET-B02,2026-10-21 03:00,6.45,Megasonic transducer fault,Transducer replaced,unsched_down
+EV-B-0573,FAB_B,2026-10-19,WET,WET-B07,2026-10-19 11:22,11.08,Megasonic transducer fault,Transducer replaced,unsched_down
+EV-B-0574,FAB_B,2026-10-19,WET,WET-B04,2026-10-25 06:27,8.76,Bath chemistry out of spec,Bath dumped and refilled; chemistry verified,unsched_down
+EV-B-0575,FAB_B,2026-10-19,WET,WET-B06,2026-10-22 01:46,2.31,Bath chemistry out of spec,Bath dumped and refilled; chemistry verified,unsched_down
+EV-B-0576,FAB_B,2026-10-19,WET,WET-B05,2026-10-23 14:04,5.01,Bath chemistry out of spec,Bath dumped and refilled; chemistry verified,unsched_down

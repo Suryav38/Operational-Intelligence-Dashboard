@@ -1,0 +1,66 @@
+Weekly equipment review · Fab A · Q4 2026 · week of 05 Oct – 11 Oct 2026 · SYNTHETIC
+Source: simulated tool states (seed 42); event detail in table tool_events_q4.
+
+Line: 1,900 wafers started, 1,686 completed, WIP 6,800 wafers, average cycle time 27.2 days.
+
+Unscheduled downtime by tool group this week (largest first):
+- Deposition (DEP, 42 tools): 433.7 h unscheduled down (6.1% of calendar), 14 events. Availability 78.7% vs 80.0% assumed; loading 85.0%; queue 0.07 h per lot step.
+    DEP-A22 2026-10-07 07:16: Heater zone failure, 51.9 h. Action: Heater replaced; temperature profile requalified.
+    DEP-A24 2026-10-05 04:22: Particle excursion after chamber clean, 46.1 h. Action: Additional seasoning; particle monitor passed.
+    DEP-A14 2026-10-07 22:47: Showerhead clogging: PM pulled in, 42.1 h. Action: Showerhead replaced; film uniformity requalified.
+    Plus 11 smaller events, 293.6 h in total.
+    Main cause by hours: Showerhead clogging: PM pulled in (127.2 h).
+- Etch (ETCH, 30 tools): 290.5 h unscheduled down (5.8% of calendar), 14 events. Availability 77.9% vs 77.0% assumed; loading 83.7%; queue 0.11 h per lot step.
+    ETCH-A29 2026-10-05 09:52: Chamber particle excursion, 41.6 h. Action: Wet clean and seasoning wafers run.
+    ETCH-A04 2026-10-06 17:43: Electrostatic chuck helium leak, 36.4 h. Action: Chuck O-rings replaced; leak check passed.
+    ETCH-A13 2026-10-07 06:54: Electrostatic chuck helium leak, 35.4 h. Action: Chuck O-rings replaced; leak check passed.
+    Plus 11 smaller events, 177.1 h in total.
+    Main cause by hours: Chamber particle excursion (121.5 h).
+- Wet clean (WET, 19 tools): 140.1 h unscheduled down (4.4% of calendar), 14 events. Availability 89.0% vs 88.0% assumed; loading 84.8%; queue 0.07 h per lot step.
+    WET-A15 2026-10-07 03:48: Robot handoff error, 16.7 h. Action: Robot taught; handoff verified.
+    WET-A03 2026-10-10 00:40: Robot handoff error, 16.1 h. Action: Robot taught; handoff verified.
+    WET-A02 2026-10-09 02:00: Robot handoff error, 14.6 h. Action: Robot taught; handoff verified.
+    Plus 11 smaller events, 92.6 h in total.
+    Main cause by hours: Robot handoff error (71.3 h).
+- Planarization (CMP, 10 tools): 110.6 h unscheduled down (6.6% of calendar), 14 events. Availability 77.7% vs 80.0% assumed; loading 80.4%; queue 0.15 h per lot step.
+    CMP-A01 2026-10-05 14:07: Slurry delivery flow alarm, 14.0 h. Action: Slurry pump serviced.
+    CMP-A02 2026-10-08 23:15: Slurry delivery flow alarm, 12.2 h. Action: Slurry pump serviced.
+    CMP-A05 2026-10-06 18:16: Slurry delivery flow alarm, 11.8 h. Action: Slurry pump serviced.
+    Plus 11 smaller events, 72.5 h in total.
+    Main cause by hours: Slurry delivery flow alarm (64.4 h).
+- Ion implant (IMPL, 5 tools): 74.5 h unscheduled down (8.9% of calendar), 9 events. Availability 84.8% vs 82.0% assumed; loading 71.5%; queue 0.12 h per lot step.
+    IMPL-A04 2026-10-07 11:22: Ion source filament failure, 17.6 h. Action: Source rebuilt; beam tuned.
+    IMPL-A03 2026-10-07 01:58: Beamline arcing, 11.4 h. Action: Beamline cleaned; arc count normal.
+    IMPL-A04 2026-10-05 03:38: Beamline arcing, 10.6 h. Action: Beamline cleaned; arc count normal.
+    Plus 6 smaller events, 34.9 h in total.
+    Main cause by hours: Beamline arcing (51.0 h).
+- Furnace (FURN, 15 tools): 72.6 h unscheduled down (2.9% of calendar), 7 events. Availability 88.7% vs 86.0% assumed; loading 77.4%; queue 0.53 h per lot step.
+    FURN-A02 2026-10-09 13:49: Mass-flow controller failure, 16.7 h. Action: MFC replaced; leak check passed.
+    FURN-A03 2026-10-08 07:55: Boat elevator fault, 12.7 h. Action: Elevator drive serviced.
+    FURN-A11 2026-10-08 16:36: Thermocouple drift, 11.7 h. Action: Thermocouple replaced; profile requalified.
+    Plus 4 smaller events, 31.6 h in total.
+    Main cause by hours: Boat elevator fault (35.4 h).
+- Inspection (METRO, 9 tools): 47.1 h unscheduled down (3.1% of calendar), 9 events. Availability 84.7% vs 84.0% assumed; loading 78.5%; queue 0.23 h per lot step.
+    METRO-A03 2026-10-10 18:43: Light source end of life, 9.8 h. Action: Light source replaced.
+    METRO-A05 2026-10-11 14:21: Stage calibration out of tolerance, 7.2 h. Action: Stage recalibrated.
+    METRO-A06 2026-10-11 01:13: Stage calibration out of tolerance, 6.9 h. Action: Stage recalibrated.
+    Plus 6 smaller events, 23.3 h in total.
+    Main cause by hours: Light source end of life (24.4 h).
+- Metal deposition (PVD, 4 tools): 40.0 h unscheduled down (6.0% of calendar), 5 events. Availability 74.0% vs 84.0% assumed; loading 73.9%; queue 1.14 h per lot step.
+    PVD-A01 2026-10-05 15:45: Target reached end of life early, 11.0 h. Action: Target swapped; burn-in completed.
+    PVD-A01 2026-10-06 17:40: Magnetron rotation fault, 10.5 h. Action: Magnetron drive repaired.
+    PVD-A01 2026-10-05 19:26: Shield flaking particles, 6.8 h. Action: Shield kit replaced.
+    Plus 2 smaller events, 11.7 h in total.
+    Main cause by hours: Target reached end of life early (17.4 h).
+- DUV lithography (DUV, 4 tools): 25.3 h unscheduled down (3.8% of calendar), 4 events. Availability 78.8% vs 81.0% assumed; loading 73.2%; queue 0.25 h per lot step.
+    DUV-A04 2026-10-05 17:42: Wafer stage interferometer fault, 10.0 h. Action: Interferometer board replaced.
+    DUV-A01 2026-10-05 00:11: Lens heating drift beyond spec, 9.7 h. Action: Lens model re-baselined.
+    DUV-A02 2026-10-08 11:53: Wafer stage interferometer fault, 2.9 h. Action: Interferometer board replaced.
+    Plus 1 smaller event, 2.7 h in total.
+    Main cause by hours: Wafer stage interferometer fault (15.6 h).
+- EUV lithography (EUV, 1 tools): 7.6 h unscheduled down (4.6% of calendar), 1 event. Availability 70.3% vs 70.0% assumed; loading 78.1%; queue 5.48 h per lot step.
+    EUV-A01 2026-10-11 15:14: Dose uniformity drift, 7.7 h. Action: Illuminator recalibrated.
+    Main cause by hours: Dose uniformity drift (7.7 h).
+
+Availability below the planning assumption by more than 2 points: Metal deposition 74.0% vs 84.0%; Planarization 77.7% vs 80.0%; DUV lithography 78.8% vs 81.0%
+Loading at or above the 85% planning limit: Deposition 85.0% (queue 0.07 h)

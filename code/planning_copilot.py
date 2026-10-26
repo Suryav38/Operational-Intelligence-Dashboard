@@ -23,7 +23,8 @@ import fab_data as fd
 import forecast_model as fm
 import review_model as rm
 
-STOP = set('the a an is are of for in on at to and or with what why how which can should we our this that from does do it its about'.split())
+STOP = set('the a an is are of for in on at to and or with what why how which can should we our this that from does do it its about '
+           'did have has had was were be been so far many much any all most more did there their they them me my you your please give show tell'.split())
 
 
 def tokens(text):
@@ -49,9 +50,18 @@ class DocumentIndex:
             if not p.is_file() or p.suffix.lower() not in ('.txt','.md') or not p.resolve().is_relative_to(root):
                 continue
             text=p.read_text(encoding='utf-8')
-            for start in range(0,len(text),1050):
-                self.chunks.append({'source':str(p.relative_to(root)), 'text':text[start:start+1200],
-                                    'character_start':start,'character_end':min(len(text),start+1200)})
+            title=text.split('\n',1)[0].strip()
+            start=0
+            while start<len(text):  # ~1,200-character chunks that end on a line break, never mid-word
+                end=min(len(text),start+1200)
+                if end<len(text):
+                    cut=text.rfind('\n',start+400,end)
+                    end=cut+1 if cut>0 else end
+                body=text[start:end]
+                if start:  # later chunks keep the document title so they stay findable by fab, week and topic
+                    body=title+' (continued)\n'+body
+                self.chunks.append({'source':str(p.relative_to(root)), 'text':body,'character_start':start,'character_end':end})
+                start=end
         self.counts=[Counter(tokens(c['source']+' '+c['text'])) for c in self.chunks]
         self.lengths=np.array([sum(c.values()) for c in self.counts],dtype=float)
         self.df=Counter(t for count in self.counts for t in count)

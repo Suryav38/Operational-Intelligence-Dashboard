@@ -17,10 +17,10 @@ The dashboard has three pages that form one planning workflow:
 - **The demand year boundary is fixed.** 2027 requests are now on the same basis as historical requests (run rate ÷ realization factor), and 2026Q4 is a trend forecast. Requests go 2,942 → 2,994 → 3,130, with no artificial drop.
 - The 2027 plan is compared against today's 2026Q4 rate. DRAM Node B, HBM and Node A grow; NAND and short loops decline in some quarters.
 - **2026Q4 to date is simulated** by `code/simulate_q4_to_date.py`. It reruns the same model for 56 weeks, verifies that the first 52 weeks match the stored history exactly, then writes the `*_q4` tables.
-- New `wafer_analyst.py`, `request_parser.py` (strict-schema LLM extraction with citation checks) and `capital_model.response_plan` (reallocation of freed capacity plus a cost-optimal rebalancing search).
+- New `wafer_analyst.py` (ranked responses to a demand increase) and `capital_model.response_plan` (reallocation of freed capacity plus a cost-optimal rebalancing search).
+- Fab assistant on Fab performance: RAG over the Q4 weekly equipment reviews (`code/make_tool_logs.py` writes them, plus the `tool_events_q4` event table, from the simulated tool hours) with read-only SQL and enforced citations.
 - AI explanations get one automatic repair turn when citations are missing, and the number check accepts rounding.
 - Removed from the UI: Levers, the EUV pilot study, the lot explorer and the equipment-health pages.
-- `code/eval_extraction.py` with `evals/request_extraction_cases.json` measures extraction accuracy and time when an API key is set.
 
 ## AI setup and data path
 

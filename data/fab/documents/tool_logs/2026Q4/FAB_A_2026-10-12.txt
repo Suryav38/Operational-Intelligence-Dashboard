@@ -1,0 +1,69 @@
+Weekly equipment review · Fab A · Q4 2026 · week of 12 Oct – 18 Oct 2026 · SYNTHETIC
+Source: simulated tool states (seed 42); event detail in table tool_events_q4.
+
+Line: 1,900 wafers started, 1,426 completed, WIP 7,250 wafers, average cycle time 26.8 days.
+
+Unscheduled downtime by tool group this week (largest first):
+- Deposition (DEP, 42 tools): 437.6 h unscheduled down (6.2% of calendar), 14 events. Availability 79.5% vs 80.0% assumed; loading 78.4%; queue 0.04 h per lot step.
+    DEP-A11 2026-10-15 13:25: Showerhead clogging: PM pulled in, 52.2 h. Action: Showerhead replaced; film uniformity requalified.
+    DEP-A39 2026-10-14 10:15: Showerhead clogging: PM pulled in, 42.6 h. Action: Showerhead replaced; film uniformity requalified.
+    DEP-A01 2026-10-16 07:31: Particle excursion after chamber clean, 41.6 h. Action: Additional seasoning; particle monitor passed.
+    Plus 11 smaller events, 301.1 h in total.
+    Main cause by hours: Showerhead clogging: PM pulled in (219.1 h).
+- Etch (ETCH, 30 tools): 212.0 h unscheduled down (4.2% of calendar), 14 events. Availability 78.1% vs 77.0% assumed; loading 76.6%; queue 0.03 h per lot step.
+    ETCH-A05 2026-10-17 08:15: Endpoint detector failure, 39.3 h. Action: Optical endpoint sensor replaced.
+    ETCH-A28 2026-10-16 14:51: Endpoint detector failure, 32.8 h. Action: Optical endpoint sensor replaced.
+    ETCH-A27 2026-10-16 15:09: Endpoint detector failure, 20.6 h. Action: Optical endpoint sensor replaced.
+    Plus 11 smaller events, 119.3 h in total.
+    Main cause by hours: Endpoint detector failure (116.3 h).
+- Wet clean (WET, 19 tools): 156.2 h unscheduled down (4.9% of calendar), 14 events. Availability 85.6% vs 88.0% assumed; loading 80.9%; queue 0.15 h per lot step.
+    WET-A04 2026-10-13 05:54: Robot handoff error, 19.9 h. Action: Robot taught; handoff verified.
+    WET-A11 2026-10-12 09:27: Robot handoff error, 18.5 h. Action: Robot taught; handoff verified.
+    WET-A19 2026-10-13 05:46: Bath chemistry out of spec, 15.4 h. Action: Bath dumped and refilled; chemistry verified.
+    Plus 11 smaller events, 102.4 h in total.
+    Main cause by hours: Robot handoff error (73.4 h).
+- Planarization (CMP, 10 tools): 127.1 h unscheduled down (7.6% of calendar), 14 events. Availability 78.3% vs 80.0% assumed; loading 71.3%; queue 0.14 h per lot step.
+    CMP-A07 2026-10-12 20:32: Pad conditioner disk wear, 19.9 h. Action: Disk replaced; removal rate requalified.
+    CMP-A05 2026-10-14 02:10: Slurry delivery flow alarm, 14.3 h. Action: Slurry pump serviced.
+    CMP-A04 2026-10-13 18:43: Wafer breakage on platen, 12.7 h. Action: Platen cleaned; head inspected.
+    Plus 11 smaller events, 80.1 h in total.
+    Main cause by hours: Wafer breakage on platen (45.5 h).
+- Furnace (FURN, 15 tools): 66.9 h unscheduled down (2.7% of calendar), 7 events. Availability 85.6% vs 86.0% assumed; loading 74.7%; queue 0.67 h per lot step.
+    FURN-A06 2026-10-14 10:12: Mass-flow controller failure, 19.7 h. Action: MFC replaced; leak check passed.
+    FURN-A03 2026-10-18 01:31: Thermocouple drift, 10.5 h. Action: Thermocouple replaced; profile requalified.
+    FURN-A05 2026-10-16 11:58: Thermocouple drift, 9.3 h. Action: Thermocouple replaced; profile requalified.
+    Plus 4 smaller events, 27.4 h in total.
+    Main cause by hours: Mass-flow controller failure (32.7 h).
+- EUV lithography (EUV, 1 tools): 54.7 h unscheduled down (32.6% of calendar), 6 events. Availability 48.1% vs 70.0% assumed; loading 95.6%; queue 22.67 h per lot step.
+    EUV-A01 2026-10-17 20:20: Collector mirror contamination, 17.5 h. Action: Collector swapped; imaging requalified.
+    EUV-A01 2026-10-18 00:06: Collector mirror contamination, 12.5 h. Action: Collector swapped; imaging requalified.
+    EUV-A01 2026-10-14 19:54: Dose uniformity drift, 10.6 h. Action: Illuminator recalibrated.
+    Plus 3 smaller events, 14.1 h in total.
+    Main cause by hours: Collector mirror contamination (40.3 h).
+- Inspection (METRO, 9 tools): 48.8 h unscheduled down (3.2% of calendar), 10 events. Availability 82.2% vs 84.0% assumed; loading 72.7%; queue 0.42 h per lot step.
+    METRO-A02 2026-10-14 16:23: Light source end of life, 9.0 h. Action: Light source replaced.
+    METRO-A02 2026-10-13 06:22: Light source end of life, 6.8 h. Action: Light source replaced.
+    METRO-A06 2026-10-18 13:12: Stage calibration out of tolerance, 6.7 h. Action: Stage recalibrated.
+    Plus 7 smaller events, 26.3 h in total.
+    Main cause by hours: Light source end of life (32.8 h).
+- DUV lithography (DUV, 4 tools): 31.9 h unscheduled down (4.7% of calendar), 5 events. Availability 78.6% vs 81.0% assumed; loading 67.3%; queue 0.91 h per lot step.
+    DUV-A01 2026-10-15 17:40: Wafer stage interferometer fault, 9.7 h. Action: Interferometer board replaced.
+    DUV-A03 2026-10-16 21:48: Track coater nozzle clog, 7.7 h. Action: Nozzle cleaned; coat thickness verified.
+    DUV-A04 2026-10-13 22:28: Wafer stage interferometer fault, 7.3 h. Action: Interferometer board replaced.
+    Plus 2 smaller events, 7.3 h in total.
+    Main cause by hours: Wafer stage interferometer fault (16.9 h).
+- Metal deposition (PVD, 4 tools): 31.9 h unscheduled down (4.7% of calendar), 4 events. Availability 82.4% vs 84.0% assumed; loading 61.9%; queue 0.25 h per lot step.
+    PVD-A01 2026-10-12 09:00: Target reached end of life early, 17.5 h. Action: Target swapped; burn-in completed.
+    PVD-A04 2026-10-17 14:46: Shield flaking particles, 7.1 h. Action: Shield kit replaced.
+    PVD-A03 2026-10-12 19:16: Shield flaking particles, 3.9 h. Action: Shield kit replaced.
+    Plus 1 smaller event, 3.4 h in total.
+    Main cause by hours: Target reached end of life early (17.5 h).
+- Ion implant (IMPL, 5 tools): 31.5 h unscheduled down (3.7% of calendar), 4 events. Availability 78.0% vs 82.0% assumed; loading 70.0%; queue 0.24 h per lot step.
+    IMPL-A03 2026-10-17 06:44: Wafer handler vacuum fault, 19.9 h. Action: Vacuum pump serviced.
+    IMPL-A01 2026-10-18 11:04: Wafer handler vacuum fault, 7.4 h. Action: Vacuum pump serviced.
+    IMPL-A04 2026-10-18 15:13: Ion source filament failure, 2.8 h. Action: Source rebuilt; beam tuned.
+    Plus 1 smaller event, 1.4 h in total.
+    Main cause by hours: Wafer handler vacuum fault (27.2 h).
+
+Availability below the planning assumption by more than 2 points: EUV lithography 48.1% vs 70.0%; Ion implant 78.0% vs 82.0%; DUV lithography 78.6% vs 81.0%; Wet clean 85.6% vs 88.0%
+Loading at or above the 85% planning limit: EUV lithography 95.6% (queue 22.67 h)

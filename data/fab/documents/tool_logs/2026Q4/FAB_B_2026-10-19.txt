@@ -1,0 +1,56 @@
+Weekly equipment review · Fab B · Q4 2026 · week of 19 Oct – 25 Oct 2026 · SYNTHETIC
+Source: simulated tool states (seed 42); event detail in table tool_events_q4.
+
+Line: 900 wafers started, 795 completed, WIP 3,550 wafers, average cycle time 31.0 days.
+
+Unscheduled downtime by tool group this week (largest first):
+- Deposition (DEP, 19 tools): 136.0 h unscheduled down (4.3% of calendar), 10 events. Availability 81.1% vs 80.0% assumed; loading 72.0%; queue 0.07 h per lot step.
+    DEP-B16 2026-10-19 04:22: ALD precursor valve fault, 29.4 h. Action: Valve replaced; delivery line purged.
+    DEP-B03 2026-10-19 13:16: Heater zone failure, 18.4 h. Action: Heater replaced; temperature profile requalified.
+    DEP-B07 2026-10-23 05:56: Heater zone failure, 15.2 h. Action: Heater replaced; temperature profile requalified.
+    Plus 7 smaller events, 73.0 h in total.
+    Main cause by hours: ALD precursor valve fault (47.5 h).
+- Etch (ETCH, 13 tools): 133.8 h unscheduled down (6.1% of calendar), 10 events. Availability 78.3% vs 77.0% assumed; loading 74.5%; queue 0.56 h per lot step.
+    ETCH-B05 2026-10-21 18:06: RF generator fault, 28.0 h. Action: RF generator swapped.
+    ETCH-B11 2026-10-22 14:52: Electrostatic chuck helium leak, 18.7 h. Action: Chuck O-rings replaced; leak check passed.
+    ETCH-B09 2026-10-22 19:45: Chamber particle excursion, 18.6 h. Action: Wet clean and seasoning wafers run.
+    Plus 7 smaller events, 68.5 h in total.
+    Main cause by hours: Electrostatic chuck helium leak (56.6 h).
+- Planarization (CMP, 4 tools): 68.4 h unscheduled down (10.2% of calendar), 9 events. Availability 80.8% vs 80.0% assumed; loading 71.9%; queue 1.19 h per lot step.
+    CMP-B01 2026-10-20 19:27: Slurry delivery flow alarm, 15.7 h. Action: Slurry pump serviced.
+    CMP-B02 2026-10-21 23:58: Pad conditioner disk wear, 12.8 h. Action: Disk replaced; removal rate requalified.
+    CMP-B02 2026-10-25 06:41: Slurry delivery flow alarm, 9.4 h. Action: Slurry pump serviced.
+    Plus 6 smaller events, 30.6 h in total.
+    Main cause by hours: Slurry delivery flow alarm (35.3 h).
+- Wet clean (WET, 8 tools): 55.8 h unscheduled down (4.1% of calendar), 7 events. Availability 88.6% vs 88.0% assumed; loading 79.3%; queue 0.56 h per lot step.
+    WET-B01 2026-10-24 22:12: Bath chemistry out of spec, 13.3 h. Action: Bath dumped and refilled; chemistry verified.
+    WET-B07 2026-10-19 11:22: Megasonic transducer fault, 11.1 h. Action: Transducer replaced.
+    WET-B08 2026-10-19 15:59: Megasonic transducer fault, 8.9 h. Action: Transducer replaced.
+    Plus 4 smaller events, 22.5 h in total.
+    Main cause by hours: Bath chemistry out of spec (29.4 h).
+- DUV lithography (DUV, 2 tools): 49.4 h unscheduled down (14.7% of calendar), 7 events. Availability 68.1% vs 81.0% assumed; loading 73.7%; queue 3.72 h per lot step.
+    DUV-B02 2026-10-22 05:50: Wafer stage interferometer fault, 11.2 h. Action: Interferometer board replaced.
+    DUV-B01 2026-10-23 03:08: Lens heating drift beyond spec, 10.7 h. Action: Lens model re-baselined.
+    DUV-B01 2026-10-22 10:28: Lens heating drift beyond spec, 9.7 h. Action: Lens model re-baselined.
+    Plus 4 smaller events, 17.8 h in total.
+    Main cause by hours: Lens heating drift beyond spec (25.3 h).
+- Inspection (METRO, 4 tools): 44.2 h unscheduled down (6.6% of calendar), 9 events. Availability 86.1% vs 84.0% assumed; loading 67.0%; queue 0.73 h per lot step.
+    METRO-B02 2026-10-24 00:31: Stage calibration out of tolerance, 14.4 h. Action: Stage recalibrated.
+    METRO-B01 2026-10-22 16:46: Stage calibration out of tolerance, 8.5 h. Action: Stage recalibrated.
+    METRO-B02 2026-10-21 10:12: Light source end of life, 4.1 h. Action: Light source replaced.
+    Plus 6 smaller events, 17.2 h in total.
+    Main cause by hours: Stage calibration out of tolerance (31.7 h).
+- Furnace (FURN, 7 tools): 23.4 h unscheduled down (2.0% of calendar), 2 events. Availability 83.5% vs 86.0% assumed; loading 82.7%; queue 1.67 h per lot step.
+    FURN-B05 2026-10-24 22:46: Boat elevator fault, 17.5 h. Action: Elevator drive serviced.
+    FURN-B07 2026-10-22 10:52: Thermocouple drift, 5.9 h. Action: Thermocouple replaced; profile requalified.
+    Main cause by hours: Boat elevator fault (17.5 h).
+- Metal deposition (PVD, 2 tools): 17.2 h unscheduled down (5.1% of calendar), 2 events. Availability 87.3% vs 84.0% assumed; loading 48.7%; queue 0.38 h per lot step.
+    PVD-B02 2026-10-23 15:11: Magnetron rotation fault, 10.7 h. Action: Magnetron drive repaired.
+    PVD-B01 2026-10-22 20:53: Shield flaking particles, 6.5 h. Action: Shield kit replaced.
+    Main cause by hours: Magnetron rotation fault (10.7 h).
+- Ion implant (IMPL, 2 tools): 5.3 h unscheduled down (1.6% of calendar), 1 event. Availability 79.2% vs 82.0% assumed; loading 73.9%; queue 2.83 h per lot step.
+    IMPL-B01 2026-10-24 22:20: Ion source filament failure, 5.3 h. Action: Source rebuilt; beam tuned.
+    Main cause by hours: Ion source filament failure (5.3 h).
+
+Availability below the planning assumption by more than 2 points: DUV lithography 68.1% vs 81.0%; Ion implant 79.2% vs 82.0%; Furnace 83.5% vs 86.0%
+Loading at or above the 85% planning limit: none.

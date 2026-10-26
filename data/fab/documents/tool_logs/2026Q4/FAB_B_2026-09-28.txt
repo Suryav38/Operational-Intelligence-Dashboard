@@ -1,0 +1,59 @@
+Weekly equipment review · Fab B · Q4 2026 · week of 28 Sep – 04 Oct 2026 · SYNTHETIC
+Source: simulated tool states (seed 42); event detail in table tool_events_q4.
+
+Line: 900 wafers started, 673 completed, WIP 3,300 wafers, average cycle time 28.4 days.
+
+Unscheduled downtime by tool group this week (largest first):
+- Deposition (DEP, 19 tools): 130.7 h unscheduled down (4.1% of calendar), 9 events. Availability 81.4% vs 80.0% assumed; loading 77.5%; queue 0.08 h per lot step.
+    DEP-B18 2026-09-30 13:15: Particle excursion after chamber clean, 29.7 h. Action: Additional seasoning; particle monitor passed.
+    DEP-B04 2026-10-02 21:09: Showerhead clogging: PM pulled in, 22.1 h. Action: Showerhead replaced; film uniformity requalified.
+    DEP-B02 2026-10-01 18:30: Heater zone failure, 18.8 h. Action: Heater replaced; temperature profile requalified.
+    Plus 6 smaller events, 60.2 h in total.
+    Main cause by hours: Particle excursion after chamber clean (45.0 h).
+- Etch (ETCH, 13 tools): 121.9 h unscheduled down (5.6% of calendar), 9 events. Availability 82.2% vs 77.0% assumed; loading 74.8%; queue 0.22 h per lot step.
+    ETCH-B02 2026-10-01 02:36: Electrostatic chuck helium leak, 32.4 h. Action: Chuck O-rings replaced; leak check passed.
+    ETCH-B03 2026-09-28 01:41: Endpoint detector failure, 27.8 h. Action: Optical endpoint sensor replaced.
+    ETCH-B12 2026-10-03 09:35: Chamber particle excursion, 15.5 h. Action: Wet clean and seasoning wafers run.
+    Plus 6 smaller events, 46.2 h in total.
+    Main cause by hours: Electrostatic chuck helium leak (66.0 h).
+- Planarization (CMP, 4 tools): 66.7 h unscheduled down (9.9% of calendar), 8 events. Availability 74.8% vs 80.0% assumed; loading 87.3%; queue 1.34 h per lot step.
+    CMP-B01 2026-10-01 10:45: Wafer breakage on platen, 11.4 h. Action: Platen cleaned; head inspected.
+    CMP-B03 2026-09-30 21:24: Wafer breakage on platen, 10.2 h. Action: Platen cleaned; head inspected.
+    CMP-B02 2026-10-04 12:08: Wafer breakage on platen, 9.6 h. Action: Platen cleaned; head inspected.
+    Plus 5 smaller events, 35.5 h in total.
+    Main cause by hours: Wafer breakage on platen (49.2 h).
+- Furnace (FURN, 7 tools): 45.4 h unscheduled down (3.9% of calendar), 5 events. Availability 87.3% vs 86.0% assumed; loading 84.7%; queue 1.31 h per lot step.
+    FURN-B05 2026-09-29 12:06: Thermocouple drift, 18.6 h. Action: Thermocouple replaced; profile requalified.
+    FURN-B02 2026-09-30 11:21: Boat elevator fault, 11.1 h. Action: Elevator drive serviced.
+    FURN-B06 2026-10-03 16:25: Mass-flow controller failure, 7.8 h. Action: MFC replaced; leak check passed.
+    Plus 2 smaller events, 7.9 h in total.
+    Main cause by hours: Boat elevator fault (19.0 h).
+- Wet clean (WET, 8 tools): 42.3 h unscheduled down (3.1% of calendar), 5 events. Availability 87.3% vs 88.0% assumed; loading 89.8%; queue 0.55 h per lot step.
+    WET-B08 2026-09-30 20:21: Megasonic transducer fault, 14.4 h. Action: Transducer replaced.
+    WET-B02 2026-10-02 04:34: Megasonic transducer fault, 8.9 h. Action: Transducer replaced.
+    WET-B07 2026-10-04 03:59: Robot handoff error, 8.7 h. Action: Robot taught; handoff verified.
+    Plus 2 smaller events, 10.2 h in total.
+    Main cause by hours: Megasonic transducer fault (23.3 h).
+- Metal deposition (PVD, 2 tools): 30.5 h unscheduled down (9.1% of calendar), 4 events. Availability 81.6% vs 84.0% assumed; loading 55.6%; queue 0.52 h per lot step.
+    PVD-B02 2026-09-30 13:08: Target reached end of life early, 12.9 h. Action: Target swapped; burn-in completed.
+    PVD-B01 2026-09-29 15:39: Shield flaking particles, 8.3 h. Action: Shield kit replaced.
+    PVD-B01 2026-09-28 02:14: Target reached end of life early, 5.0 h. Action: Target swapped; burn-in completed.
+    Plus 1 smaller event, 4.3 h in total.
+    Main cause by hours: Target reached end of life early (17.9 h).
+- Inspection (METRO, 4 tools): 20.5 h unscheduled down (3.0% of calendar), 4 events. Availability 86.7% vs 84.0% assumed; loading 70.8%; queue 0.45 h per lot step.
+    METRO-B01 2026-10-02 13:47: Light source end of life, 8.3 h. Action: Light source replaced.
+    METRO-B04 2026-09-29 00:47: Stage calibration out of tolerance, 5.7 h. Action: Stage recalibrated.
+    METRO-B02 2026-10-01 07:40: Light source end of life, 5.2 h. Action: Light source replaced.
+    Plus 1 smaller event, 1.3 h in total.
+    Main cause by hours: Light source end of life (13.5 h).
+- Ion implant (IMPL, 2 tools): 16.0 h unscheduled down (4.8% of calendar), 2 events. Availability 79.1% vs 82.0% assumed; loading 82.4%; queue 2.79 h per lot step.
+    IMPL-B02 2026-09-28 11:13: Beamline arcing, 10.4 h. Action: Beamline cleaned; arc count normal.
+    IMPL-B01 2026-09-30 07:10: Wafer handler vacuum fault, 5.6 h. Action: Vacuum pump serviced.
+    Main cause by hours: Beamline arcing (10.4 h).
+- DUV lithography (DUV, 2 tools): 14.1 h unscheduled down (4.2% of calendar), 2 events. Availability 87.6% vs 81.0% assumed; loading 61.5%; queue 0.20 h per lot step.
+    DUV-B01 2026-10-01 04:16: Wafer stage interferometer fault, 8.2 h. Action: Interferometer board replaced.
+    DUV-B02 2026-09-30 10:18: Track coater nozzle clog, 5.9 h. Action: Nozzle cleaned; coat thickness verified.
+    Main cause by hours: Wafer stage interferometer fault (8.2 h).
+
+Availability below the planning assumption by more than 2 points: Planarization 74.8% vs 80.0%; Ion implant 79.1% vs 82.0%; Metal deposition 81.6% vs 84.0%
+Loading at or above the 85% planning limit: Wet clean 89.8% (queue 0.55 h); Planarization 87.3% (queue 1.34 h)

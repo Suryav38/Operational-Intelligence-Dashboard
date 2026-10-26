@@ -1,0 +1,67 @@
+Weekly equipment review · Fab A · Q4 2026 · week of 19 Oct – 25 Oct 2026 · SYNTHETIC
+Source: simulated tool states (seed 42); event detail in table tool_events_q4.
+
+Line: 1,900 wafers started, 2,150 completed, WIP 6,975 wafers, average cycle time 27.9 days.
+
+Unscheduled downtime by tool group this week (largest first):
+- Deposition (DEP, 42 tools): 326.3 h unscheduled down (4.6% of calendar), 14 events. Availability 81.3% vs 80.0% assumed; loading 81.4%; queue 0.02 h per lot step.
+    DEP-A22 2026-10-20 02:20: Particle excursion after chamber clean, 56.4 h. Action: Additional seasoning; particle monitor passed.
+    DEP-A41 2026-10-21 06:57: Heater zone failure, 42.8 h. Action: Heater replaced; temperature profile requalified.
+    DEP-A38 2026-10-23 07:52: Heater zone failure, 31.9 h. Action: Heater replaced; temperature profile requalified.
+    Plus 11 smaller events, 195.3 h in total.
+    Main cause by hours: Heater zone failure (112.0 h).
+- Etch (ETCH, 30 tools): 310.1 h unscheduled down (6.2% of calendar), 14 events. Availability 76.0% vs 77.0% assumed; loading 87.1%; queue 0.11 h per lot step.
+    ETCH-A01 2026-10-24 02:45: RF generator fault, 43.1 h. Action: RF generator swapped.
+    ETCH-A30 2026-10-22 20:26: Chamber particle excursion, 41.3 h. Action: Wet clean and seasoning wafers run.
+    ETCH-A21 2026-10-21 05:29: Chamber particle excursion, 37.5 h. Action: Wet clean and seasoning wafers run.
+    Plus 11 smaller events, 188.1 h in total.
+    Main cause by hours: Chamber particle excursion (151.8 h).
+- Wet clean (WET, 19 tools): 161.2 h unscheduled down (5.0% of calendar), 14 events. Availability 87.9% vs 88.0% assumed; loading 86.7%; queue 0.05 h per lot step.
+    WET-A06 2026-10-20 00:42: Megasonic transducer fault, 31.4 h. Action: Transducer replaced.
+    WET-A09 2026-10-19 10:29: Robot handoff error, 22.1 h. Action: Robot taught; handoff verified.
+    WET-A13 2026-10-22 02:44: Megasonic transducer fault, 16.6 h. Action: Transducer replaced.
+    Plus 11 smaller events, 91.1 h in total.
+    Main cause by hours: Megasonic transducer fault (77.9 h).
+- Furnace (FURN, 15 tools): 129.2 h unscheduled down (5.1% of calendar), 13 events. Availability 82.4% vs 86.0% assumed; loading 82.3%; queue 0.84 h per lot step.
+    FURN-A15 2026-10-21 05:03: Mass-flow controller failure, 17.3 h. Action: MFC replaced; leak check passed.
+    FURN-A14 2026-10-24 21:10: Mass-flow controller failure, 14.2 h. Action: MFC replaced; leak check passed.
+    FURN-A10 2026-10-25 07:40: Boat elevator fault, 13.9 h. Action: Elevator drive serviced.
+    Plus 10 smaller events, 83.8 h in total.
+    Main cause by hours: Mass-flow controller failure (58.6 h).
+- Planarization (CMP, 10 tools): 84.6 h unscheduled down (5.0% of calendar), 11 events. Availability 82.9% vs 80.0% assumed; loading 74.6%; queue 0.19 h per lot step.
+    CMP-A08 2026-10-22 00:25: Slurry delivery flow alarm, 15.7 h. Action: Slurry pump serviced.
+    CMP-A06 2026-10-23 01:22: Slurry delivery flow alarm, 13.7 h. Action: Slurry pump serviced.
+    CMP-A03 2026-10-24 07:57: Slurry delivery flow alarm, 12.4 h. Action: Slurry pump serviced.
+    Plus 8 smaller events, 42.8 h in total.
+    Main cause by hours: Slurry delivery flow alarm (45.8 h).
+- Ion implant (IMPL, 5 tools): 51.3 h unscheduled down (6.1% of calendar), 6 events. Availability 80.1% vs 82.0% assumed; loading 75.8%; queue 0.65 h per lot step.
+    IMPL-A03 2026-10-24 01:36: Beamline arcing, 11.9 h. Action: Beamline cleaned; arc count normal.
+    IMPL-A01 2026-10-24 20:39: Ion source filament failure, 9.2 h. Action: Source rebuilt; beam tuned.
+    IMPL-A04 2026-10-22 12:22: Ion source filament failure, 9.2 h. Action: Source rebuilt; beam tuned.
+    Plus 3 smaller events, 21.0 h in total.
+    Main cause by hours: Ion source filament failure (26.4 h).
+- DUV lithography (DUV, 4 tools): 36.4 h unscheduled down (5.4% of calendar), 5 events. Availability 78.7% vs 81.0% assumed; loading 72.6%; queue 0.15 h per lot step.
+    DUV-A03 2026-10-20 17:27: Wafer stage interferometer fault, 13.4 h. Action: Interferometer board replaced.
+    DUV-A04 2026-10-21 16:09: Wafer stage interferometer fault, 8.2 h. Action: Interferometer board replaced.
+    DUV-A04 2026-10-23 01:25: Reticle handler jam, 7.3 h. Action: Handler gripper realigned.
+    Plus 2 smaller events, 7.5 h in total.
+    Main cause by hours: Wafer stage interferometer fault (21.6 h).
+- Inspection (METRO, 9 tools): 30.3 h unscheduled down (2.0% of calendar), 6 events. Availability 86.3% vs 84.0% assumed; loading 75.8%; queue 0.19 h per lot step.
+    METRO-A01 2026-10-19 19:05: Stage calibration out of tolerance, 9.1 h. Action: Stage recalibrated.
+    METRO-A04 2026-10-20 10:19: Stage calibration out of tolerance, 5.9 h. Action: Stage recalibrated.
+    METRO-A05 2026-10-20 03:28: Light source end of life, 5.6 h. Action: Light source replaced.
+    Plus 3 smaller events, 9.7 h in total.
+    Main cause by hours: Stage calibration out of tolerance (24.7 h).
+- EUV lithography (EUV, 1 tools): 27.7 h unscheduled down (16.5% of calendar), 3 events. Availability 69.6% vs 70.0% assumed; loading 99.6%; queue 26.40 h per lot step.
+    EUV-A01 2026-10-20 11:06: Collector mirror contamination, 11.8 h. Action: Collector swapped; imaging requalified.
+    EUV-A01 2026-10-24 14:04: Source power drop: droplet generator instability, 9.7 h. Action: Droplet generator replaced; dose re-baselined.
+    EUV-A01 2026-10-21 16:32: Source power drop: droplet generator instability, 6.3 h. Action: Droplet generator replaced; dose re-baselined.
+    Main cause by hours: Source power drop: droplet generator instability (16.0 h).
+- Metal deposition (PVD, 4 tools): 25.5 h unscheduled down (3.8% of calendar), 3 events. Availability 82.8% vs 84.0% assumed; loading 68.5%; queue 0.60 h per lot step.
+    PVD-A01 2026-10-22 01:36: Magnetron rotation fault, 10.6 h. Action: Magnetron drive repaired.
+    PVD-A04 2026-10-20 02:53: Shield flaking particles, 9.6 h. Action: Shield kit replaced.
+    PVD-A02 2026-10-21 08:17: Magnetron rotation fault, 5.3 h. Action: Magnetron drive repaired.
+    Main cause by hours: Magnetron rotation fault (15.9 h).
+
+Availability below the planning assumption by more than 2 points: DUV lithography 78.7% vs 81.0%; Furnace 82.4% vs 86.0%
+Loading at or above the 85% planning limit: EUV lithography 99.6% (queue 26.40 h); Etch 87.1% (queue 0.11 h); Wet clean 86.7% (queue 0.05 h)
