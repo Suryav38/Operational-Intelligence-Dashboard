@@ -41,34 +41,30 @@ def test_capacity_views_render_at_each_limit():
             assert not at.exception, (limit, view)
 
 
-def test_scenario_assistant_demand_change_and_stale_inputs():
+def test_manual_scenario_runs_and_hides_stale_results():
     at = app()
     at.radio(key='page').set_value('Capacity scenario planning').run()
     assert at.radio(key='cap_view').value == '2027 capacity'
     at.radio(key='cap_view').set_value('Scenarios').run()
-    assert any(b.label == 'Fill inputs with AI' and b.disabled for b in at.button)
-    assert at.radio(key='sc_fleet').value == 'planned' and at.selectbox(key='sc_type').value == 'Demand change'
-    at.button(key='sc_run').click().run()
-    assert not at.exception
-    planned = next(m.value for m in at.markdown if 'class="decision"' in m.value)
-    assert 'Accept <b>+100</b>' in planned            # after the 2027 buys, EUV has room
-    at.radio(key='sc_fleet').set_value('current').run()
-    at.button(key='sc_run').click().run()
-    decision = next(m.value for m in at.markdown if 'class="decision"' in m.value)
-    assert 'EUV lithography' in decision and 'capacity must be added' in decision
-    at.number_input(key='sc_change').set_value(60.).run()
-    assert any('Inputs changed' in i.value for i in at.info)
+    assert at.radio(key='scenario_fleet').value == 'planned'
+    next(b for b in at.button if b.label == 'Run scenario').click().run()
+    assert not at.exception and at.session_state['review']['program'] == 'DRAM_B'
+    assert any('class="decision"' in m.value for m in at.markdown)      # demand growth also ranks responses
+    at.number_input(key='scenario_pct').set_value(20).run()
+    assert any('Inputs changed' in x.value for x in at.info)
 
 
-def test_scenario_assistant_runs_every_example_type():
+def test_assistant_fills_the_manual_form_for_every_type():
     at = app()
     at.radio(key='page').set_value('Capacity scenario planning').run()
     at.radio(key='cap_view').set_value('Scenarios').run()
+    assert any(b.label == 'Fill the form with AI' and b.disabled for b in at.button)
     seen = set()
     for option in at.selectbox(key='sc_example').options:
         at.selectbox(key='sc_example').set_value(option).run()
-        at.button(key='sc_run').click().run()
-        assert not at.exception and not at.error
-        assert any('class="decision"' in m.value or 'class="stats"' in m.value for m in at.markdown)
-        seen.add(at.selectbox(key='sc_type').value)
-    assert seen == {'Demand change', 'Product mix shift', 'Tool unavailability', 'Qualified load transfer'}
+        seen.add(at.selectbox(key='scenario_operation').value)
+        next(b for b in at.button if b.label == 'Run scenario').click().run()
+        assert not at.exception and not at.error and at.session_state['review'] is not None
+    assert seen == {'Demand growth', 'Product mix shift', 'Tool unavailability', 'Qualified load transfer'}
+    at.selectbox(key='sc_example').set_value(at.selectbox(key='sc_example').options[0]).run()
+    assert at.radio(key='demand_mode').value == 'Target WSPW' and at.number_input(key='target_FAB_A_DRAM_B_2027Q1').value == 1070.

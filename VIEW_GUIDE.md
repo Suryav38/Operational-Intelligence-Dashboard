@@ -74,46 +74,41 @@ The view sizes the response step by step:
 
 The view ends with the buy list: tools, need-by quarter, pull-ins and cost index. You can download it as a CSV.
 
-### Scenarios (with the AI assistant)
+### Scenarios (manual form + AI assistant)
 
-One tab for every "what if". The **assistant** sits on top: describe the scenario in plain English (or pick an example) and press *Fill inputs with AI*. The LLM must return a **strict JSON schema** (scenario type, fab, program, quarter, the new total or the change, target program, wafers shifted, tool group, tools down, transfer %, protected programs, constraints). Python then validates it:
+The manual scenario form works as before: test type, fab, program, priority, quarter or week range, % or target WSPW, availability recovery, *Tools assumed* (planned fleet by default, or current fleet). The results are also as before:
+- stats;
+- baseline vs. scenario load by tool group;
+- groups above the limit across 2027;
+- the full table, with a CSV download;
+- the planning assistant.
 
-- unknown values are dropped and qualification is checked;
-- a "+50" becomes a new total on the 2027 requested plan;
-- constraints must cite `REQUEST` or a retrieved note ID, and citations to notes that weren't retrieved are removed;
-- anything the text didn't state is listed as missing.
+**AI assistant (collapsible, above the form):** describe a scenario in plain English, or pick an example, and press *Fill the form with AI*. The LLM must return a strict JSON schema: scenario type, fab, program, quarter, the new total or the change, target program, wafers shifted, tool group, tools down, transfer % and constraints. Python then validates it:
+- it drops unknown values and checks qualification;
+- it turns "+100" into a target on the 2027 requested plan;
+- it removes citations to notes that weren't retrieved;
+- it lists anything missing.
 
-The AI only fills the form. Every input stays editable, and **Python does every calculation**. Without an API key, the examples fill the form.
+The assistant only **fills the manual form**. You still review the inputs and press *Run scenario*, and Python does the calculation. Without an API key, the examples fill the form.
 
-**Scenario types**
+**Responses tested (demand growth only):** after a demand-growth run, the first quarter of the request also goes through the ranked responses:
+- accept in full;
+- accept part and defer or decline the rest;
+- cut a lower-priority, unprotected program on the bottleneck;
+- run the excess on qualified tools at the other fab.
 
-| Type | Inputs | What is calculated |
-|---|---|---|
-| Demand change | program, change per week, acceptance ceiling, protected programs | Weekly model through 2027. Responses tested: accept in full, accept part and defer/decline the rest, cut a lower-priority unprotected program on the bottleneck, run the excess on qualified tools at the other fab. These are ranked (below). |
-| Product mix shift | from program, to program, wafers/week | Starts move between programs at the same fab, so the total is unchanged. Routes differ, so tool loading changes. |
-| Tool unavailability | tool group, tools down | Fewer tools released in the quarter |
-| Qualified load transfer | dual-qualified program, % moved | The share moves to the other fab. Results show both fabs. |
-
-**Tools assumed:** *Planned fleet* (default) = installed + on order + the 2027 buys, each added in the quarter it is needed. Under this fleet the 2027 plan sits at or below the planning limit (max 84.9%), so a scenario shows its true marginal effect. *Current fleet* = installed + on order only ("what if we don't buy?").
-
-**Demand-change ranking rules**, applied in order:
-1. Feasible under the ceiling.
+The ranking rules, in order:
+1. Feasible under the 95% ceiling.
 2. Protected programs are never touched.
 3. The most wafers started now.
 4. The fewest wafers taken from other programs.
-5. The fewest tool groups pushed over the limit.
+5. The fewest groups over the limit.
 
-The decision band is *Within limit* (≤ planning limit), *Needs exception* (between the limit and the ceiling, default 95%), or *Not accepted* (above the ceiling).
-
-**Results:**
-- *Demand change:* the decision, the wafers that fit under the ceiling and under the limit, the binding tool group with its load before → after, and the ranked responses.
-- *Other types:* starts, groups at or above the limit, peak load, groups over 100%, and one chart of the tool groups whose load changes (baseline vs. scenario).
-
-An **AI explanation** follows each result. It gets the computed result as source [S1], plus retrieved notes. Every paragraph must cite a source, and every number must appear in a cited source. A failed draft gets one repair turn.
+The decision is *Within limit*, *Needs exception* (between the limit and the ceiling) or *Not accepted*.
 
 **Examples (planned fleet):**
-- **REQ-2027-014: Node B +100 at Fab A, Q1** (970 → 1,070 requested). Accepted with an exception. Wet clean at Fab A binds at 85% → 89%. On the *current* fleet it is declined, because EUV is full and Fab B has no EUV.
-- **REQ-2027-021: Node A +50 at Fab B, Q1.** Accepted with an exception; etch binds at 84% → 88%. On the current fleet only +20 fits.
-- **Shift 50 WSPW NAND → HBM at Fab A, Q2.** EUV 78.9% → 81.3% and deposition 83.7% → 82.7%. Total starts are unchanged.
-- **One EUV scanner down at Fab A, Q3.** EUV 61.7% → 92.5%. It stays under 100%, but it is above the limit.
-- **20% of Node A from Fab A to Fab B, Q2.** Fab B wet clean 84.6% → 96.3%. The constraint moves to Fab B.
+- **REQ-2027-014: Node B +100 at Fab A, Q1** (970 → 1,070). Needs an exception: wet clean goes 85% → 89%. On the current fleet it is declined, because EUV is full.
+- **REQ-2027-021: Node A +50 at Fab B, Q1.** Needs an exception: etch goes 84% → 88%. On the current fleet only +20 fits.
+- **NAND → HBM, 50 WSPW at Fab A, Q2:** EUV goes 78.9% → 81.3%.
+- **One EUV down at Fab A, Q3:** EUV goes 61.7% → 92.5%.
+- **20% of Node A moved Fab A → Fab B, Q2:** Fab B wet clean goes 84.6% → 96.3%.
