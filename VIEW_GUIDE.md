@@ -49,54 +49,7 @@ The four weeks after the stored history come from rerunning the same fab simulat
 
 ## 3. Capacity scenario planning
 
-### Views, in order: 2027 capacity · Response plan · Wafer request analyst · Other scenarios
-
-### Wafer request analyst (the AI feature)
-
-1. **Request.** You type or paste a request. *Extract inputs with AI* sends it to an LLM together with the top retrieved notes. The LLM must fill a **strict JSON schema**: fab, program, quarter, the new total or the change, weeks, protected programs, and constraints. Each constraint must cite `REQUEST` or a retrieved note ID. Python then validates the output:
-   - unknown values are dropped;
-   - qualification is checked;
-   - a "+50" is converted to a new total;
-   - dates are snapped to planning weeks;
-   - citations to notes that were not retrieved are removed;
-   - anything the request didn't state is listed as missing.
-
-   Without an API key, choosing an example fills the inputs.
-2. **Inputs.** Every input stays editable:
-   - *Screen against*: planned run rate (default) or the requested plan.
-   - *Acceptance ceiling*: default 95%.
-   - *Tool availability*: the planning assumption, or the value measured in Q4 to date.
-3. **Model.** Weekly through 2027, for both fabs:
-
-   ```
-   required tool-h = Σ starts × visits × min/visit × sampling ÷ 60   (prorated by days in the week)
-   available tool-h = tools released that week × 168 × availability
-   room = min over the program's tool groups and weeks of (ceiling × available − required) ÷ hours per wafer, rounded down to 5
-   ```
-
-   The analyst tests each response through the same weekly model:
-   - accept the full request;
-   - accept what fits and defer the rest (or decline it if no later quarter has room);
-   - cut a lower-priority, unprotected program that shares the bottleneck;
-   - use qualified tools at the other fab.
-
-   **Ranking rules**, applied in order:
-   1. Feasible under the ceiling.
-   2. Protected programs are never touched.
-   3. The most wafers started now.
-   4. The fewest wafers taken from other programs.
-   5. The fewest tool groups pushed over the limit.
-
-   **Decision bands:**
-   - Within limit: at or below the planning limit.
-   - Needs exception: between the limit and the ceiling.
-   - Not accepted: above the ceiling.
-4. **AI explanation.** The LLM gets the computed result as source [S1], plus retrieved notes. It must cite a source for every paragraph, and every number it uses must appear in a cited source (rounding is allowed). If a draft fails, the model gets one repair turn and is told the exact reason.
-
-**Examples:**
-- **REQ-2027-014: DRAM Node B 825 → 925 at Fab A, Q1.** EUV supplies 117.6 h/week. The 2027 plan already uses (825 + 180) × 7 ÷ 60 = 117.25 h, which is 99.7%. There is no room, HBM is protected, and Fab B has no EUV, so the request is declined: capacity has to be added (see Response plan).
-- **REQ-2027-021: DRAM Node A +50 at Fab B, Q1.** Wet clean binds. The recommended response cuts short-loop experiments (priority 3) to free the hours.
-- **Short loops +100 at Fab A, Q1.** The excess runs on qualified tools at Fab B.
+### Views, in order: 2027 capacity · Response plan · Scenarios
 
 ### 2027 capacity (first view)
 
@@ -121,18 +74,46 @@ The view sizes the response step by step:
 
 The view ends with the buy list: tools, need-by quarter, pull-ins and cost index. You can download it as a CSV.
 
-### Other scenarios
+### Scenarios (with the AI assistant)
 
-Each test runs on one of two fleets:
+One tab for every "what if". The **assistant** sits on top: describe the scenario in plain English (or pick an example) and press *Fill inputs with AI*. The LLM must return a **strict JSON schema** (scenario type, fab, program, quarter, the new total or the change, target program, wafers shifted, tool group, tools down, transfer %, protected programs, constraints). Python then validates it:
 
-- **Planned fleet (default):** installed + on order + the 2027 buys from the *2027 capacity* view, with each tool added in the quarter it's needed. A pulled-in tool is not counted again when its original order arrives. The 2027 plan then sits at or below the planning limit everywhere (max 84.9%), so a scenario shows its true marginal effect. Without the buys, groups already at 105–150% make every scenario look the same.
-- **Current fleet:** installed + on order only. This answers "what if we don't buy?"
+- unknown values are dropped and qualification is checked;
+- a "+50" becomes a new total on the 2027 requested plan;
+- constraints must cite `REQUEST` or a retrieved note ID, and citations to notes that weren't retrieved are removed;
+- anything the text didn't state is listed as missing.
 
-The tests:
+The AI only fills the form. Every input stays editable, and **Python does every calculation**. Without an API key, the examples fill the form.
 
-- **Demand growth:** change one program's starts, as a % or a target.
-- **Product mix shift:** move N wafers/week from one program to another at the same fab, with total starts unchanged. Because routes differ, the same wafers load tools differently. Shifting NAND to HBM, for example, adds EUV and lithography load and frees deposition and etch.
-- **Tool unavailability:** take N tools out of service for a window.
-- **Qualified load transfer:** move a share of a dual-qualified program to the other fab.
+**Scenario types**
 
-Each test can run by quarter or by exact week. The **Wafer request analyst** has the same *Tools assumed* switch.
+| Type | Inputs | What is calculated |
+|---|---|---|
+| Demand change | program, change per week, acceptance ceiling, protected programs | Weekly model through 2027. Responses tested: accept in full, accept part and defer/decline the rest, cut a lower-priority unprotected program on the bottleneck, run the excess on qualified tools at the other fab. These are ranked (below). |
+| Product mix shift | from program, to program, wafers/week | Starts move between programs at the same fab, so the total is unchanged. Routes differ, so tool loading changes. |
+| Tool unavailability | tool group, tools down | Fewer tools released in the quarter |
+| Qualified load transfer | dual-qualified program, % moved | The share moves to the other fab. Results show both fabs. |
+
+**Tools assumed:** *Planned fleet* (default) = installed + on order + the 2027 buys, each added in the quarter it is needed. Under this fleet the 2027 plan sits at or below the planning limit (max 84.9%), so a scenario shows its true marginal effect. *Current fleet* = installed + on order only ("what if we don't buy?").
+
+**Demand-change ranking rules**, applied in order:
+1. Feasible under the ceiling.
+2. Protected programs are never touched.
+3. The most wafers started now.
+4. The fewest wafers taken from other programs.
+5. The fewest tool groups pushed over the limit.
+
+The decision band is *Within limit* (≤ planning limit), *Needs exception* (between the limit and the ceiling, default 95%), or *Not accepted* (above the ceiling).
+
+**Results:**
+- *Demand change:* the decision, the wafers that fit under the ceiling and under the limit, the binding tool group with its load before → after, and the ranked responses.
+- *Other types:* starts, groups at or above the limit, peak load, groups over 100%, and one chart of the tool groups whose load changes (baseline vs. scenario).
+
+An **AI explanation** follows each result. It gets the computed result as source [S1], plus retrieved notes. Every paragraph must cite a source, and every number must appear in a cited source. A failed draft gets one repair turn.
+
+**Examples (planned fleet):**
+- **REQ-2027-014: Node B +100 at Fab A, Q1** (970 → 1,070 requested). Accepted with an exception. Wet clean at Fab A binds at 85% → 89%. On the *current* fleet it is declined, because EUV is full and Fab B has no EUV.
+- **REQ-2027-021: Node A +50 at Fab B, Q1.** Accepted with an exception; etch binds at 84% → 88%. On the current fleet only +20 fits.
+- **Shift 50 WSPW NAND → HBM at Fab A, Q2.** EUV 78.9% → 81.3% and deposition 83.7% → 82.7%. Total starts are unchanged.
+- **One EUV scanner down at Fab A, Q3.** EUV 61.7% → 92.5%. It stays under 100%, but it is above the limit.
+- **20% of Node A from Fab A to Fab B, Q2.** Fab B wet clean 84.6% → 96.3%. The constraint moves to Fab B.

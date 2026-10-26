@@ -163,3 +163,7 @@ table.cap td.q .ql { display:block; font-size:10.5px; color:var(--muted); }
 table.cap td.q.bad .ql { color:#7d2a1e; }
 table.cap th .sub { font-size:9.5px; text-transform:none; letter-spacing:0; color:var(--faint); font-weight:400; }
 table.cap td.q { width:84px; line-height:1.25; }
+
+/* multiselect chips: neutral, not alarm red */
+[data-baseweb="tag"] { background: #e3ebf4 !important; color: var(--ink) !important; }
+[data-baseweb="tag"] span[role="presentation"] svg, [data-baseweb="tag"] svg { fill: var(--ink) !important; color: var(--ink) !important; }

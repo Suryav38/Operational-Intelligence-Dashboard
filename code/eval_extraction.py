@@ -14,6 +14,7 @@ import planning_copilot as rag
 import request_parser as P
 
 FIELDS = ['site', 'program', 'quarter', 'requested_wspw', 'protected']
+EXTRA = ['scenario_type', 'to_program', 'wafers_shift', 'tool_group', 'tools_unavailable', 'transfer_pct']
 
 
 def main():
@@ -33,13 +34,15 @@ def main():
             inputs, warnings = {}, [str(exc)]
         seconds = time.perf_counter() - start
         row = []
-        for f in FIELDS:
+        for f in FIELDS + [k for k in EXTRA if k in case['expect']]:
             want, have = case['expect'][f], inputs.get(f)
+            hits.setdefault(f, 0)
             ok = sorted(want) == sorted(have or []) if f == 'protected' else want == have
             hits[f] += ok
             row.append(f"{f}={'ok' if ok else f'{have!r}≠{want!r}'}")
         print(f"{case['id']} {seconds:4.1f}s  " + '  '.join(row) + (f"  warnings={warnings}" if warnings else ''))
-    print('\nField accuracy:', {f: f'{hits[f]}/{len(cases)}' for f in FIELDS})
+    counts = {f: sum(f in c['expect'] for c in cases) for f in hits}
+    print('\nField accuracy:', {f: f'{hits[f]}/{counts[f]}' for f in hits})
 
 
 if __name__ == '__main__':

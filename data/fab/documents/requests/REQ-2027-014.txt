@@ -3,7 +3,7 @@ Date: 2026-10-19
 From: DRAM Node B program office
 To: TD capacity planning (IE)
 
-Request: Increase DRAM Node B (EUV) wafer starts at Fab A in 2027Q1 from 825 to 925 wafers per week for the full quarter, to bring yield-learning lots ahead of the June ramp gate.
+Request: Increase DRAM Node B (EUV) wafer starts at Fab A in 2027Q1 by 100 wafers per week (from 970 to 1,070 in the requested plan) for the full quarter, to bring yield-learning lots ahead of the June ramp gate.
 
 Constraints:
 - The HBM test vehicle qualification lots-out date of 26 Mar 2027 must not move. Do not reduce HBM test-vehicle starts or change their dispatch priority.

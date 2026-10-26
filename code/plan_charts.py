@@ -461,3 +461,21 @@ def program_vs_plan(programs):
     fig.update_xaxes(title='Wafer starts / week', showgrid=False, range=[0, float(f.plan_wspw.max()) * 1.18])
     fig.update_yaxes(showgrid=False)
     return fig
+
+
+def scenario_delta(frame, ceiling, both):
+    """Baseline vs. scenario loading for the tool groups a scenario changes."""
+    frame = frame.sort_values('loading_pct_scenario', ascending=False, na_position='first')
+    names = frame.tool_group.map(rm.GROUP_LABELS)
+    labels = (frame.site.map(rm.SITE_LABELS) + ' · ' + names) if both else names
+    fig = go.Figure()
+    for col, name, color in [('loading_pct_base', 'Baseline', '#bac9dd'), ('loading_pct_scenario', 'Scenario', ACCENT)]:
+        fig.add_bar(y=labels, x=frame[col].fillna(0), orientation='h', name=name, marker_color=color,
+                    text=frame[col].map(lambda x: 'No capacity' if pd.isna(x) else f'{x:.0f}%'), textposition='outside', cliponaxis=False)
+    ec.style(fig, max(260, len(frame) * 44 + 80))
+    fig.update_layout(barmode='group', bargap=.28)
+    fig.add_vline(x=ceiling * 100, line_color=WARN, line_width=1.5)
+    top = frame[['loading_pct_base', 'loading_pct_scenario']].max().max()
+    fig.update_xaxes(title='Loading (%)', range=[0, max(110, (0 if pd.isna(top) else top) * 1.15)])
+    fig.update_yaxes(autorange='reversed')
+    return fig

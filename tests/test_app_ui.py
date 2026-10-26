@@ -3,7 +3,7 @@ from streamlit.testing.v1 import AppTest
 
 APP = Path(__file__).resolve().parents[1] / 'code' / 'apprag.py'
 PAGES = ['Demand outlook', 'Fab performance', 'Capacity scenario planning']
-VIEWS = ['2027 capacity', 'Response plan', 'Wafer request analyst', 'Other scenarios']
+VIEWS = ['2027 capacity', 'Response plan', 'Scenarios']
 
 
 def app():
@@ -41,34 +41,34 @@ def test_capacity_views_render_at_each_limit():
             assert not at.exception, (limit, view)
 
 
-def test_analyst_calculates_and_flags_stale_inputs():
+def test_scenario_assistant_demand_change_and_stale_inputs():
     at = app()
     at.radio(key='page').set_value('Capacity scenario planning').run()
     assert at.radio(key='cap_view').value == '2027 capacity'
-    at.radio(key='cap_view').set_value('Wafer request analyst').run()
-    assert any(b.label == 'Extract inputs with AI' and b.disabled for b in at.button)
-    assert at.radio(key='an_fleet').value == 'planned'
-    at.button(key='an_calc').click().run()
+    at.radio(key='cap_view').set_value('Scenarios').run()
+    assert any(b.label == 'Fill inputs with AI' and b.disabled for b in at.button)
+    assert at.radio(key='sc_fleet').value == 'planned' and at.selectbox(key='sc_type').value == 'Demand change'
+    at.button(key='sc_run').click().run()
     assert not at.exception
     planned = next(m.value for m in at.markdown if 'class="decision"' in m.value)
     assert 'Accept <b>+100</b>' in planned            # after the 2027 buys, EUV has room
-    at.radio(key='an_fleet').set_value('current').run()
-    at.button(key='an_calc').click().run()
+    at.radio(key='sc_fleet').set_value('current').run()
+    at.button(key='sc_run').click().run()
     decision = next(m.value for m in at.markdown if 'class="decision"' in m.value)
     assert 'EUV lithography' in decision and 'capacity must be added' in decision
-    at.number_input(key='an_target').set_value(900.).run()
+    at.number_input(key='sc_change').set_value(60.).run()
     assert any('Inputs changed' in i.value for i in at.info)
-    at.selectbox(key='analyst_example').set_value(at.selectbox(key='analyst_example').options[1]).run()
-    assert at.selectbox(key='an_site').value == 'FAB_B' and at.number_input(key='an_target').value == 730.
-    at.button(key='an_calc').click().run()
-    assert any('Short-loop experiments' in m.value for m in at.markdown if 'class="decision"' in m.value)
 
 
-def test_scenario_test_runs_and_hides_stale_results():
+def test_scenario_assistant_runs_every_example_type():
     at = app()
     at.radio(key='page').set_value('Capacity scenario planning').run()
-    at.radio(key='cap_view').set_value('Other scenarios').run()
-    next(b for b in at.button if b.label == 'Run scenario').click().run()
-    assert not at.exception and at.session_state['review']['program'] == 'DRAM_B'
-    at.number_input(key='scenario_pct').set_value(20).run()
-    assert any('Inputs changed' in x.value for x in at.info)
+    at.radio(key='cap_view').set_value('Scenarios').run()
+    seen = set()
+    for option in at.selectbox(key='sc_example').options:
+        at.selectbox(key='sc_example').set_value(option).run()
+        at.button(key='sc_run').click().run()
+        assert not at.exception and not at.error
+        assert any('class="decision"' in m.value or 'class="stats"' in m.value for m in at.markdown)
+        seen.add(at.selectbox(key='sc_type').value)
+    assert seen == {'Demand change', 'Product mix shift', 'Tool unavailability', 'Qualified load transfer'}
