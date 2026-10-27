@@ -2,7 +2,7 @@
 
 ## Where AI appears
 
-Expandable assistants sit inside historical Production Overview and Equipment Health, the 2027 Capacity Outlook, live Scenario Comparison and Program Introduction. Each receives a separate scope-specific context; there is no detached generic chat page.
+Expandable assistants sit on Fab performance (the fab assistant over the Q4 tool logbook and event table), the 2027 baseline and the Scenarios results. Each receives a separate scope-specific context that includes the screen's fleet and availability settings, so its calculations match the screen. There is no detached generic chat page.
 
 No API call runs merely from opening the dashboard or changing a filter. **Ask AI** triggers generation. **Preview evidence** is keyword retrieval plus the exact numerical context and works offline.
 
@@ -32,11 +32,11 @@ The bundle contains 28 tables. They include:
 
 ## Unstructured evidence
 
-There are 36 text notes: 15 archived earlier-prototype records and 21 current records. Current records include five dated capacity-hold incidents, 13 calendar-month flow reviews (the 52-week span includes partial boundary months), one pilot change note, one model/mix policy and one demand-comparison reference policy. v10 adds three dated wafer-start requests (documents/requests: REQ-2027-014, -021, -030). The demand-comparison policy note now describes the trend-based 2026Q4 forecast.
+Searched notes (data/fab/documents): three dated wafer-start requests (requests/), the eight Q4 weekly equipment reviews (tool_logs/2026Q4), and the v6 records (dated capacity-hold incidents, monthly flow reviews, the model/mix policy and the demand-comparison policy). Retired prototype notes and the old pilot note were moved to archive/documents and are no longer searched.
 
 The current notes identify the request and actual realized hold timestamps, affected equipment and duration, with references to source tables. A documented capacity hold does not establish that every observed WIP or queue change was caused by it.
 
-Legacy notes begin **ARCHIVED PROTOTYPE NOTE**. They cannot override the v6 fleet, route or loading tables. Historical observations, future requests and simulated pilot results retain separate periods and provenance.
+Legacy notes (beginning **ARCHIVED PROTOTYPE NOTE**) now live in archive/ and are not retrieved. Historical observations, future requests and simulated pilot results retain separate periods and provenance.
 
 Text chunks retain source filenames and character positions. Optional semantic retrieval uses `text-embedding-3-small`, combined with keyword ranking. If embedding retrieval is unavailable, the fallback is labelled. Structured tables remain SQL/model inputs, not document embeddings.
 

@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import streamlit as st
 
-PAGES = ['Demand outlook', 'Fab performance', 'Capacity scenario planning']
+PAGES = ['Demand outlook', 'Fab performance', 'Capacity planning']
 SITES = {'Both': 'Both fabs', 'FAB_A': 'Fab A', 'FAB_B': 'Fab B'}
 CASES = {'baseline': '2027 plan'}
 LIMITS = [75, 80, 85, 90, 95]
@@ -12,7 +12,7 @@ LIMITS = [75, 80, 85, 90, 95]
 USES = {
     'Demand outlook': {'site'},
     'Fab performance': {'site', 'limit'},
-    'Capacity scenario planning': {'site', 'case', 'limit', 'availability'},
+    'Capacity planning': {'site', 'case', 'limit', 'availability'},
 }
 AVAILABILITY = {'plan': 'Planning assumption', 'measured': 'Measured 2026Q4 to date'}
 DEFAULTS = {'page': PAGES[0], 'site': 'Both', 'limit_pct': 85, 'availability': 'plan'}

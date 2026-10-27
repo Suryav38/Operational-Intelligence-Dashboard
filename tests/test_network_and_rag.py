@@ -44,7 +44,7 @@ def test_document_retrieval_and_provenance():
     assert len({c['source'] for c in index.chunks})==len(list(fd.DOCS.rglob('*.txt')))
     hits=index.search('Fab A EUV scanner availability and second scanner',4)
     assert hits
-    assert any('EUV' in x['source'] for x in hits)
+    assert any('EUV' in x['text'] for x in hits)
     assert all(x['retrieval']=='keyword' for x in hits)
     assert all(x['text'] and x['character_end']>x['character_start'] for x in hits)
 

@@ -7,10 +7,10 @@ The dashboard has three pages that form one planning workflow:
 | Page | What it shows |
 |---|---|
 | **Demand outlook** (the opener) | Requested vs. actual starts from 2024 through the 2026Q4 forecast to the 2027 plan; the program × quarter change table; per-program trends; the mix; the realization factor; priorities and milestones |
-| **Fab performance** | 2026Q4 to date (28 Sep – 25 Oct 2026, simulated): starts vs. plan, completions, WIP, cycle time, yield, tool loading and queues, measured vs. planned availability, and the model check |
-| **Capacity scenario planning** | **AI wafer loading analyst** (request → editable inputs → model → ranked responses → cited explanation), 2027 capacity, the **Response plan** (2026Q4 rate → 2027 plan → cost-optimal response) and other scenarios |
+| **Fab performance** | 2026Q4 to date (28 Sep – 25 Oct 2026, simulated): starts vs. plan, completions, WIP and cycle time, plus the fab assistant over the tool logbook |
+| **Capacity planning** | **Current fleet** (utilization, downtime, availability, queues, model check) · **2027 baseline** (tools the demand profile needs, by quarter) · **Response plan** (2026Q4 rate → 2027 plan → cost-optimal response) · **Scenarios** (demand, mix, outage and transfer tests with ranked responses) |
 
-**VIEW_GUIDE.md** explains every view and calculation. **DEMO_GUIDE.md** is the walkthrough.
+**VIEW_GUIDE.md** explains every view and calculation. **DEMO_GUIDE.md** is the walkthrough. `archive/` holds retired prototype notes and unused presentation code; the simulation sources stay in `code/` so every table can be regenerated.
 
 ### What changed in v10
 - Three dashboard pages with no headline sentences. Each chart heading states what is compared and over what period.
@@ -66,7 +66,7 @@ See **MODEL_GUIDE.md** for the equations, inputs, limits and a concise interview
 - Introduction: mean post-release WIP **8,780.5 → 10,240.5** input-wafer equivalents; mean existing-lot completion shift **0.59 days**.
 - Slower ramp: mean WIP **9,334.5**; mean shift **0.24 days**. Reduced impact is not a guarantee that every equipment group meets the planning limit.
 
-These are model outputs under synthetic assumptions, not real-fab predictions. Additional completion time is relative to baseline; targets are illustrative, not customer promises. HOT is non-preemptive priority and cannot create equipment capacity.
+These are model outputs under synthetic assumptions, not real-fab predictions. Additional completion time is relative to baseline; targets are illustrative, not customer promises. HOT is non-preemptive priority and cannot create equipment capacity, so the capacity screens no longer offer it.
 
 ## Data and scope
 

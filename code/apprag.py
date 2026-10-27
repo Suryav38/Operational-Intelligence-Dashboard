@@ -24,7 +24,6 @@ import fab_data as fd
 import fab_demo as D
 import fab_month as M
 import forecast_model as fm
-import launch_charts as LC
 import launch_model as L
 import plan_charts as PC
 import planning_copilot as rag
@@ -239,9 +238,12 @@ def capacity_checks(basis, frame):
 
 
 # ================================================================== 1 · CAPITAL PLAN
-def quarter_cell(add, value, ceiling):
-    tone = 'bad' if pd.isna(value) or value > 100 else 'warn' if value >= ceiling * 100 else 'ok'
-    load = 'no tool' if pd.isna(value) else f'{value:.0f}%'
+def quarter_cell(add, value, ceiling, after=None):
+    """+tools to add, then load before → after adding them. Shading follows the load after the response."""
+    shown = value if after is None else after
+    tone = 'bad' if pd.isna(shown) or shown > 100 else 'warn' if shown >= ceiling * 100 + .05 else 'ok'
+    fmt = lambda v: 'no tool' if pd.isna(v) else f'{v:.0f}%'
+    load = fmt(value) if after is None or (not add and abs((after or 0) - (value or 0)) < .5) else f'{fmt(value)} → {fmt(after)}'
     tools = f'+{add}' if add else '–'
     return f'<td class="q {tone}"><span class="qa{" zero" if not add else ""}">{tools}</span><span class="ql">{load}</span></td>'
 
@@ -252,7 +254,7 @@ def capital_table(view, show_covered):
                                                                  ascending=[True, False, False, False])
     head = ('<tr>' + ('<th class="l">Fab</th>' if BOTH else '') + '<th class="l">Tool group</th><th>Installed</th>'
             '<th>On order</th><th>Pull in</th><th>Buy · 2027</th>'
-            + ''.join(f'<th>{q}<div class="sub">add · load</div></th>' for q in K.Q) + '<th>Fleet by Q4</th></tr>')
+            + ''.join(f'<th>{q}<div class="sub">add · load before → after</div></th>' for q in K.Q) + '<th>Fleet by Q4</th></tr>')
     body = []
     for r in rows.itertuples():
         cls = ' class="covered"' if r.action == 'Covered' else ''
@@ -263,12 +265,12 @@ def capital_table(view, show_covered):
                     f'<td class="num">{on_order}</td>'
                     f'<td class="buy {"zero" if not r.pull_in else ""}">{pull}</td>'
                     f'<td class="buy {"zero" if not r.net_new else ""}">{r.net_new or "–"}</td>'
-                    + ''.join(quarter_cell(getattr(r, f'add_{q}'), getattr(r, f'load_{q}'), ceiling) for q in K.Q)
+                    + ''.join(quarter_cell(getattr(r, f'add_{q}'), getattr(r, f'load_{q}'), ceiling, getattr(r, f'after_{q}')) for q in K.Q)
                     + f'<td class="num">{getattr(r, "fleet_2027Q4")}</td></tr>')
     st.markdown(f'<div class="cap-wrap"><table class="cap"><thead>{head}</thead><tbody>{"".join(body)}</tbody></table></div>',
                 unsafe_allow_html=True)
     st.markdown(f'<div class="legend-row"><span>+n = new tools to bring into service that quarter</span>'
-                f'<span>load = required hours ÷ hours from installed + on-order tools released by then</span>'
+                f'<span>load before = on installed + on-order tools released by then · after = with the adds and pull-ins in place</span>'
                 f'<span><i style="background:var(--warn-bg)"></i>{ceiling*100:.0f}–100%</span>'
                 '<span><i style="background:var(--bad-bg)"></i>over 100%</span></div>', unsafe_allow_html=True)
 
@@ -291,6 +293,61 @@ def program_hours(state, s, grp, qi):
     return frame
 
 
+def fleet_view():
+    f = M.fleet_status(data, site)
+    s = M.summary(data, site)
+    cal = f.installed.sum()
+    util = (f.productive_pct * f.installed).sum() / cal if cal else float('nan')
+    hot = f[f.loading_pct >= ceiling * 100]
+    q = f.sort_values('queue_h', ascending=False).iloc[0]
+    section(f'Current fleet · 2026Q4 to date ({s["start"]:%d %b} – {s["end"]:%d %b})', 'Installed + on order · how each tool group spent its time (simulated)')
+    stats([
+        (f'{int(cal):,}', f'Tools installed · {int(f.on_order.sum())} on order', ''),
+        (number(util, 0, '%'), 'Utilization · productive share of calendar time', ''),
+        (f'{f.unsched_down_h.sum():,.0f} h', f'Unscheduled downtime · {int(f.events.sum())} events', ''),
+        (f'{len(hot)} / {len(f)}', f'Tool groups at or above the {ceiling*100:.0f}% limit', 'warn' if len(hot) else ''),
+        (f'{q.queue_h:.1f} h', f'Longest queue per visit · {group_label(q.site, q.tool_group, True)}', 'bad' if q.queue_h > 4 else ''),
+    ])
+    left, right = st.columns(2, gap='large')
+    with left:
+        section('Where tool time went', '% of calendar time by state · E10-style split')
+        chart(PC.time_split(f, BOTH), 'fleet_time')
+    with right:
+        section(f'Production loading vs. {ceiling*100:.0f}% planning limit', 'Productive ÷ available hours · label = queue per visit')
+        chart(PC.loading_queue(f, ceiling, BOTH), 'fleet_loading')
+    section('Fleet register', 'Largest unscheduled downtime first · 2026Q4 to date')
+    rows = ''
+    for r in f.sort_values('unsched_down_h', ascending=False).itertuples():
+        arrival = esc(r.on_order_label.replace(' in ', ' · ')) if r.on_order else '–'
+        rows += (f'<tr>' + (f'<td class="l">{site_label(r.site)}</td>' if BOTH else '') +
+                 f'<td class="l">{esc(rm.GROUP_LABELS[r.tool_group])}</td><td class="num">{r.installed}</td>'
+                 f'<td class="num">{arrival}</td>'
+                 f'<td class="num">{r.productive_pct:.0f}%</td><td class="num">{r.loading_pct:.0f}%</td>'
+                 f'<td class="num">{r.avail_pct:.0f}% <span class="sub">({r.avail_gap_pts:+.1f})</span></td>'
+                 f'<td class="num">{r.unsched_down_h:,.0f} h <span class="sub">· {r.events}</span></td>'
+                 f'<td class="l cause">{esc(r.top_cause)}</td><td class="num">{r.queue_h:.1f}</td></tr>')
+    st.markdown('<div class="cap-wrap"><table class="cap register"><thead><tr>' + ('<th class="l">Fab</th>' if BOTH else '') +
+                '<th class="l">Tool group</th><th>Installed</th><th>On order</th><th>Utilization</th><th>Loading</th>'
+                '<th>Availability<div class="sub">vs. plan</div></th><th>Unsched. down<div class="sub">· events</div></th>'
+                '<th class="l">Main downtime cause</th><th>Queue<div class="sub">h / visit</div></th></tr></thead><tbody>' + rows + '</tbody></table></div>',
+                unsafe_allow_html=True)
+    st.caption('Utilization = productive ÷ calendar time. Loading = productive ÷ hours the tools were up and released for production '
+               '(calendar − PM − unscheduled down − engineering). Events and causes come from the Q4 tool logbook.')
+    left, right = st.columns(2, gap='large')
+    with left:
+        section('Availability: measured vs. planning assumption', 'What the 2027 plan assumes vs. what the tools delivered')
+        chart(PC.availability(f.rename(columns={'avail_pct': 'observed_avail_pct'}), BOTH), 'fleet_availability')
+    with right:
+        section('Capacity model vs. lot simulation', '2026Q3 loading · checks the formula the 2027 baseline uses')
+        check = K.model_check(data)
+        check = check if BOTH else check[check.site == site]
+        chart(PC.model_check(check), 'model_check')
+    st.caption('Model check: the formula with the 3-lot furnace assumption agrees with the lot simulation within ±3 points except Fab B furnace, '
+               'where partial batches still take a full 6-hour run. The 2027 baseline therefore uses calibrated lots per run (Fab A '
+               f'{C.FURNACE_LOTS_PER_RUN["FAB_A"]:g}, Fab B {C.FURNACE_LOTS_PER_RUN["FAB_B"]:g}).')
+    st.download_button('Download fleet register (CSV)', csv(f.round(2)), 'td_fleet_2026q4_to_date.csv', 'text/csv')
+
+
 def outlook_view():
     top, side = st.columns([3, 1.1], vertical_alignment='bottom')
     with side:
@@ -301,7 +358,7 @@ def outlook_view():
     frame = cached_buy(FP, pilot_case, basis, ceiling, avail)
     view = K.scope(frame, site)
     with top:
-        section('2027 tool requirement vs. installed + on-order fleet', '2027 plan · by fab and tool group')
+        section('2027 baseline · tools the demand profile needs vs. current fleet', '2027 plan by quarter · installed + on order · by fab and tool group')
     t = K.totals(view)
     loads = view.melt(id_vars=['site', 'tool_group'], value_vars=[f'load_{q}' for q in K.Q]).dropna()
     worst = loads.sort_values('value', ascending=False).iloc[0] if len(loads) else None
@@ -316,7 +373,7 @@ def outlook_view():
 
     head, toggle = st.columns([4, 1], vertical_alignment='bottom')
     with head:
-        section('New tools by quarter vs. installed + on-order fleet', 'Buy = 2027 total · each quarter shows tools to add and load before adding them')
+        section('New tools by quarter vs. installed + on-order fleet', 'Buy = 2027 total · each quarter: tools to add, load before → after adding them')
     show_covered = toggle.checkbox('Show covered groups', key='show_covered')
     capital_table(view, show_covered)
 
@@ -359,7 +416,7 @@ def outlook_view():
     export = view[list(labels)].assign(planning_limit_pct=ceiling * 100, basis=basis, plan_case=pilot_case, availability=avail)
     st.download_button('Download tool requirement (CSV)', csv(export, labels), 'td_2027_tool_requirement.csv', 'text/csv')
     capacity_checks(basis, frame)
-    ai_panel('ai_capital', dict(view='2027 capacity outlook', site=site, pilot_case=pilot_case, planning_limit=ceiling, demand_basis=basis,
+    ai_panel('ai_capital', dict(view='2027 capacity baseline', site=site, pilot_case=pilot_case, planning_limit=ceiling, demand_basis=basis,
                                 fleet='current', availability=avail,
                                 totals=t, headline=K.headline(view, ceiling, basis).replace('<b>', '').replace('</b>', ''),
                                 tool_requirement=export.round(1).to_dict('records')), [
@@ -556,10 +613,8 @@ def fab_performance_page():
         (f'{s["weeks_done"]} / 13', 'Weeks of 2026Q4 completed', ''),
         (number(s['started_total']), f'Wafers started so far · {100*s["started_total"]/s["quarter_total_plan"]:.0f}% of Q4 total ({s["quarter_total_plan"]:,.0f})', ''),
         (number(s['starts_wspw']), f'Avg starts / week · {s["attainment_pct"]:.0f}% of requested weekly rate', 'warn' if s['attainment_pct'] < 95 else ''),
-        (number(s['outs_wspw']), 'Completions / week', ''),
-        (number(s['wip']), 'WIP · wafers', ''),
-        (f'{s["cycle_days"]:.1f} d', f'Cycle time · p90 {s["cycle_p90"]:.1f} d', ''),
-        (number(s['yield_pct'], 1, '%'), 'Line yield', ''),
+        (number(s['wip']), f'WIP · wafers · {number(s["outs_wspw"])} completed / week', ''),
+        (f'{s["cycle_days"]:.1f} d', f'Cycle time · p90 {s["cycle_p90"]:.1f} d · yield {s["yield_pct"]:.1f}%', ''),
     ])
     left, right = st.columns([1.2, 1], gap='large')
     with left:
@@ -568,22 +623,9 @@ def fab_performance_page():
     with right:
         section('WIP and cycle time', 'Weekly')
         chart(PC.month_wip_ct(s['weekly']), 'month_wip_ct')
-    left, right = st.columns(2, gap='large')
-    with left:
-        section(f'Tool loading vs. {ceiling*100:.0f}% planning limit', 'Q4 to date · label = queue per visit')
-        chart(PC.loading_queue(tl, ceiling, BOTH), 'month_loading')
-    with right:
-        section('Tool availability: measured vs. planning assumption', 'Q4 to date · % of calendar time')
-        chart(PC.availability(tl, BOTH), 'month_availability')
-    section('Capacity model vs. lot simulation', '2026Q3 · production loading by tool group')
-    check = K.model_check(data)
-    check = check if BOTH else check[check.site == site]
-    chart(PC.model_check(check), 'model_check')
-    st.caption('Model = the capacity formula with the 3-lot furnace assumption. Fab B furnace is the one gap: partial batches still take a '
-               'full 6-hour run. The capacity plan therefore uses calibrated lots per run (Fab A '
-               f'{C.FURNACE_LOTS_PER_RUN["FAB_A"]:g}, Fab B {C.FURNACE_LOTS_PER_RUN["FAB_B"]:g}); sensitivity is on the 2027 capacity tab.')
     st.caption('2026Q4 to date is a simulated continuation of the same fab model (seed 42): rerunning it reproduces the stored 52-week history exactly, '
-               'then adds 28 Sep – 25 Oct 2026. Request = 2026Q4 requested starts.')
+               'then adds 28 Sep – 25 Oct 2026. Request = 2026Q4 requested starts. Tool loading, downtime and availability are on '
+               'Capacity planning → Current fleet.')
     fab_assistant(s, tl)
 
 
@@ -610,7 +652,7 @@ def fab_assistant(s, tl):
         'Which single tools went down most often, and for what reasons?',
         'Why is measured availability below the planning assumption for metal deposition at Fab A?',
         'Summarize the equipment review for Fab B for the week of 12 Oct.'],
-        title='Fab assistant · tool logbook and events', expanded=True,
+        title='Fab assistant · tool logbook and events', expanded=False,
         note='Retrieves the weekly equipment reviews and queries the event table (read-only SQL), then answers with citations. '
              'The data is a simulated continuation of the fab model; every number must come from a cited source.')
 
@@ -684,8 +726,8 @@ def scenario_test():
     quarter = '2027Q3'
     a, b = st.columns([1, 1.4])
     operation = a.selectbox('Test', request_model.OPERATIONS, key='scenario_operation')
-    fleet = b.radio('Tools assumed', list(request_model.FLEETS), format_func=request_model.FLEETS.get, horizontal=True, key='scenario_fleet',
-                    help='Planned fleet = installed + on order + the 2027 buys from the 2027 capacity view (sized to requested starts at the planning limit).')
+    fleet = b.radio('Tools assumed', ['current', 'planned'], format_func=request_model.FLEETS.get, horizontal=True, key='scenario_fleet',
+                    help='Current fleet = installed + on order. With planned 2027 purchases = the current fleet plus the buys from the 2027 baseline tab, each added in the quarter it is needed.')
     if ss.get('_scenario_scope') != (site,):
         ss['_scenario_scope'] = (site,)
         ss['review'] = None
@@ -716,9 +758,6 @@ def scenario_test():
         if ss.get('scenario_to_program') not in targets:
             ss['scenario_to_program'] = 'HBM_TV' if 'HBM_TV' in targets else targets[0]
         to_program = c.selectbox('Shift to', targets, format_func=ec.PROGRAM_SHORT.get, key='scenario_to_program')
-        request_priority = 'NORMAL'
-    else:
-        request_priority = c.selectbox('Request priority', ['NORMAL', 'HOT'], key='scenario_priority', disabled=operation == 'Tool unavailability')
     timing = st.radio('Timing', ['Quarter range', 'Week range'], horizontal=True, key='scenario_timing')
     first_week = last_week = None
     if timing == 'Quarter range':
@@ -757,7 +796,6 @@ def scenario_test():
         pct = b.number_input('Starts change (%)', min_value=-100., max_value=100., value=10., step=5., key='scenario_pct') if mode == 'Percentage change' else 0.
         target = b.number_input('Target starts / week', min_value=0., value=float(state['wspw'][request_site][program][C.PLAN_QUARTERS.index(first_q)]), step=25.,
                                 key='target_' + request_site + '_' + program + '_' + first_q) if mode == 'Target WSPW' else None
-    milestone = st.text_input('Urgent experiment / milestone (optional)', key='hot_milestone') if request_priority == 'HOT' and operation != 'Tool unavailability' else ''
     recovery = st.checkbox('Also test an availability recovery', key='recovery_enabled') if operation == 'Demand growth' else False
     recovery_group, points = None, 0.
     if recovery:
@@ -765,13 +803,12 @@ def scenario_test():
         recovery_group = a.selectbox('Equipment to recover', [g_ for g_ in C.TOOL_GROUP_ORDER if C.INSTALLED_TOOLS[request_site][g_] > 0], format_func=rm.GROUP_LABELS.get, key='recovery_group_' + request_site)
         points = b.number_input('Recovery (percentage points)', min_value=.5, max_value=15., value=5., step=.5, key='recovery_points')
     signature = (site, pilot_case, operation, request_site, program, pct, target, timing, first_period, last_period, ceiling, recovery_group, points,
-                 request_priority, milestone, outage_group, unavailable, fleet, to_program, wafers, avail)
+                 outage_group, unavailable, fleet, to_program, wafers, avail)
     if st.button('Run scenario', type='primary'):
         try:
             review = request_model.run(data, operation, request_site, program, pct, outage_group, unavailable, to_site, first_period, last_period,
                                        'weeks' if timing == 'Week range' else 'quarters', ceiling, recovery_group, points, target, pilot_case,
                                        fleet=fleet, to_program=to_program, wafers=wafers, availability=avail)
-            review.update(request_priority=request_priority, milestone=milestone)
             ss['review'] = review
             ss['review_signature'] = signature
             ss['inspect_week' if timing == 'Week range' else 'inspect_quarter'] = first_q if timing != 'Week range' else first_period
@@ -788,7 +825,7 @@ def scenario_test():
     result_scope = 'Both' if include_other else request_site
     request_name = (rm.GROUP_LABELS[outage_group] + ' unavailable' if operation == 'Tool unavailability'
                     else f'{wafers:,.0f} WSPW {ec.PROGRAM_SHORT[program]} → {ec.PROGRAM_SHORT[to_program]}' if operation == 'Product mix shift'
-                    else ec.PROGRAM_SHORT[program] + ' · ' + request_priority)
+                    else ec.PROGRAM_SHORT[program])
     if timing == 'Week range':
         inspect = st.selectbox('Inspect week', week_options, format_func=lambda w: calendar.loc[w, 'label'], key='inspect_week')
         before = weekly.summary(review, result_scope, inspect)
@@ -815,8 +852,6 @@ def scenario_test():
     if operation == 'Demand growth':
         demand_responses(review, program, target, pct, fleet, avail, (recovery_group, points) if recovery_group else None,
                          first_week if timing == 'Week range' else None, last_week if timing == 'Week range' else None)
-    if operation != 'Tool unavailability' and request_priority == 'HOT':
-        st.caption('HOT · ' + (milestone or 'no milestone given') + '. Priority changes dispatch order, not tool hours, so capacity results are the same as NORMAL.')
     a, b = st.columns([1.3, 1], gap='large')
     with a:
         section(inspection_label + ' · baseline vs scenario')
@@ -830,12 +865,12 @@ def scenario_test():
             'loading_pct_base': 'Baseline load (%)', 'loading_pct_scenario': 'Scenario load (%)', 'change_pp': 'Change (pts)', 'status': 'Status'}).round(1),
             hide_index=True, width='stretch')
         st.write(review['applied'])
-    exported = rm.select_scope(comparison, result_scope).assign(request_site=request_site, request_program=program, request_priority=request_priority,
+    exported = rm.select_scope(comparison, result_scope).assign(request_site=request_site, request_program=program,
                                                                 timing_mode=review['timing_mode'], requested_window=period_label, plan_case=pilot_case, operation=operation)
     st.download_button('Download scenario (CSV)', csv(exported), f'{result_scope}_scenario.csv', 'text/csv')
     ai_panel('ai_scenario', dict(view='Live capacity scenario', site=result_scope, pilot_case=pilot_case, planning_limit=ceiling,
                                  fleet=fleet, availability=avail, demand_basis='requested',
-                                 request=dict(operation=operation, site=request_site, program=program, priority=request_priority, period=period_label,
+                                 request=dict(operation=operation, site=request_site, program=program, period=period_label,
                                               timing='weeks' if timing == 'Week range' else 'quarters', first=str(first_period), last=str(last_period),
                                               pct=pct, target_wspw=target, recovery_group=recovery_group, recovery_points=points,
                                               tool_group=outage_group if operation == 'Tool unavailability' else None,
@@ -851,13 +886,15 @@ def scenarios_view():
     scenario_test()
 
 
+CAP_VIEWS = ['Current fleet', '2027 baseline', 'Response plan', 'Scenarios']
+
+
 def capacity_page():
-    frame = cached_buy(FP, pilot_case, 'requested', ceiling, avail)
-    t = K.totals(K.scope(frame, site))
-    exp = K.totals(K.scope(cached_buy(FP, pilot_case, 'expected', ceiling, avail), site))
-    page_head(f'{ui.SITES[site].upper()} · 2027 PLAN · {ceiling*100:.0f}% LIMIT', 'Capacity scenario planning')
-    view = st.radio('View', ['2027 capacity', 'Response plan', 'Scenarios'], horizontal=True, key='cap_view', label_visibility='collapsed')
-    if view == '2027 capacity':
+    page_head('', 'Capacity planning')
+    view = st.radio('View', CAP_VIEWS, horizontal=True, key='cap_view', label_visibility='collapsed')
+    if view == 'Current fleet':
+        fleet_view()
+    elif view == '2027 baseline':
         outlook_view()
     elif view == 'Response plan':
         response_view()
@@ -865,7 +902,7 @@ def capacity_page():
         scenarios_view()
 
 
-PAGES = {'Demand outlook': demand_page, 'Fab performance': fab_performance_page, 'Capacity scenario planning': capacity_page}
+PAGES = {'Demand outlook': demand_page, 'Fab performance': fab_performance_page, 'Capacity planning': capacity_page}
 PAGES[page]()
 st.markdown('<div class="footer"><span>All fab data, routes, tool counts and plans are synthetic. No company data is used.</span>'
             '<span>Method notes: MODEL_GUIDE.md · VIEW_GUIDE.md</span></div>', unsafe_allow_html=True)

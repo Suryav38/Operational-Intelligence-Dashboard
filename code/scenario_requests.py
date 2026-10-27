@@ -8,7 +8,7 @@ import weekly_scenarios as W
 import launch_model as L
 
 OPERATIONS=['Demand growth','Product mix shift','Tool unavailability','Qualified load transfer']
-FLEETS={'planned':'Planned fleet (after 2027 buys)','current':'Current fleet (installed + on order)'}
+FLEETS={'current':'Current fleet (installed + on order)','planned':'With planned 2027 purchases'}
 
 def run(data,operation,site,program='DRAM_B',pct=10.,group='EUV',unavailable=1,to_site='FAB_B',
         first='2027Q2',last='2027Q2',timing='quarters',ceiling=.85,recovery_group=None,recovery_points=0.,target_wspw=None,pilot_case='baseline',

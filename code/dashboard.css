@@ -167,3 +167,8 @@ table.cap td.q { width:84px; line-height:1.25; }
 /* multiselect chips: neutral, not alarm red */
 [data-baseweb="tag"] { background: #e3ebf4 !important; color: var(--ink) !important; }
 [data-baseweb="tag"] span[role="presentation"] svg, [data-baseweb="tag"] svg { fill: var(--ink) !important; color: var(--ink) !important; }
+
+/* fleet register: one line per row */
+table.register td, table.register th { white-space: nowrap; }
+table.register td.cause { white-space: normal; min-width: 180px; }
+table.register .sub { display: inline; margin-left: 3px; }

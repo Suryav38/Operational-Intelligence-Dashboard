@@ -479,3 +479,24 @@ def scenario_delta(frame, ceiling, both):
     fig.update_xaxes(title='Loading (%)', range=[0, max(110, (0 if pd.isna(top) else top) * 1.15)])
     fig.update_yaxes(autorange='reversed')
     return fig
+
+
+TIME_STATES = [('productive_pct', 'Productive', '#2f5d8a'), ('standby_pct', 'Standby (idle, available)', '#c9d6e3'),
+               ('engineering_pct', 'Engineering', '#8a9199'), ('sched_down_pct', 'Scheduled down (PM)', '#e3c48f'),
+               ('unsched_down_pct', 'Unscheduled down', '#b8412f')]
+
+
+def time_split(fleet, both):
+    """Where each tool group's calendar time went (E10-style states), sorted by productive share."""
+    f = fleet.sort_values('productive_pct')
+    labels = (f.site.map(rm.SITE_LABELS) + ' · ' if both else '') + f.tool_group.map(rm.GROUP_LABELS)
+    fig = go.Figure()
+    for col, name, color in TIME_STATES:
+        fig.add_bar(y=labels, x=f[col], orientation='h', name=name, marker_color=color,
+                    text=f[col].map(lambda v: f'{v:.0f}' if v >= 6 else ''), textposition='inside', insidetextanchor='middle',
+                    hovertemplate='%{y}<br>' + name + ' %{x:.1f}%<extra></extra>')
+    ec.style(fig, max(300, 26 * len(f) + 90))
+    fig.update_layout(barmode='stack', bargap=.3)
+    fig.update_xaxes(title='Share of calendar time, 2026Q4 to date (%)', range=[0, 100])
+    fig.update_yaxes(showgrid=False)
+    return fig

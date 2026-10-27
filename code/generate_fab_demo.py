@@ -176,7 +176,8 @@ Source: operating_events.csv and sim_tool_group_weekly.csv. Entirely synthetic.
             lines.append(f'{site}: {len(g)} reporting weeks; mean wafer starts {g.wafer_starts.mean():.1f}/week, completions {g.wafer_outs.mean():.1f}/week, mean WIP {g.wip_wafers.mean():.1f} input-wafer equivalents.')
         lines.append('Review program mix, outages and queues before attributing causes. Source: sim_fab_weekly.csv, weekly_program_flow.csv and dated operating records.')
         (target/(month+'-flow-review.txt')).write_text('\n'.join(lines))
-    (target/'2027-05-17-pilot-introduction.txt').write_text('''SYNTHETIC PLANNING CHANGE — PILOT-2027-001
+    archive=DOCS.parents[2]/'archive'/'documents';archive.mkdir(parents=True,exist_ok=True)  # retired pilot study: kept out of retrieval
+    (archive/'2027-05-17-pilot-introduction.txt').write_text('''SYNTHETIC PLANNING CHANGE — PILOT-2027-001
 Planned release: 17 May 2027, seventh week of the 16-week study beginning 05 April 2027.
 Program: DRAM_P, DRAM EUV pilot. Qualified only at FAB_A; FAB_B has no EUV resource.
 Introduction: 100 WSPW for two weeks, then 200 WSPW. Slower response: 50 WSPW for four weeks, then 75 WSPW.

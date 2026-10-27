@@ -56,10 +56,9 @@ def test_dated_unstructured_notes_and_archives_are_retrievable():
     index=rag.DocumentIndex(fd.DOCS)
     hits=index.search('SYN-OPS-003 2026-06-15 scanner recovery',4)
     assert any('SYN-OPS-003' in h['source'] for h in hits)
-    pilot=index.search('DRAM_P pilot 17 May 2027 qualified FAB_A',4)
-    assert any('pilot-introduction' in h['source'] for h in pilot)
-    archived=[p for p in fd.DOCS.rglob('*.txt') if not {'v6_records','requests','tool_logs'} & set(p.parts)]
-    assert all(p.read_text().startswith('ARCHIVED PROTOTYPE NOTE') for p in archived)
+    # Archived prototype notes and the retired pilot note live outside the searched folder.
+    assert not any(p.read_text().startswith('ARCHIVED PROTOTYPE NOTE') for p in fd.DOCS.rglob('*.txt'))
+    assert not any('pilot-introduction' in c['source'] for c in index.chunks)
 
 
 def app():return AppTest.from_file(str(Path(__file__).resolve().parents[1]/'code'/'apprag.py'),default_timeout=45).run()

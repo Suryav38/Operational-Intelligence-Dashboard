@@ -133,6 +133,8 @@ def buy_list(data, case='baseline', basis='requested', ceiling=.85, state=None, 
             new_add = np.diff(np.concatenate([[0.], new_cum]))         # new tools to bring in during each quarter
             pull_cum = np.minimum(np.clip(fleet - timed[i, j], 0, None), comm[i, j] - timed[i, j])
             pull_q = next((Q[k] for k in range(4) if pull_cum[k] > 0), None)
+            in_service = np.maximum(fleet, timed[i, j])                 # after the response: buys + pull-ins in place
+            after = np.where(in_service > 0, 100 * required[i, j] / np.where(in_service > 0, in_service * per[i, j], 1), np.nan)
             rows.append(dict(pull_in_by=pull_q,
                 **{f'add_{q}': int(new_add[k]) for k, q in enumerate(Q)},
                 **{f'fleet_{q}': int(fleet[k]) for k, q in enumerate(Q)},
@@ -144,7 +146,8 @@ def buy_list(data, case='baseline', basis='requested', ceiling=.85, state=None, 
                 need_by=short[0] if short else None,
                 peak_loading_pct=float(np.nanmax(loading)) if np.isfinite(loading).any() else np.nan,
                 **{f'gap_{q}': int(timed_gap[k]) for k, q in enumerate(Q)},
-                **{f'load_{q}': float(loading[k]) for k, q in enumerate(Q)}))
+                **{f'load_{q}': float(loading[k]) for k, q in enumerate(Q)},
+                **{f'after_{q}': float(after[k]) for k, q in enumerate(Q)}))
     frame = pd.DataFrame(rows)
     frame['action'] = np.select([frame.net_new.gt(0) & frame.pull_in.gt(0), frame.net_new.gt(0), frame.pull_in.gt(0)],
                                 ['Buy + pull in', 'Buy', 'Pull in'], 'Covered')

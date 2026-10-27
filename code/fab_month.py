@@ -81,3 +81,33 @@ def tools(data, site='Both', weeks=WEEKS):
     out = pd.DataFrame(rows)
     out['avail_gap_pts'] = out.observed_avail_pct - out.assumed_avail_pct
     return out
+
+
+def fleet_status(data, site='Both', weeks=WEEKS):
+    """Current fleet register: tools installed and on order, plus how each tool group spent its time in 2026Q4 to date."""
+    wk = window(data, weeks)
+    t = data['sim_tool_group_weekly_q4']
+    t = t[t.week_start.isin(wk) & t.site.isin(_sites(site))]
+    ev = data['tool_events_q4']
+    ev = ev[ev.week_start.isin(wk) & ev.site.isin(_sites(site))]
+    rows = []
+    for (s, g), r in t.groupby(['site', 'tool_group']):
+        cal = r.calendar_h.sum()
+        e = ev[(ev.site == s) & (ev.tool_group == g)]
+        cause = e.groupby('cause').down_hours.sum().sort_values(ascending=False)
+        visits = r.lot_steps.sum()
+        on_order = [(q, n) for site_, grp, q, n in C.TOOL_ARRIVALS if site_ == s and grp == g]
+        rows.append(dict(
+            site=s, tool_group=g, installed=int(C.INSTALLED_TOOLS[s][g]), on_order=int(sum(n for _, n in on_order)),
+            on_order_label=', '.join(f'{n} in {q}' for q, n in on_order),
+            productive_pct=100 * r.productive_h.sum() / cal, standby_pct=100 * r.standby_h.sum() / cal,
+            engineering_pct=100 * r.engineering_h.sum() / cal, sched_down_pct=100 * r.sched_down_h.sum() / cal,
+            unsched_down_pct=100 * r.unsched_down_h.sum() / cal,
+            loading_pct=100 * r.productive_h.sum() / (cal - r.engineering_h.sum() - r.sched_down_h.sum() - r.unsched_down_h.sum()),
+            avail_pct=100 * (r.productive_h.sum() + r.standby_h.sum()) / cal, assumed_avail_pct=100 * C.production_availability(g),
+            unsched_down_h=float(r.unsched_down_h.sum()), events=int(len(e)),
+            top_cause=cause.index[0] if len(cause) else '', top_cause_h=float(cause.iloc[0]) if len(cause) else 0.,
+            queue_h=float((r.avg_queue_h * r.lot_steps).sum() / visits) if visits else 0.))
+    out = pd.DataFrame(rows)
+    out['avail_gap_pts'] = out.avail_pct - out.assumed_avail_pct
+    return out
