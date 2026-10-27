@@ -49,7 +49,7 @@ def test_manual_scenario_runs_and_hides_stale_results():
     assert at.radio(key='scenario_fleet').value == 'current'
     next(b for b in at.button if b.label == 'Run scenario').click().run()
     assert not at.exception and at.session_state['review']['program'] == 'DRAM_B'
-    assert any('class="decision"' in m.value for m in at.markdown)      # demand growth also ranks responses
+    assert not any('class="decision"' in m.value for m in at.markdown)  # ranked responses are not shown on screen
     at.number_input(key='scenario_pct').set_value(20).run()
     assert any('Inputs changed' in x.value for x in at.info)
 
@@ -71,3 +71,21 @@ def test_fab_performance_has_the_fab_assistant():
     assert not at.exception
     assert any('Fab assistant' in e.label for e in at.expander)
     assert any('deposition tools at Fab A' in o for o in at.selectbox(key='ai_fab_example').options)
+
+
+def test_scenario_shows_every_quarter_in_the_window():
+    at = app()
+    at.radio(key='page').set_value('Capacity planning').run()
+    at.radio(key='cap_view').set_value('Scenario analysis').run()
+    at.selectbox(key='scenario_first').set_value('2027Q1').run()
+    at.selectbox(key='scenario_last').set_value('2027Q3').run()
+    next(b for b in at.button if b.label == 'Run scenario').click().run()
+    assert not at.exception
+    titles = ' '.join(m.value for m in at.markdown if 'section-title' in m.value)
+    for q in ['2027Q1', '2027Q2', '2027Q3']:
+        assert f'>{q}<' in titles
+    assert '>2027Q4<' not in titles
+    assert 'Groups above the limit' not in titles
+    at.radio(key='scenario_timing').set_value('Week range').run()
+    next(b for b in at.button if b.label == 'Run scenario').click().run()
+    assert not at.exception

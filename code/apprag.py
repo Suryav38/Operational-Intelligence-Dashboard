@@ -1,4 +1,4 @@
-"""TD Capacity Plan 2027: what tools the plan needs, by when, and what avoids buying them."""
+"""Fab Capacity Planner 2027: what tools the plan needs, by when, and what avoids buying them."""
 from __future__ import annotations
 
 import hashlib
@@ -8,6 +8,7 @@ import json
 import os
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
 import streamlit as st
 from dotenv import load_dotenv
@@ -30,11 +31,10 @@ import planning_copilot as rag
 import planning_context as PCX
 import review_model as rm
 import scenario_requests as request_model
-import wafer_analyst as WA
 import weekly_scenarios as weekly
 
 load_dotenv(fd.ROOT / '.env')
-st.set_page_config(page_title='TD Capacity Plan 2027', page_icon='▦', layout='wide', initial_sidebar_state='collapsed')
+st.set_page_config(page_title='Fab Capacity Planner 2027', page_icon='▦', layout='wide', initial_sidebar_state='collapsed')
 st.markdown('<style>' + Path(__file__).with_name('dashboard.css').read_text() + '</style>', unsafe_allow_html=True)
 
 
@@ -613,69 +613,6 @@ def fab_assistant(s, tl):
 
 
 # ================================================================== CAPACITY SCENARIO PLANNING · SCENARIOS
-@st.cache_data(show_spinner=False, max_entries=48)
-def cached_analysis(fingerprint, request_json, limit, ceiling_, fleet, availability, recovery_json):
-    recovery = json.loads(recovery_json)
-    return WA.analyze(load_data(fingerprint), json.loads(request_json), 'baseline', limit, ceiling_, availability, 'requested', fleet,
-                      tuple(recovery) if recovery else None)
-
-
-def pill(status):
-    cls = {'Within limit': 'ok', 'Needs exception': 'warn', 'Not accepted': 'bad', 'Not possible': 'na'}[status]
-    return f'<span class="pill {cls}">{esc(status)}</span>'
-
-
-def demand_responses(review, program, target, pct, fleet, availability, recovery, first_week=None, last_week=None):
-    """Demand growth: rank responses for exactly the scenario that was run — every quarter in its window,
-    the selected weeks, availability source and any availability recovery. Shows the most constrained quarter."""
-    s = review['site']
-    quarters = [q for q in C.PLAN_QUARTERS if review['first_quarter'] <= q <= review['last_quarter']]
-    protected = [x['program'] for x in PCX.PROGRAMS if x['protected'] and x['program'] != program]
-    results = []
-    for q in quarters:
-        weeks = WA.quarter_weeks(q)
-        if first_week is not None:
-            weeks = [w for w in weeks if first_week <= w <= last_week]
-        if not weeks:
-            continue
-        current = WA.current_wspw(data, s, program, q, basis='requested')
-        requested = float(target) if target is not None else current * (1 + pct / 100)
-        if requested <= current:
-            continue
-        request = dict(site=s, program=program, quarter=q, requested_wspw=requested, first_week=weeks[0], last_week=weeks[-1], protected=protected)
-        try:
-            results.append(cached_analysis(FP, json.dumps(request), ceiling, .95, fleet, availability, json.dumps(list(recovery) if recovery else None)))
-        except ValueError as exc:
-            st.caption(f'{q}: {exc}')
-    if not results:
-        return
-    share = lambda r: (r['recommended']['started_now'] if r['recommended'] else 0.) / max(r['request']['delta_wspw'], 1e-9)
-    r = min(results, key=share)  # the quarter where the least of the increase can be started
-    scope = f'{quarters[0]}–{quarters[-1]}' if len(quarters) > 1 else quarters[0]
-    if first_week is not None:
-        scope = f'weeks {first_week} – {last_week}'
-    section(f'Responses tested · {r["request"]["quarter"]}', f'Exact scenario: {scope}'
-            + (f' · recovery {rm.GROUP_LABELS[recovery[0]]} +{recovery[1]:g} pts' if recovery else '')
-            + ' · calculated by the capacity model, not AI · ranked: feasible under 95% → protected untouched → most wafers now')
-    if len(results) > 1:
-        cells = ''.join(f'<span><i>{x["request"]["quarter"]}</i>+{(x["recommended"]["started_now"] if x["recommended"] else 0):,.0f}'
-                        f' of +{x["request"]["delta_wspw"]:,.0f}</span>' for x in results)
-        st.markdown('<div class="chips">' + cells + '</div>', unsafe_allow_html=True)
-        st.caption('Wafers/week that can be started by quarter; the table below is the most constrained quarter.')
-    st.markdown(f'<div class="decision">{r["decision"]}</div>', unsafe_allow_html=True)
-    rows = []
-    for k, o in enumerate(r['options']):
-        started = '—' if o['started_now'] is None else f"+{o['started_now']:,.0f}"
-        taken = '—' if not o['taken_from_others'] else f"{o['taken_from_others']:,.0f}"
-        worst = '—' if pd.isna(o['peak_load']) else f"{o['peak_load']:.0f}% {rm.GROUP_LABELS[o['peak_group']]}"
-        rows.append(f'<tr><td class="num">{k+1}</td><td class="l"><b>{esc(o["option"])}</b><div class="sub">{esc(o["how"])}</div></td>'
-                    f'<td class="l">{pill(o["status"])}</td><td class="num">{started}</td><td class="num">{taken}</td><td class="num">{esc(worst)}</td></tr>')
-    st.markdown('<div class="cap-wrap"><table class="cap opts"><thead><tr><th>#</th><th class="l">Response</th><th class="l">Status</th>'
-                '<th>Started now</th><th>Taken from others</th><th>Worst added load</th></tr></thead><tbody>' + ''.join(rows) + '</tbody></table></div>',
-                unsafe_allow_html=True)
-    return r
-
-
 def scenario_test():
     programs = em.program_options(site, 'All families', include_pilot=False)
     quarter = '2027Q3'
@@ -781,47 +718,71 @@ def scenario_test():
     request_name = (rm.GROUP_LABELS[outage_group] + ' unavailable' if operation == 'Tool unavailability'
                     else f'{wafers:,.0f} WSPW {ec.PROGRAM_SHORT[program]} → {ec.PROGRAM_SHORT[to_program]}' if operation == 'Product mix shift'
                     else ec.PROGRAM_SHORT[program])
+    win = request_model.window_quarters(review, result_scope)
+    qs = list(dict.fromkeys(win.quarter))
+    states = (review['base_state'], review['scenario_state'])
+    sites = list(C.SITES) if result_scope == 'Both' else [result_scope]
+    starts = [sum(st_['wspw'][s_][p_][C.PLAN_QUARTERS.index(q)] for s_ in sites for p_ in st_['wspw'][s_] for q in qs) / len(qs)
+              for st_ in states]
     if timing == 'Week range':
-        inspect = st.selectbox('Inspect week', week_options, format_func=lambda w: calendar.loc[w, 'label'], key='inspect_week')
-        before = weekly.summary(review, result_scope, inspect)
-        after = weekly.summary(review, result_scope, inspect, True)
-        comparison = review['weekly_comparison']
-        current = rm.select_scope(comparison[comparison.week_start == inspect], result_scope)
-        inspection_label = calendar.loc[inspect, 'label']
-    else:
-        inspect = st.selectbox('Inspect quarter', C.PLAN_QUARTERS, key='inspect_quarter')
-        brief = rm.decision_brief(review, inspect, result_scope)
-        before, after = brief['before'], brief['after']
-        comparison = review['comparison']
-        current = rm.select_scope(comparison, result_scope, inspect)
-        inspection_label = inspect
+        sb, sa = review['starts_before'], review['starts_after']
+        inside = sb.week_start.between(first_week, last_week) & sb.site.isin(sites)
+        starts = [sb[inside].groupby('week_start').starts_weekly_equiv.sum().mean(),
+                  sa[sa.week_start.between(first_week, last_week) & sa.site.isin(sites)].groupby('week_start').starts_weekly_equiv.sum().mean()]
+    peak = win.assign(_k=win.loading_pct_scenario.fillna(np.inf)).sort_values('_k', ascending=False).iloc[0]
+    over = lambda col: win[(win[col] > 100) | win[col].isna()].drop_duplicates(['site', 'tool_group']).shape[0]
+    tools_g = win.groupby(['site', 'tool_group']).agg(fleet_b=('tools_base', 'min'), fleet_s=('tools_scenario', 'min'),
+                                                      need_b=('need_base', 'max'), need_s=('need_scenario', 'max'),
+                                                      short_b=('short_base', 'max'), short_s=('short_scenario', 'max'))
+    tools_g['extra'] = tools_g.short_s - tools_g.short_b
+    extra = int(tools_g.extra.sum())
     section(site_label(request_site) + (' → ' + site_label(to_site) if operation == 'Qualified load transfer' else '') + ' · ' + request_name,
             period_label + ' · ' + ('both fabs' if include_other else site_label(request_site) + ' only') + ' · ' + request_model.FLEETS[fleet].lower())
     stats([
-        (f"{before['starts']:,.0f} → {after['starts']:,.0f}", 'Starts / week', ''),
-        (f"{before['at_risk']} → {after['at_risk']}", f'Groups at or above {ceiling*100:.0f}%', 'warn' if after['at_risk'] > before['at_risk'] else ''),
-        ('no capacity' if pd.isna(after['worst_load']) else number(after['worst_load'], 1, '%'),
-         'Peak load · ' + group_label(after['worst_site'], after['worst_group'], True), 'bad' if pd.isna(after['worst_load']) or after['worst_load'] > 100 else 'warn'),
-        (str(after['over_capacity']), 'Groups over 100%', 'bad' if after['over_capacity'] else ''),
+        (f"{starts[0]:,.0f} → {starts[1]:,.0f}", f'Starts / week · average over {", ".join(qs)}', ''),
+        ('no capacity' if pd.isna(peak.loading_pct_scenario) else number(peak.loading_pct_scenario, 1, '%'),
+         f'Peak scenario load · {group_label(peak.site, peak.tool_group, True)} {peak.quarter}',
+         'bad' if pd.isna(peak.loading_pct_scenario) or peak.loading_pct_scenario > 100 else 'warn' if peak.loading_pct_scenario >= ceiling * 100 else ''),
+        (f'{over("loading_pct_base")} → {over("loading_pct_scenario")}', 'Tool groups over 100% in the window', 'bad' if over('loading_pct_scenario') else ''),
+        (f'{extra:+d}', f'Extra tools the scenario needs to stay ≤ {ceiling*100:.0f}%', 'warn' if extra > 0 else ''),
     ])
-    if operation == 'Demand growth':
-        demand_responses(review, program, target, pct, fleet, avail, (recovery_group, points) if recovery_group else None,
-                         first_week if timing == 'Week range' else None, last_week if timing == 'Week range' else None)
-    a, b = st.columns([1.3, 1], gap='large')
-    with a:
-        section(inspection_label + ' · baseline vs scenario')
-        chart(weekly.equipment_chart(current, result_scope, ceiling), 'scenario_loads')
-    with b:
-        section('Groups above the limit, across 2027')
-        chart(weekly.risk_chart(review, result_scope, ceiling) if timing == 'Week range' else ec.scenario_risks(review, result_scope, ceiling), 'scenario_risks')
+    section('Baseline vs. scenario load by quarter', 'Tool groups the scenario changes, plus any at or above the limit'
+            + (' · week range: peak week inside the window' if timing == 'Week range' else ''))
+    cols = st.columns(2 if len(qs) > 1 else 1, gap='large')
+    for k, q in enumerate(qs):
+        f = win[win.quarter == q]
+        f = f[(f.change_pp.abs() > .05) | (f.loading_pct_scenario >= ceiling * 100) | f.loading_pct_scenario.isna()]
+        f = f.assign(_k=f.change_pp.abs().fillna(999)).sort_values(['_k', 'loading_pct_scenario'], ascending=False).head(8)
+        with cols[k % len(cols)]:
+            st.markdown(f'<div class="section"><span class="section-title">{q}</span></div>', unsafe_allow_html=True)
+            if f.empty:
+                st.caption('No tool group changes or reaches the limit.')
+            else:
+                chart(PC.scenario_delta(f, ceiling, result_scope == 'Both'), f'scenario_q_{q}')
+    ch = tools_g[tools_g.extra != 0].sort_values('extra', ascending=False)
+    if ch.empty:
+        st.caption(f'Tools short of the {ceiling*100:.0f}% limit do not change in any tool group: the scenario fits within the tools each group '
+                   'already needs (or already has).')
+    else:
+        section(f'Extra tools the scenario needs · to stay at or below {ceiling*100:.0f}%',
+                'Worst quarter in the window · short = tools needed − tools available, never below 0')
+        arrow = lambda a_, b_: f'{int(a_)}' if a_ == b_ else f'{int(a_)} → {int(b_)}'
+        rows = ''.join(f'<tr>' + (f'<td class="l">{site_label(s_)}</td>' if result_scope == 'Both' else '') +
+                       f'<td class="l">{esc(rm.GROUP_LABELS[g_])}</td><td class="num">{arrow(r.fleet_b, r.fleet_s)}</td>'
+                       f'<td class="num">{arrow(r.need_b, r.need_s)}</td><td class="num">{arrow(r.short_b, r.short_s)}</td>'
+                       f'<td class="num"><b>{int(r.extra):+d}</b></td></tr>' for (s_, g_), r in ch.iterrows())
+        st.markdown('<div class="cap-wrap narrow"><table class="cap"><thead><tr>' + ('<th class="l">Fab</th>' if result_scope == 'Both' else '') +
+                    '<th class="l">Tool group</th><th>Tools available<div class="sub">baseline → scenario</div></th>'
+                    '<th>Tools needed<div class="sub">baseline → scenario</div></th><th>Short<div class="sub">baseline → scenario</div></th>'
+                    '<th>Extra</th></tr></thead><tbody>' + rows + '</tbody></table></div>', unsafe_allow_html=True)
     with st.expander('All tool groups and applied assumptions'):
-        frame = current.assign(Fab=current.site.map(rm.SITE_LABELS), Equipment=current.tool_group.map(rm.GROUP_LABELS))
-        st.dataframe(frame[['Fab', 'Equipment', 'loading_pct_base', 'loading_pct_scenario', 'change_pp', 'status']].rename(columns={
-            'loading_pct_base': 'Baseline load (%)', 'loading_pct_scenario': 'Scenario load (%)', 'change_pp': 'Change (pts)', 'status': 'Status'}).round(1),
-            hide_index=True, width='stretch')
+        frame = win.assign(Fab=win.site.map(rm.SITE_LABELS), Equipment=win.tool_group.map(rm.GROUP_LABELS))
+        st.dataframe(frame[['quarter', 'Fab', 'Equipment', 'loading_pct_base', 'loading_pct_scenario', 'change_pp', 'need_base', 'need_scenario']].rename(columns={
+            'quarter': 'Quarter', 'loading_pct_base': 'Baseline load (%)', 'loading_pct_scenario': 'Scenario load (%)', 'change_pp': 'Change (pts)',
+            'need_base': 'Tools needed · baseline', 'need_scenario': 'Tools needed · scenario'}).round(1), hide_index=True, width='stretch')
         st.write(review['applied'])
-    exported = rm.select_scope(comparison, result_scope).assign(request_site=request_site, request_program=program,
-                                                                timing_mode=review['timing_mode'], requested_window=period_label, plan_case=pilot_case, operation=operation)
+    exported = win.assign(request_site=request_site, request_program=program, timing_mode=review['timing_mode'], requested_window=period_label,
+                          operation=operation, fleet=fleet, availability=avail)
     st.download_button('Download scenario (CSV)', csv(exported), f'{result_scope}_scenario.csv', 'text/csv')
     ai_panel('ai_scenario', dict(view='Live capacity scenario', site=result_scope, pilot_case=pilot_case, planning_limit=ceiling,
                                  fleet=fleet, availability=avail, demand_basis='requested',
@@ -831,7 +792,8 @@ def scenario_test():
                                               tool_group=outage_group if operation == 'Tool unavailability' else None,
                                               tools_unavailable=unavailable if operation == 'Tool unavailability' else None,
                                               to_program=to_program, wafers=wafers),
-                                 before=before, after=after, equipment=current.round(3).to_dict('records')), [
+                                 quarters=qs, starts_before=round(float(starts[0])), starts_after=round(float(starts[1])), extra_tools_to_stay_at_limit=extra,
+                                 by_quarter=win.round(2).to_dict('records')), [
         'Which named equipment constrains this request, and which documented response should we examine?',
         'Can we consolidate qualified work into the other fab without simply moving the constraint?',
         'Which tool groups change most in this scenario, and what do the dated operating notes say about them?'])

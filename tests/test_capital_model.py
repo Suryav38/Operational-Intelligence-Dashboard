@@ -112,3 +112,13 @@ def test_response_levers_only_reduce_or_rebalance():
     assert int(r['buy'].net_new.sum()) == steps[2]
     none = K.response_levers(d, downtime_cut=0)
     assert none['steps'].tools.iloc[1] == none['steps'].tools.iloc[0]
+
+
+def test_scenario_extra_tools_cover_outages_and_transfers():
+    import scenario_requests as R
+    d = fd.load()
+    out = R.window_quarters(R.run(d, 'Tool unavailability', 'FAB_A', group='EUV', unavailable=1, first='2027Q3', last='2027Q3'), 'FAB_A')
+    euv = out[out.tool_group == 'EUV'].iloc[0]
+    assert euv.need_scenario == euv.need_base and euv.short_scenario == euv.short_base + 1   # same hours, one tool fewer
+    move = R.window_quarters(R.run(d, 'Qualified load transfer', 'FAB_A', program='DRAM_A', pct=20., first='2027Q2', last='2027Q2'), 'Both')
+    assert (move[move.site == 'FAB_B'].short_scenario >= move[move.site == 'FAB_B'].short_base).all()

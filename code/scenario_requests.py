@@ -74,3 +74,40 @@ def run(data,operation,site,program='DRAM_B',pct=10.,group='EUV',unavailable=1,t
         review.update(first_week=first,last_week=last,weekly_baseline=wb,weekly_scenario=ws,weekly_comparison=comparison,starts_before=sb,starts_after=ss)
         review['applied']=[f'{item} · applied only to weeks {first} through {last}' for item in applied]
     return review
+
+
+def window_quarters(review, scope='Both'):
+    """Baseline vs. scenario for every quarter in the scenario window, one row per (quarter, fab, tool group).
+
+    Quarter range: the quarterly comparison. Week range: for each quarter the window touches, the peak week
+    inside the window. Tools needed = ceil(required hours ÷ (168 × availability × planning limit)).
+    """
+    ceiling = review['ceiling']
+    qs = [q for q in C.PLAN_QUARTERS if review['first_quarter'] <= q <= review['last_quarter']]
+    if review.get('timing_mode') == 'weeks':
+        c = review['weekly_comparison']
+        c = c[c.inside_request_window].copy()
+        c['quarter'] = c.period_start.map(W.quarter_of)
+        scale = 7 / c.period_days
+        c['required_h_wk_base'] = c.required_h_period_base * scale
+        c['required_h_wk_scenario'] = c.required_h_period_scenario * scale
+        c = (c.sort_values('loading_pct_scenario', ascending=False)
+              .groupby(['quarter', 'site', 'tool_group'], as_index=False).first())
+    else:
+        c = review['comparison'][review['comparison'].quarter.isin(qs)].copy()
+    if scope != 'Both':
+        c = c[c.site == scope]
+    def need(row, key, state):
+        i = C.PLAN_QUARTERS.index(row.quarter)
+        per = 168 * review[state]['avail'][row.site][row.tool_group][i] * ceiling
+        return int(math.ceil(row[f'required_h_wk_{key}'] / per - 1e-9)) if per > 0 and row[f'required_h_wk_{key}'] > 0 else 0
+    c['need_base'] = c.apply(lambda r: need(r, 'base', 'base_state'), axis=1)
+    c['need_scenario'] = c.apply(lambda r: need(r, 'scenario', 'scenario_state'), axis=1)
+    tb, ts = fc._tools(review['base_state']), fc._tools(review['scenario_state'])
+    at = lambda t: c.apply(lambda r: t[r.site][r.tool_group][C.PLAN_QUARTERS.index(r.quarter)], axis=1)
+    c['tools_base'], c['tools_scenario'] = at(tb), at(ts)
+    c['tools'] = c.tools_scenario
+    c['short_base'] = (c.need_base - c.tools_base).clip(lower=0)
+    c['short_scenario'] = (c.need_scenario - c.tools_scenario).clip(lower=0)
+    return c[['quarter', 'site', 'tool_group', 'tools', 'tools_base', 'tools_scenario', 'loading_pct_base', 'loading_pct_scenario', 'change_pp',
+              'required_h_wk_base', 'required_h_wk_scenario', 'need_base', 'need_scenario', 'short_base', 'short_scenario']].reset_index(drop=True)

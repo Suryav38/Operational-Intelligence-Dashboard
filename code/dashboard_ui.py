@@ -30,7 +30,7 @@ def render_header():
         ss.setdefault(key, value)
     if ss['page'] not in PAGES:
         ss['page'] = PAGES[0]
-    st.markdown('<div class="brand"><span class="brand-name">TD Capacity Plan</span>'
+    st.markdown('<div class="brand"><span class="brand-name">Fab Capacity Planner</span>'
                 '<span class="brand-year">2027</span>'
                 '<span class="brand-note">Synthetic two-fab development network</span></div>', unsafe_allow_html=True)
     page = st.radio('Page', PAGES, horizontal=True, key='page', label_visibility='collapsed')

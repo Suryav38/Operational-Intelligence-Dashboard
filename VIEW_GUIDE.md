@@ -126,21 +126,10 @@ Each test runs by quarter range or exact week range, with an optional availabili
 
 Request priority (HOT) was removed: it changes dispatch order, not tool hours, so it never changed a capacity result.
 
-**Results:** stats, baseline vs. scenario load by tool group, groups above the limit across 2027, the full table with a CSV download, and the planning assistant. The assistant's own calculations use the same fleet, availability, window and recovery as the screen.
+**Results** cover every quarter in the window: a Q1–Q3 run shows Q1, Q2 and Q3. For a week range, each quarter the window touches shows its peak week inside the window.
+- **Tiles:** average starts per week (before → after), the peak scenario load (tool group and quarter), the number of tool groups over 100% (before → after), and the extra tools the scenario needs to stay at or below the planning limit.
+- **Baseline vs. scenario load, one chart per quarter:** the tool groups the scenario changes, plus any at or above the limit.
+- **Extra tools the scenario needs:** for each tool group where it changes, the worst quarter in the window, comparing baseline and scenario on three counts. *Tools available* (installed + on order, minus any outage). *Tools needed* = ⌈required h ÷ (168 × availability × limit)⌉. *Short* = needed − available, never below 0. Extra = scenario short − baseline short. So a one-tool EUV outage shows +1 even though the hours needed don't change, and a transfer shows tools freed at one fab (negative) and needed at the other. If nothing changes, the table is hidden and a one-line note says so.
+- **Below that:** the full table, a CSV download and the planning assistant. The assistant's own calculations use the same fleet, availability, window and recovery as the screen.
 
-**Responses tested (demand growth only).** These are calculated by the capacity model in Python (`wafer_analyst.py`); no AI is involved. Each response is re-run through the same weekly loading model. The responses are:
-- accept in full;
-- accept part and defer or decline the rest;
-- cut a lower-priority, unprotected program on the bottleneck;
-- run the excess on qualified tools at the other fab.
-
-They are ranked by these rules, in order:
-1. Feasible under the 95% ceiling.
-2. Protected programs are never touched.
-3. The most wafers started now.
-4. The fewest wafers taken from other programs.
-5. The fewest groups over the limit.
-
-How the ranking works:
-- **It covers exactly the scenario you ran:** every quarter in the window, the selected weeks, the availability setting and any recovery. A multi-quarter window shows what fits in each quarter, and the table shows the most constrained one.
-- **Every tool group at both fabs is checked.** Groups already above the ceiling *before* the request are listed separately ("already above the ceiling, not caused by this request"). Any response that adds hours to one of them is *Not accepted*.
+**Accept/decline logic (not shown on screen).** `code/wafer_analyst.py` holds the rules engine for a demand request. It calculates the headroom against the 95% ceiling, tests four permitted responses (accept in full; accept part and defer or decline the rest; cut a lower-priority, unprotected program; use the other fab) through the same weekly model, and ranks them. It is covered by tests (`tests/test_wafer_analyst.py`) so the logic can be walked through, but the dashboard no longer displays it.
