@@ -2,7 +2,7 @@
 
 1. **Demand outlook.**
    - The trend chart: requested and actual starts run into the Q4 forecast, then continue through the 2027 plan.
-   - The tiles: requests grow +5% into 2027Q1 and +48% by 2027Q4. HBM has the largest increase (+120%), and NAND dips 17% in 2027Q2.
+   - The tiles: the 2026 average is 2,870 requested starts per week and the 2027 average is 3,811 (+33%). HBM grows the most (+82%), and NAND is the only program that declines (−6%).
    - The program × quarter table shows each cell's change against 2026Q4 (blue = up, red = down).
    - The realization factor explains the gap between requested and realization-adjusted starts (before capacity limits).
 2. **Fab performance, Q4 to date.** Four of 13 weeks are done. Starts are running at 94% of the requested weekly rate. EUV is 89% loaded with about 15 hours of queue per visit. Measured availability is compared with the planning assumption, and the model check shows the capacity formula is trustworthy.

@@ -380,33 +380,29 @@ def demand_page():
     short = PCX.VERSION_SHORT
     cur, today = PCX.CURRENT_VERSION, PCX.TODAY_VERSION
     tot = vf.groupby(['version', 'quarter'])[['requested_wspw', 'expected_wspw']].sum()
-    req = tot.loc[cur].requested_wspw
-    base = q4['requested_wspw']
-    # program change in requested starts vs. 2026Q4: largest increase by 2027Q4, deepest dip in any 2027 quarter
-    now = bridge.groupby('program').requested_wspw.sum()
-    plan = vf[vf.version == cur].pivot_table(index='program', columns='quarter', values='requested_wspw', aggfunc='sum').reindex(columns=C.PLAN_QUARTERS)
-    plan = plan[plan.index.isin(now[now > 0].index)]
-    change = plan.sub(now.reindex(plan.index), axis=0)
-    pct = 100 * change.div(now.reindex(plan.index), axis=0)
-    up = pct[C.PLAN_QUARTERS[-1]].idxmax()
-    low = pct.stack().idxmin()
+    # 2026 average (2026Q1–Q3 requests + 2026Q4 request) vs. 2027 average of the 2027 plan, requested starts / week
+    h26 = hp[hp.quarter.str.startswith('2026')].groupby(['program', 'quarter']).requested_wspw.sum().unstack()
+    h26['2026Q4'] = bridge.groupby('program').requested_wspw.sum()
+    avg26 = h26.fillna(0.).mean(axis=1)
+    avg27 = vf[vf.version == cur].groupby('program').requested_wspw.sum() / len(C.PLAN_QUARTERS)
+    prog = pd.DataFrame({'y26': avg26, 'y27': avg27}).fillna(0.)
+    prog = prog[prog.y26 > 0]
+    prog['chg'] = prog.y27 - prog.y26
+    prog['pct'] = 100 * prog.chg / prog.y26
+    t26, t27 = float(prog.y26.sum()), float(avg27.sum())
+    up, down = prog.pct.idxmax(), prog.pct.idxmin()
 
     def signed(v):
         v = round(float(v))
         return f'{v:+d}%' if v else '0%'
-    up_tile = (signed(pct.loc[up, C.PLAN_QUARTERS[-1]]), f'Largest increase by 2027Q4 · {D.NAMES[up]} ({change.loc[up, C.PLAN_QUARTERS[-1]]:+,.0f} / week)', '')
-    if pct.loc[low] < 0:
-        down_tile = (signed(pct.loc[low]), f'Largest drop · {D.NAMES[low[0]]}, {low[1]} ({change.loc[low]:+,.0f} / week)', 'bad')
-    else:
-        down_tile = ('none', 'Largest drop · no program falls below 2026Q4', '')
     page_head('', 'Demand outlook for 2027')
     stats([
-        (number(base), '2026Q4 requested starts / week', ''),
-        (number(req.iloc[-1]), '2027Q4 requested starts / week', ''),
-        (signed(100 * (req.iloc[0] / base - 1)), 'Request growth · 2026Q4 → 2027Q1', ''),
-        (signed(100 * (req.iloc[-1] / base - 1)), 'Request growth · 2026Q4 → 2027Q4', ''),
-        up_tile,
-        down_tile,
+        (number(t26), '2026 average requested starts / week', ''),
+        (number(t27), '2027 average requested starts / week', ''),
+        (signed(100 * (t27 / t26 - 1)), f'Request growth · 2026 avg → 2027 avg ({t27 - t26:+,.0f} / week)', ''),
+        (signed(prog.pct[up]), f'Largest increase · {D.NAMES[up]} ({prog.chg[up]:+,.0f} / week)', ''),
+        (signed(prog.pct[down]), f'{"Largest drop" if prog.pct[down] < 0 else "Smallest increase"} · {D.NAMES[down]} ({prog.chg[down]:+,.0f} / week)',
+         'bad' if prog.pct[down] < 0 else ''),
     ])
     with st.container(key='demand_controls'):
         a, b, _ = st.columns([1, 1.25, 2.4], vertical_alignment='bottom')

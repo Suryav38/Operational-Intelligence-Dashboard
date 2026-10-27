@@ -20,7 +20,7 @@ The 2027 plan is compared against **today**: the 2026Q4 rate (the quarter in pro
 
 | Element | How it is calculated |
 |---|---|
-| KPI tiles | 2026Q4 and 2027Q4 requested starts per week; request growth from 2026Q4 to 2027Q1 and to 2027Q4; the program with the largest increase by 2027Q4 (vs. its 2026Q4 request); and the largest drop, which is the deepest dip any program takes below its 2026Q4 request in any 2027 quarter. |
+| KPI tiles | 2026 vs. 2027 **averages** of requested starts per week. The 2026 average uses the 2026Q1–Q3 requests plus the 2026Q4 request; the 2027 average uses the four 2027 plan quarters. The tiles show both averages, the growth between them, and the programs with the largest increase and the largest drop (or the smallest increase, if no program declines). |
 | Requested vs. actual wafer starts | Quarterly *average weekly* starts. **Requested** (grey) runs through 2026Q4, then continues as the 2027 plan request (blue). **Starts** (black) are actuals to 2026Q3, then the 2026Q4 forecast, then 2027 realization-adjusted starts (request × realization factor, hollow markers). These are *before capacity limits*: the demand the fleet must carry, not a check of whether it can. |
 | 2026Q4 forecast | Q4 is in progress. For each fab and program, Q4 = the Q3 value × (1 + the average quarter-on-quarter change over the last four quarters), done separately for requests and for starts. It never enters the fit. |
 | Wafer starts by program and quarter | Each cell shows the 2027 value and its change against 2026Q4. Shading: blue for increases and red for decreases, darker for bigger changes (±3%, 10% and 25% bands). |
