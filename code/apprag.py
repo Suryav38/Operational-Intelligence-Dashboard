@@ -759,22 +759,6 @@ def scenario_test():
                 st.caption('No tool group changes or reaches the limit.')
             else:
                 chart(PC.scenario_delta(f, ceiling, result_scope == 'Both'), f'scenario_q_{q}')
-    ch = tools_g[tools_g.extra != 0].sort_values('extra', ascending=False)
-    if ch.empty:
-        st.caption(f'Tools short of the {ceiling*100:.0f}% limit do not change in any tool group: the scenario fits within the tools each group '
-                   'already needs (or already has).')
-    else:
-        section(f'Extra tools the scenario needs · to stay at or below {ceiling*100:.0f}%',
-                'Worst quarter in the window · short = tools needed − tools available, never below 0')
-        arrow = lambda a_, b_: f'{int(a_)}' if a_ == b_ else f'{int(a_)} → {int(b_)}'
-        rows = ''.join(f'<tr>' + (f'<td class="l">{site_label(s_)}</td>' if result_scope == 'Both' else '') +
-                       f'<td class="l">{esc(rm.GROUP_LABELS[g_])}</td><td class="num">{arrow(r.fleet_b, r.fleet_s)}</td>'
-                       f'<td class="num">{arrow(r.need_b, r.need_s)}</td><td class="num">{arrow(r.short_b, r.short_s)}</td>'
-                       f'<td class="num"><b>{int(r.extra):+d}</b></td></tr>' for (s_, g_), r in ch.iterrows())
-        st.markdown('<div class="cap-wrap narrow"><table class="cap"><thead><tr>' + ('<th class="l">Fab</th>' if result_scope == 'Both' else '') +
-                    '<th class="l">Tool group</th><th>Tools available<div class="sub">baseline → scenario</div></th>'
-                    '<th>Tools needed<div class="sub">baseline → scenario</div></th><th>Short<div class="sub">baseline → scenario</div></th>'
-                    '<th>Extra</th></tr></thead><tbody>' + rows + '</tbody></table></div>', unsafe_allow_html=True)
     with st.expander('All tool groups and applied assumptions'):
         frame = win.assign(Fab=win.site.map(rm.SITE_LABELS), Equipment=win.tool_group.map(rm.GROUP_LABELS))
         st.dataframe(frame[['quarter', 'Fab', 'Equipment', 'loading_pct_base', 'loading_pct_scenario', 'change_pp', 'need_base', 'need_scenario']].rename(columns={
