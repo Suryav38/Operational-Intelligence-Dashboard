@@ -56,7 +56,7 @@ The assistant:
 
 ## 3. Capacity planning
 
-### Views, in order: Current fleet · 2027 baseline · Response plan · Scenarios
+### Views, in order: Current fleet · 2027 baseline · Scenario analysis · Response plan
 
 ### Current fleet
 
@@ -69,7 +69,6 @@ The installed and on-order fleet, and how each tool group spent its time in 2026
 | Production loading vs. planning limit | Productive ÷ (calendar − PM − unscheduled down − engineering). The label shows queue hours per visit. |
 | Availability: measured vs. planning assumption | Measured (productive + standby) ÷ calendar, against the planning value of 1 − PM − unscheduled down − engineering. |
 | Fleet register | Installed, on order with arrival quarter, utilization, loading, availability against plan, unscheduled-down hours and events, the main downtime cause (from the tool logbook) and queue per visit. Downloadable. |
-| Capacity model vs. lot simulation | 2026Q3 starts run through the capacity formula and compared with the simulated loading. 18 of 19 tool groups agree within ±3 points. Fab B furnace is the exception, because partial batches still take a full 6-hour run, so the 2027 baseline uses calibrated lots per run. |
 
 ### 2027 baseline: what the demand profile needs from the fleet
 
@@ -91,20 +90,24 @@ Each quarter cell shows the tools to add, then **load before → after**:
 
 Shading follows the load after the response, so a group that the buy resolves no longer looks unresolved. A drill-down lists required vs. available hours by program, with the full arithmetic.
 
-Below the table:
-- **Buy vs. availability source.** The buy at the other availability setting, which tool groups change, and the largest measured shortfalls. At measured availability the total is unchanged (125); Fab A furnace is +1 and Fab B etch −1.
-- **Furnace buy vs. effective lots per run.** The plan uses the lots per 6-hour run the lot simulation achieved (Fab A 2.96, Fab B 2.61), not the 3-lot design value. The table shows the peak furnace need from 2.0 to 3.5 lots per run.
+Furnaces use the lots per 6-hour run that the lot simulation achieved (Fab A 2.96, Fab B 2.61), not the 3-lot design value, because partial batches still take a full run.
 
-### Response plan: 2026Q4 rate → 2027 plan → response
+### Response plan: close the 2027 gap, cheapest levers first
 
-1. **2026Q4 rate:** net-new tools if today's rate were held flat through 2027.
-2. **Growth only:** the 2027 plan for programs that grow, with every other program held at today's rate.
-3. **Reallocate freed capacity:** the actual 2027 plan. NAND and short loops decline in some quarters and release shared etch, deposition and wet tools. EUV gets nothing back, because NAND doesn't use it.
-4. **Rebalance fabs:** a grid search over moving 0–50% of each dual-qualified program (DRAM Node A, NAND, short loops) between the fabs, in either direction (9,261 combinations). It minimises the illustrative cost index, Σ net-new tools × relative cost (wet clean = 1, EUV = 18).
+The plan starts from the 2027 baseline buy and applies each lever before buying:
 
-The view ends with the buy list after reallocation and rebalancing: tools by quarter (load before → after), pull-ins and cost index. You can download it as a CSV.
+| Step | What it does | Inputs |
+|---|---|---|
+| 2027 baseline buy | Net-new tools from the 2027 baseline tab | Size to: requested or realization-adjusted starts |
+| Cut unscheduled downtime | Engineering recovers a share of each tool group's unscheduled downtime, and those hours become production time. The table shows each group's measured Q4 downtime, so you can see where the lever matters (Fab A EUV 13.4%, Fab B planarization 11%). | Downtime cut: 0, 10, 25 (default) or 50% |
+| Rebalance fabs | A grid search over moving 0–max% of each dual-qualified program (DRAM Node A, NAND, short loops) between the fabs. It keeps the move only if the total cost index falls; a move can add a few tools at the receiving fab. | Most of a program that may move: 25, 50 or 100% |
+| Buy the rest | The buy list by quarter, with load before → after and on-order pull-ins | |
 
-### Scenarios
+Under the planning-assumption availability, with a 25% downtime cut and up to 50% movable: 125 → 118 after the downtime cut → 116 after rebalancing (cost index 288 → 264). The rebalancing moves 5% of DRAM Node A and 20% of NAND from Fab A to Fab B.
+
+The tiles show the baseline buy, the tools saved by each lever, the tools to buy (with cost index) and the on-order tools to pull in. "Where each lever acts" breaks this down by fab and tool group. Cost index = Σ tools × relative cost (wet clean = 1, EUV = 18); it is illustrative and only ranks options.
+
+### Scenario analysis
 
 The manual scenario form covers four tests:
 
@@ -125,7 +128,7 @@ Request priority (HOT) was removed: it changes dispatch order, not tool hours, s
 
 **Results:** stats, baseline vs. scenario load by tool group, groups above the limit across 2027, the full table with a CSV download, and the planning assistant. The assistant's own calculations use the same fleet, availability, window and recovery as the screen.
 
-**Responses tested (demand growth only).** The responses are:
+**Responses tested (demand growth only).** These are calculated by the capacity model in Python (`wafer_analyst.py`); no AI is involved. Each response is re-run through the same weekly loading model. The responses are:
 - accept in full;
 - accept part and defer or decline the rest;
 - cut a lower-priority, unprotected program on the bottleneck;

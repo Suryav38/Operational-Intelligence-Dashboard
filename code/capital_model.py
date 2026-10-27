@@ -437,3 +437,48 @@ def furnace_sensitivity(data, basis='requested', ceiling=.85, availability='plan
             rows.append(dict(site=r.site, lots_per_run=n, needed_peak=int(r.needed_peak), committed=int(r.installed + r.on_order),
                              net_new=int(r.net_new)))
     return pd.DataFrame(rows)
+
+
+# ------------------------------------------------------------------ response plan (levers before buying)
+def unscheduled_share(data, availability='plan'):
+    """Unscheduled-down share of calendar time by (site, group): planning assumption, or measured 2026Q4 to date."""
+    if availability == 'measured':
+        t = data['sim_tool_group_weekly_q4'].groupby(['site', 'tool_group'])[['unsched_down_h', 'calendar_h']].sum()
+        return (t.unsched_down_h / t.calendar_h).to_dict()
+    return {(s, g): C.TOOL_GROUPS[g]['down'] for s in SITES for g in GROUPS}
+
+
+def response_levers(data, case='baseline', basis='requested', ceiling=.85, availability='plan', downtime_cut=25, max_share=50):
+    """2027 baseline buy, then the levers that reduce it before buying.
+
+    1. Downtime reduction: cut unscheduled downtime by `downtime_cut`% on every tool group
+       (the hours come back as production availability).
+    2. Rebalance fabs: cost-optimal move of dual-qualified programs (grid search).
+    3. Buy the rest, with on-order tools pulled in where they are needed earlier.
+    """
+    import copy
+    base = plan_state(data, case, basis, availability)
+    u = unscheduled_share(data, availability)
+    better = copy.deepcopy(base)
+    for s in SITES:
+        for g in GROUPS:
+            gain = downtime_cut / 100 * u.get((s, g), 0.) * C.batch_efficiency(s, g)
+            better['avail'][s][g] = [min(.98, a + gain) for a in better['avail'][s][g]]
+    transfer = optimize_transfers(better, ceiling, max_share, weighted=True)
+    final_state = apply_moves(better, transfer['moves'])
+    n0, n1, n2 = _net_new(base, ceiling), _net_new(better, ceiling), _net_new(final_state, ceiling)
+    rows = []
+    for i, s in enumerate(SITES):
+        for j, g in enumerate(GROUPS):
+            if n0[i, j] or n1[i, j] or n2[i, j]:
+                rows.append(dict(site=s, tool_group=g, baseline=int(n0[i, j]), downtime_saves=int(n0[i, j] - n1[i, j]),
+                                 rebalance_saves=int(n1[i, j] - n2[i, j]), buy=int(n2[i, j]),
+                                 unsched_pct=100 * u.get((s, g), 0.), cost_each=C.RELATIVE_COST_INDEX[g]))
+    groups = pd.DataFrame(rows)
+    steps = pd.DataFrame([
+        dict(step='2027 baseline buy', tools=int(n0.sum()), cost_index=cost_index(n0)),
+        dict(step=f'Cut unscheduled downtime {downtime_cut}%', tools=int(n1.sum()), cost_index=cost_index(n1)),
+        dict(step='Rebalance fabs', tools=int(n2.sum()), cost_index=cost_index(n2))])
+    buy = buy_list(data, case, basis, ceiling, state=final_state)
+    buy['cost_index'] = buy.net_new * buy.tool_group.map(C.RELATIVE_COST_INDEX)
+    return dict(steps=steps, groups=groups, transfer=transfer, buy=buy, final_state=final_state, downtime_cut=downtime_cut)

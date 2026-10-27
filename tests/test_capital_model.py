@@ -100,3 +100,15 @@ def test_furnace_batch_efficiency_and_availability_source():
     plan, meas = K.plan_state(d), K.plan_state(d, availability='measured')
     assert plan['avail']['FAB_A']['EUV'][0] == pytest.approx(C.production_availability('EUV'))
     assert meas['avail']['FAB_A']['EUV'][0] == pytest.approx(K.measured_availability(d)[('FAB_A', 'EUV')])
+
+
+def test_response_levers_only_reduce_or_rebalance():
+    d = fd.load()
+    r = K.response_levers(d)
+    steps = r['steps'].tools.tolist()
+    assert steps[0] == int(K.buy_list(d).net_new.sum())          # starts from the 2027 baseline buy
+    assert steps[1] <= steps[0]                                   # recovering downtime never adds tools
+    assert r['steps'].cost_index.iloc[2] <= r['steps'].cost_index.iloc[1]   # a fab move is kept only if cost falls
+    assert int(r['buy'].net_new.sum()) == steps[2]
+    none = K.response_levers(d, downtime_cut=0)
+    assert none['steps'].tools.iloc[1] == none['steps'].tools.iloc[0]

@@ -193,51 +193,6 @@ BOTH = site == 'Both'
 CASE_NOTE = ui.CASES[pilot_case]
 
 
-@st.cache_data(show_spinner=False)
-def cached_furnace(fingerprint, basis, ceiling_, availability):
-    return K.furnace_sensitivity(load_data(fingerprint), basis, ceiling_, availability)
-
-
-def capacity_checks(basis, frame):
-    """How sensitive the buy is to the two assumptions the review flagged: availability source and furnace batch fill."""
-    other = 'measured' if avail == 'plan' else 'plan'
-    alt = K.totals(K.scope(cached_buy(FP, pilot_case, basis, ceiling, other), site))
-    now = K.totals(K.scope(frame, site))
-    a = K.scope(frame, site).set_index(['site', 'tool_group']).net_new
-    b = K.scope(cached_buy(FP, pilot_case, basis, ceiling, other), site).set_index(['site', 'tool_group']).net_new
-    diff = (b - a).reindex(a.index.union(b.index)).fillna(0)
-    moved = ', '.join(f'{group_label(s_, g_, BOTH)} {int(v):+d}' for (s_, g_), v in diff[diff != 0].items()) or 'no tool group changes'
-    left, right = st.columns([1, 1.25], gap='large')
-    with left:
-        short = {'plan': 'planning-assumption availability', 'measured': 'measured 2026Q4 availability'}
-        section('Buy vs. availability source', f'{K.AVAILABILITY[avail]} is selected in the bar above')
-        st.markdown(f'<p class="note"><b>{now["net_new"]:,}</b> tools at {short[avail]} · '
-                    f'<b>{alt["net_new"]:,}</b> at {short[other]} ({moved}).</p>', unsafe_allow_html=True)
-        meas = K.measured_availability(data)
-        gaps = sorted(((100 * (meas[(s_, g_)] - C.production_availability(g_)), s_, g_) for (s_, g_) in meas
-                       if BOTH or s_ == site), key=lambda x: x[0])[:3]
-        st.caption('Largest shortfalls of measured vs. planned availability: ' +
-                   '; '.join(f'{group_label(s_, g_, True)} {d:+.1f} pts' for d, s_, g_ in gaps) + '.')
-    with right:
-        f = cached_furnace(FP, basis, ceiling, avail)
-        f = f if BOTH else f[f.site == site]
-        section('Furnace buy vs. effective lots per run', 'Peak 2027 need · a run holds up to 4 lots · calibrated value marked')
-        cols = sorted(f.lots_per_run.unique())
-        head = ''.join(f'<th>{c:g}</th>' for c in cols)
-        body = ''
-        for s_, g in f.groupby('site'):
-            cal = C.FURNACE_LOTS_PER_RUN[s_]
-            near = min(cols, key=lambda c: abs(c - cal))
-            cells = ''.join(f'<td class="num{" qa" if c == near else ""}">{int(r.needed_peak)}<div class="sub">buy {int(r.net_new)}</div></td>'
-                            for c, r in zip(cols, g.sort_values('lots_per_run').itertuples()))
-            body += f'<tr><td class="l">{rm.SITE_LABELS[s_]} <span class="sub">calibrated {cal:g}</span></td>{cells}</tr>'
-        st.markdown(f'<div class="cap-wrap"><table class="cap"><thead><tr><th class="l">Lots / run →</th>{head}</tr></thead>'
-                    f'<tbody>{body}</tbody></table></div>', unsafe_allow_html=True)
-        st.caption('The plan uses the lots per run the 2026Q3 lot simulation achieved (partial batches still take a full 6-hour run), '
-                   'not the 3-lot design assumption.')
-
-
-# ================================================================== 1 · CAPITAL PLAN
 def quarter_cell(add, value, ceiling, after=None):
     """+tools to add, then load before → after adding them. Shading follows the load after the response."""
     shown = value if after is None else after
@@ -333,18 +288,8 @@ def fleet_view():
                 unsafe_allow_html=True)
     st.caption('Utilization = productive ÷ calendar time. Loading = productive ÷ hours the tools were up and released for production '
                '(calendar − PM − unscheduled down − engineering). Events and causes come from the Q4 tool logbook.')
-    left, right = st.columns(2, gap='large')
-    with left:
-        section('Availability: measured vs. planning assumption', 'What the 2027 plan assumes vs. what the tools delivered')
-        chart(PC.availability(f.rename(columns={'avail_pct': 'observed_avail_pct'}), BOTH), 'fleet_availability')
-    with right:
-        section('Capacity model vs. lot simulation', '2026Q3 loading · checks the formula the 2027 baseline uses')
-        check = K.model_check(data)
-        check = check if BOTH else check[check.site == site]
-        chart(PC.model_check(check), 'model_check')
-    st.caption('Model check: the formula with the 3-lot furnace assumption agrees with the lot simulation within ±3 points except Fab B furnace, '
-               'where partial batches still take a full 6-hour run. The 2027 baseline therefore uses calibrated lots per run (Fab A '
-               f'{C.FURNACE_LOTS_PER_RUN["FAB_A"]:g}, Fab B {C.FURNACE_LOTS_PER_RUN["FAB_B"]:g}).')
+    section('Availability: measured vs. planning assumption', 'What the 2027 plan assumes vs. what the tools delivered · 2026Q4 to date')
+    chart(PC.availability(f.rename(columns={'avail_pct': 'observed_avail_pct'}), BOTH), 'fleet_availability')
     st.download_button('Download fleet register (CSV)', csv(f.round(2)), 'td_fleet_2026q4_to_date.csv', 'text/csv')
 
 
@@ -415,7 +360,6 @@ def outlook_view():
               'pull_in_by': 'Pull in to', **{f'add_{q}': f'Add {q}' for q in K.Q}, **{f'load_{q}': f'Load {q} (%)' for q in K.Q}}
     export = view[list(labels)].assign(planning_limit_pct=ceiling * 100, basis=basis, plan_case=pilot_case, availability=avail)
     st.download_button('Download tool requirement (CSV)', csv(export, labels), 'td_2027_tool_requirement.csv', 'text/csv')
-    capacity_checks(basis, frame)
     ai_panel('ai_capital', dict(view='2027 capacity baseline', site=site, pilot_case=pilot_case, planning_limit=ceiling, demand_basis=basis,
                                 fleet='current', availability=avail,
                                 totals=t, headline=K.headline(view, ceiling, basis).replace('<b>', '').replace('</b>', ''),
@@ -551,55 +495,66 @@ def demand_matrix(vf, base, target, col, group):
 
 # ================================================================== RESPONSE PLAN
 @st.cache_data(show_spinner=False)
-def cached_response(fingerprint, case, basis, ceiling_, max_share, availability='plan'):
-    return K.response_plan(load_data(fingerprint), case, basis, ceiling_, max_share, availability)
+@st.cache_data(show_spinner=False)
+def cached_levers(fingerprint, basis, ceiling_, availability, downtime_cut, max_share):
+    return K.response_levers(load_data(fingerprint), 'baseline', basis, ceiling_, availability, downtime_cut, max_share)
 
 
 def response_view():
-    case = pilot_case
-    a, b, _ = st.columns([1.1, 1.1, 2])
+    a, b, c, _ = st.columns([1.1, 1.1, 1.1, 1.4])
     basis = a.selectbox('Size to', ['requested', 'expected'], key='resp_basis',
                         format_func={'requested': 'Requested starts', 'expected': 'Realization-adjusted starts'}.get)
-    max_share = b.selectbox('Most of a program that may move fabs', [25, 50, 100], index=1, key='resp_share', format_func=lambda v: f'{v}%')
-    r = cached_response(FP, case, basis, ceiling, max_share, avail)
-    steps = r['steps']
-    cols = [c for c in steps.columns if '|' in c and (BOTH or c.startswith(site + '|'))]
-    steps = steps.assign(net_new=steps[cols].sum(axis=1),
-                         cost=[sum(row[c] * C.RELATIVE_COST_INDEX[c.split('|')[1]] for c in cols) for _, row in steps.iterrows()])
-    v, cost = steps.net_new.tolist(), steps.cost.tolist()
-    over = r['overloads'] if BOTH else r['overloads'][r['overloads'].site == site]
-    over_now = r['overloads_current'] if BOTH else r['overloads_current'][r['overloads_current'].site == site]
-    first_q = over.quarter.min() if len(over) else None
-    groups = over.drop_duplicates(['site', 'tool_group'])
+    cut = b.selectbox('Unscheduled downtime cut', [0, 10, 25, 50], index=2, key='resp_cut', format_func=lambda v: f'{v}%',
+                      help='Reliability lever: the share of unscheduled downtime engineering recovers in 2027. The hours return as production time.')
+    max_share = c.selectbox('Most of a program that may move fabs', [25, 50, 100], index=1, key='resp_share', format_func=lambda v: f'{v}%')
+    r = cached_levers(FP, basis, ceiling, avail, cut, max_share)
+    g = r['groups'] if BOTH else r['groups'][r['groups'].site == site]
+    base, down, reb, buy = int(g.baseline.sum()), int(g.downtime_saves.sum()), int(g.rebalance_saves.sum()), int(g.buy.sum())
+    cost = lambda col: float((g[col] * g.cost_each).sum())
+    bl = r['buy'] if BOTH else r['buy'][r['buy'].site == site]
+    section('Closing the 2027 gap · cheapest levers first', 'Start from the 2027 baseline buy, then take each lever before buying')
     stats([
-        (len(groups), 'Tool groups over 100% on installed + on order' + (f' · from {first_q}' if first_q else ''), 'bad' if len(groups) else ''),
-        (v[1], 'Tools needed if nothing else gave way', ''),
-        (f'{v[2] - v[1]:+d}', 'From capacity freed by declining programs', ''),
-        (f'{v[3] - v[2]:+d}', 'From rebalancing work across fabs', ''),
-        (f'{v[-1]} · {cost[-1]:,.0f}', 'Tools to buy · illustrative cost index', 'warn'),
+        (f'{base}', f'2027 baseline buy · cost index {cost("baseline"):,.0f}', ''),
+        (f'{-down:+d}', f'Cut unscheduled downtime {cut}%', ''),
+        (f'{-reb:+d}', 'Rebalance work across fabs', ''),
+        (f'{buy}', f'Tools to buy · cost index {cost("buy"):,.0f}', 'warn'),
+        (f'{int(bl.pull_in.sum())}', 'On-order tools to pull in', ''),
     ])
-    left, right = st.columns([1.25, 1], gap='large')
+    left, right = st.columns([1, 1.25], gap='large')
     with left:
-        section('Net-new tools: 2026Q4 rate → 2027 plan → response', f'At the {ceiling*100:.0f}% planning limit')
-        wf = steps[['step', 'net_new']].copy()
+        section('Net-new tools · baseline → levers → buy', f'At the {ceiling*100:.0f}% planning limit')
+        wf = pd.DataFrame(dict(step=['2027 baseline', f'Downtime −{cut}%', 'Rebalance fabs'], net_new=[base, base - down, base - down - reb]))
         chart(PC.waterfall(wf, final='Tools to buy'), 'response_waterfall')
     with right:
-        section('Tool-hours added vs. freed · 2026Q4 rate → 2027 plan', '2027Q3 · hours / week')
-        fv = K.freed_vs_added(data, case, basis, '2027Q3', avail)
-        fv = fv if BOTH else fv[fv.site == site]
-        chart(PC.freed_added(fv, BOTH), 'freed_added')
+        section('Where each lever acts', 'Tools by fab and tool group · unscheduled downtime from 2026Q4 performance')
+        rows = ''
+        meas = K.unscheduled_share(data, 'measured')
+        show = g[(g.baseline > 0) | (g.buy > 0)].sort_values(['buy', 'baseline'], ascending=False)
+        for x in show.itertuples():
+            fmt = lambda v: f'{-v:+d}' if v else '–'
+            rows += (f'<tr>' + (f'<td class="l">{site_label(x.site)}</td>' if BOTH else '') +
+                     f'<td class="l">{esc(rm.GROUP_LABELS[x.tool_group])}</td>'
+                     f'<td class="num">{100*meas.get((x.site, x.tool_group), 0):.1f}%</td>'
+                     f'<td class="num">{x.baseline}</td><td class="num">{fmt(x.downtime_saves)}</td><td class="num">{fmt(x.rebalance_saves)}</td>'
+                     f'<td class="num"><b>{x.buy}</b></td></tr>')
+        st.markdown('<div class="cap-wrap"><table class="cap"><thead><tr>' + ('<th class="l">Fab</th>' if BOTH else '') +
+                    '<th class="l">Tool group</th><th>Unsched. down<div class="sub">Q4 to date</div></th><th>Baseline</th>'
+                    '<th>Downtime cut</th><th>Rebalance</th><th>Buy</th></tr></thead><tbody>' + rows + '</tbody></table></div>',
+                    unsafe_allow_html=True)
     moves = r['transfer']['moves']
-    section('Optimized rebalancing across fabs', f'{r["transfer"]["searched"]:,} combinations searched · up to {max_share}% of a program · lowest cost index')
-    rows = ''.join(f'<tr><td class="l">{esc(D.NAMES[m["program"]])}</td><td class="l">{site_label(m["from_site"])} → {site_label(m["to_site"])}</td>'
-                   f'<td class="num">{m["share_pct"]}%</td><td class="num">{m["avg_wspw"]:,}</td></tr>' for m in moves) or '<tr><td class="l" colspan="4">No move lowers the cost index</td></tr>'
+    section('Rebalancing · work moved between fabs', f'{r["transfer"]["searched"]:,} combinations searched · up to {max_share}% of a dual-qualified program · lowest cost index')
+    mrows = ''.join(f'<tr><td class="l">{esc(D.NAMES[m["program"]])}</td><td class="l">{site_label(m["from_site"])} → {site_label(m["to_site"])}</td>'
+                    f'<td class="num">{m["share_pct"]}%</td><td class="num">{m["avg_wspw"]:,}</td></tr>' for m in moves) or '<tr><td class="l" colspan="4">No move lowers the cost index</td></tr>'
     st.markdown('<div class="cap-wrap narrow"><table class="cap"><thead><tr><th class="l">Program</th><th class="l">Move</th><th>Share</th>'
-                f'<th>Starts / week</th></tr></thead><tbody>{rows}</tbody></table></div>', unsafe_allow_html=True)
-    section('Tools to add by quarter · after reallocation and rebalancing', 'Pull in = on-order tools needed before their arrival date')
-    buy = r['buy'] if BOTH else r['buy'][r['buy'].site == site]
-    capital_table(buy, False)
-    st.caption('Cost index: illustrative relative cost per tool (wet clean = 1, EUV = 18), used only to rank responses; not a price.')
-    export = buy[['site', 'tool_group', 'installed', 'on_order', 'needed_peak', 'net_new', 'pull_in', 'pull_in_by', *[f'add_{q}' for q in K.Q], 'cost_index']]
-    st.download_button('Download response buy list (CSV)', csv(export), f'td_2027_response_{case}.csv', 'text/csv')
+                f'<th>Starts / week</th></tr></thead><tbody>{mrows}</tbody></table></div>', unsafe_allow_html=True)
+    st.caption('A move frees tools at one fab and can add some at the other (negative numbers under Rebalance); it is kept only if the '
+               'total cost index falls. EUV work cannot move: Fab B has no EUV.')
+    section('Buy list · tools to add by quarter after the levers', 'Load before → after the adds and pull-ins')
+    capital_table(bl, False)
+    st.caption('Cost index: illustrative relative cost per tool (wet clean = 1, EUV = 18), used only to rank responses; not a price. '
+               'Downtime cut and rebalancing are assumptions to be agreed with equipment engineering and the program owners.')
+    export = bl[['site', 'tool_group', 'installed', 'on_order', 'needed_peak', 'net_new', 'pull_in', 'pull_in_by', *[f'add_{q}' for q in K.Q], 'cost_index']]
+    st.download_button('Download response buy list (CSV)', csv(export), 'td_2027_response_buy_list.csv', 'text/csv')
 
 
 # ================================================================== 4 · SCENARIOS
@@ -701,7 +656,7 @@ def demand_responses(review, program, target, pct, fleet, availability, recovery
         scope = f'weeks {first_week} – {last_week}'
     section(f'Responses tested · {r["request"]["quarter"]}', f'Exact scenario: {scope}'
             + (f' · recovery {rm.GROUP_LABELS[recovery[0]]} +{recovery[1]:g} pts' if recovery else '')
-            + ' · ranked: feasible under 95% → protected untouched → most wafers now')
+            + ' · calculated by the capacity model, not AI · ranked: feasible under 95% → protected untouched → most wafers now')
     if len(results) > 1:
         cells = ''.join(f'<span><i>{x["request"]["quarter"]}</i>+{(x["recommended"]["started_now"] if x["recommended"] else 0):,.0f}'
                         f' of +{x["request"]["delta_wspw"]:,.0f}</span>' for x in results)
@@ -886,7 +841,7 @@ def scenarios_view():
     scenario_test()
 
 
-CAP_VIEWS = ['Current fleet', '2027 baseline', 'Response plan', 'Scenarios']
+CAP_VIEWS = ['Current fleet', '2027 baseline', 'Scenario analysis', 'Response plan']
 
 
 def capacity_page():
@@ -896,10 +851,10 @@ def capacity_page():
         fleet_view()
     elif view == '2027 baseline':
         outlook_view()
-    elif view == 'Response plan':
-        response_view()
-    else:
+    elif view == 'Scenario analysis':
         scenarios_view()
+    else:
+        response_view()
 
 
 PAGES = {'Demand outlook': demand_page, 'Fab performance': fab_performance_page, 'Capacity planning': capacity_page}

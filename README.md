@@ -8,7 +8,7 @@ The dashboard has three pages that form one planning workflow:
 |---|---|
 | **Demand outlook** (the opener) | Requested vs. actual starts from 2024 through the 2026Q4 forecast to the 2027 plan; the program × quarter change table; per-program trends; the mix; the realization factor; priorities and milestones |
 | **Fab performance** | 2026Q4 to date (28 Sep – 25 Oct 2026, simulated): starts vs. plan, completions, WIP and cycle time, plus the fab assistant over the tool logbook |
-| **Capacity planning** | **Current fleet** (utilization, downtime, availability, queues, model check) · **2027 baseline** (tools the demand profile needs, by quarter) · **Response plan** (2026Q4 rate → 2027 plan → cost-optimal response) · **Scenarios** (demand, mix, outage and transfer tests with ranked responses) |
+| **Capacity planning** | **Current fleet** (utilization, downtime, availability, queues) · **2027 baseline** (tools the demand profile needs, by quarter) · **Scenario analysis** (demand, mix, outage and transfer tests with ranked responses) · **Response plan** (baseline buy → downtime cut → fab rebalancing → buy list) |
 
 **VIEW_GUIDE.md** explains every view and calculation. **DEMO_GUIDE.md** is the walkthrough. `archive/` holds retired prototype notes and unused presentation code; the simulation sources stay in `code/` so every table can be regenerated.
 
