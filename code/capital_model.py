@@ -38,7 +38,27 @@ def realization_rates(data):
     return fm.fit(data['wafer_start_history']).set_index('program')['realization_rate'].astype(float)
 
 
-def plan_state(data, case='baseline', basis='requested'):
+AVAILABILITY = {'plan': 'Planning assumption', 'measured': 'Measured 2026Q4 to date'}
+
+
+def measured_availability(data):
+    """(productive + standby) ÷ calendar over 2026Q4 to date, by (site, tool group)."""
+    t = data['sim_tool_group_weekly_q4'].groupby(['site', 'tool_group'])[['calendar_h', 'productive_h', 'standby_h']].sum()
+    return ((t.productive_h + t.standby_h) / t.calendar_h).to_dict()
+
+
+def apply_availability(state, data, availability='plan'):
+    """Planning assumption (default) or measured 2026Q4 availability; furnaces keep their batch efficiency."""
+    if availability == 'measured':
+        for (s, g), a in measured_availability(data).items():
+            state['avail'][s][g] = [float(a) * C.batch_efficiency(s, g)] * len(Q)
+    elif availability != 'plan':
+        raise ValueError('Availability must be plan or measured.')
+    state['availability'] = availability
+    return state
+
+
+def plan_state(data, case='baseline', basis='requested', availability='plan'):
     """Requested plan, or requested x historical realization factor ('expected').
 
     The pilot has no history, so it stays at its requested ramp in both bases.
@@ -52,7 +72,7 @@ def plan_state(data, case='baseline', basis='requested'):
     elif basis != 'requested':
         raise ValueError('Basis must be requested or expected.')
     state['basis'] = basis
-    return state
+    return apply_availability(state, data, availability)
 
 
 def _wspw(state):
@@ -91,8 +111,8 @@ def tools_needed(wspw, per_tool, ceiling):
 
 
 # ------------------------------------------------------------------ buy list
-def buy_list(data, case='baseline', basis='requested', ceiling=.85, state=None):
-    state = state or plan_state(data, case, basis)
+def buy_list(data, case='baseline', basis='requested', ceiling=.85, state=None, availability='plan'):
+    state = state or plan_state(data, case, basis, availability)
     per = _per_tool_hours(state)
     need, required = tools_needed(_wspw(state), per, ceiling)
     timed, inst, comm = timed_tools(), installed(), committed()
@@ -265,6 +285,7 @@ def model_check(data):
         required = sum(starts.get((r.site, p), 0.) * D.hours_per_wafer(p, r.tool_group) for p in C.PROGRAM_ORDER)
         available = C.INSTALLED_TOOLS[r.site][r.tool_group] * 168 * C.production_availability(r.tool_group)
         rows.append(dict(site=r.site, tool_group=r.tool_group, model_pct=100 * required / available,
+                         model_batch_pct=100 * required / (available * C.batch_efficiency(r.site, r.tool_group)),
                          simulated_pct=float(r.loading_pct), queue_h=float(r.avg_queue_h),
                          assumed_nonproductive_pct=100 * (1 - C.production_availability(r.tool_group)),
                          observed_nonproductive_pct=float(r.engineering_pct + r.sched_down_pct + r.unsched_down_pct)))
@@ -309,9 +330,9 @@ def overloads(state):
     return pd.DataFrame(rows, columns=['site', 'tool_group', 'quarter', 'load_pct', 'short_h_wk'])
 
 
-def _today_state(data, basis):
+def _today_state(data, basis, availability='plan'):
     """Today's 2026Q4 rate held flat through 2027: requests, or forecast starts for the expected basis."""
-    state = plan_state(data, 'baseline', 'requested')
+    state = plan_state(data, 'baseline', 'requested', availability)
     col = 'requested_wspw' if basis == 'requested' else 'forecast_wspw'
     q4 = data['demand_bridge_2026q4'].set_index(['site', 'program'])[col]
     for s in SITES:
@@ -329,10 +350,10 @@ def _increases_only(previous, current):
     return out
 
 
-def freed_vs_added(data, case='baseline', basis='requested', quarter='2027Q3'):
+def freed_vs_added(data, case='baseline', basis='requested', quarter='2027Q3', availability='plan'):
     """Hours per week the 2027 plan adds (growing programs) and gives back (shrinking programs) versus today's 2026Q4 rate."""
-    base = _today_state(data, basis)
-    new = plan_state(data, case, basis)
+    base = _today_state(data, basis, availability)
+    new = plan_state(data, case, basis, availability)
     qi = Q.index(quarter)
     rows = []
     for i, s in enumerate(SITES):
@@ -348,10 +369,10 @@ def freed_vs_added(data, case='baseline', basis='requested', quarter='2027Q3'):
     return pd.DataFrame(rows)
 
 
-def response_plan(data, case='baseline', basis='requested', ceiling=.85, max_share=50):
+def response_plan(data, case='baseline', basis='requested', ceiling=.85, max_share=50, availability='plan'):
     """Cheapest response to the latest plan: declines given back, then cross-fab rebalancing, then buy the rest."""
-    current = _today_state(data, basis)
-    requested = plan_state(data, case, basis)
+    current = _today_state(data, basis, availability)
+    requested = plan_state(data, case, basis, availability)
     up_only = _increases_only(current, requested)
     transfer = optimize_transfers(requested, ceiling, max_share, weighted=True)
     moved = apply_moves(requested, transfer['moves'])
@@ -371,13 +392,13 @@ def response_plan(data, case='baseline', basis='requested', ceiling=.85, max_sha
 
 
 # ------------------------------------------------------------------ planned fleet (follow the buy plan)
-def planned_extras(data, basis='requested', ceiling=.85):
+def planned_extras(data, basis='requested', ceiling=.85, availability='plan'):
     """extra_tools entries that take every group to its planned 2027 fleet: pull-ins + new buys, by quarter.
 
     Cumulative extras = max(0, planned fleet - tools released by date). Negative steps cancel a pulled-in
     tool when its original order arrives, so it is never counted twice.
     """
-    b = buy_list(data, 'baseline', basis, ceiling)
+    b = buy_list(data, 'baseline', basis, ceiling, availability=availability)
     timed = timed_tools()
     extras = []
     for r in b.itertuples():
@@ -391,9 +412,25 @@ def planned_extras(data, basis='requested', ceiling=.85):
     return extras
 
 
-def with_fleet(state, data, fleet='current', basis='requested', ceiling=.85):
+def with_fleet(state, data, fleet='current', basis='requested', ceiling=.85, availability='plan'):
+    """Planned fleet = the buy list sized at the same availability the scenario uses."""
     if fleet == 'planned':
-        state['extra_tools'] = list(state.get('extra_tools', [])) + planned_extras(data, basis, ceiling)
+        state['extra_tools'] = list(state.get('extra_tools', [])) + planned_extras(data, basis, ceiling, availability)
     elif fleet != 'current':
         raise ValueError('Fleet must be current or planned.')
     return state
+
+
+def furnace_sensitivity(data, basis='requested', ceiling=.85, availability='plan', lots=(2.0, 2.25, 2.5, 2.75, 3.0, 3.25, 3.5)):
+    """Peak 2027 furnace fleet needed vs. effective lots per 6-hour run (a furnace holds up to 4)."""
+    rows = []
+    for n in lots:
+        state = plan_state(data, 'baseline', basis, availability)
+        for s in SITES:
+            base = state['avail'][s]['FURN'][0] / C.batch_efficiency(s, 'FURN')
+            state['avail'][s]['FURN'] = [base * C.batch_efficiency(s, 'FURN', n)] * len(Q)
+        b = buy_list(data, 'baseline', basis, ceiling, state=state)
+        for r in b[b.tool_group == 'FURN'].itertuples():
+            rows.append(dict(site=r.site, lots_per_run=n, needed_peak=int(r.needed_peak), committed=int(r.installed + r.on_order),
+                             net_new=int(r.net_new)))
+    return pd.DataFrame(rows)

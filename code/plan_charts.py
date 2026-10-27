@@ -362,13 +362,13 @@ def version_trend(history, q4, vf, col, shown):
                         marker=dict(size=6), hovertemplate='%{x} · %{y:,.0f}<extra>' + PCX.VERSION_SHORT[v] + '</extra>')
     # Starts forecast: actual -> 2026Q4 trend forecast -> 2027 expected starts of the current plan.
     e = vf[vf.version == PCX.CURRENT_VERSION].groupby('quarter').expected_wspw.sum().reindex(C.PLAN_QUARTERS)
-    fig.add_scatter(x=['2026Q4'] + C.PLAN_QUARTERS, y=[q4['forecast_wspw']] + list(e), name='Starts forecast',
+    fig.add_scatter(x=['2026Q4'] + C.PLAN_QUARTERS, y=[q4['forecast_wspw']] + list(e), name='Realization-adjusted starts (before capacity limits)',
                     mode='lines+markers', line=dict(color=INK, width=2.2), marker=dict(size=6, symbol='circle-open', line=dict(width=2)),
                     hovertemplate='%{x} · %{y:,.0f} forecast starts<extra></extra>')
     order = hq + ['2026Q4'] + C.PLAN_QUARTERS
     fig.add_vrect(x0=order.index('2027Q1') - .5, x1=len(order) - .5, fillcolor='#f3f5f8', line_width=0, layer='below',
                   annotation=dict(text='2027 plan', font=dict(size=10, color=MUTED), yanchor='top', y=1, xanchor='left'))
-    ec.style(fig, 360)
+    ec.style(fig, 400)
     fig.update_xaxes(type='category', categoryorder='array', categoryarray=order, showgrid=False, tickangle=-45)
     fig.update_yaxes(title='Wafer starts / week', rangemode='tozero')
     return fig

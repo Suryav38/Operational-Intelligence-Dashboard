@@ -13,7 +13,7 @@ def app():
 def test_demand_outlook_opens_first_and_every_page_renders_for_every_fab():
     at = app()
     assert not at.exception
-    assert at.title[0].value == 'Demand outlook'
+    assert at.title[0].value == 'Demand outlook for 2027'
     assert at.radio(key='page').options == PAGES
     for site in ['Both', 'FAB_A', 'FAB_B']:
         at.radio(key='site').set_value(site).run()
@@ -26,7 +26,7 @@ def test_demand_versions_and_unused_assumptions_disabled():
     at = app()
     assert at.selectbox(key='limit_pct').disabled
     at.radio(key='demand_split').set_value('Family').run()
-    at.radio(key='demand_measure').set_value('Expected').run()
+    at.radio(key='demand_measure').set_value('Realization-adjusted').run()
     assert not at.exception
     assert not any('class="headline"' in m.value for m in at.markdown)
 

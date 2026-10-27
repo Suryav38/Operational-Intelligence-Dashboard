@@ -47,6 +47,25 @@ def production_availability(tg: str) -> float:
     return 1.0 - t["pm"] - t["down"] - t["eng"]
 
 
+# Effective lots per furnace run, calibrated to the 2026Q3 lot simulation (analytic ÷ simulated
+# furnace loading × 3 lots). Partial batches still take a full 6-hour run, so Fab B furnaces
+# deliver fewer wafers per hour than the 3-lot assumption. Used by every capacity plan.
+FURNACE_LOTS_PER_RUN = {"FAB_A": 2.96, "FAB_B": 2.61}
+
+
+def batch_efficiency(site: str, tg: str, lots_per_run: float | None = None) -> float:
+    """Capacity factor for batch tools: effective lots per run ÷ the 3 lots in min_per_wafer."""
+    if tg != "FURN":
+        return 1.0
+    lots = FURNACE_LOTS_PER_RUN[site] if lots_per_run is None else lots_per_run
+    return lots / TOOL_GROUPS["FURN"]["batch_lots"]
+
+
+def planning_availability(site: str, tg: str) -> float:
+    """Availability used in capacity plans: E10 planning assumption × batch efficiency."""
+    return production_availability(tg) * batch_efficiency(site, tg)
+
+
 # ---------------------------------------------------------------- programs
 # passes = how many times a wafer visits each tool group over the full route
 # (wafers return to the same tool groups layer after layer: re-entrant flow).

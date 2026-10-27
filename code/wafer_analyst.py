@@ -65,11 +65,9 @@ def base_state(data, case='baseline', availability='plan', basis='run_rate', fle
                 state['wspw'][s][p] = [float(v) for v in values]
     elif basis != 'requested':
         raise ValueError('Basis must be run_rate or requested.')
-    if availability == 'observed':
-        for (s, g), a in observed_availability(data).items():
-            state['avail'][s][g] = [float(a)] * len(Q)
     import capital_model as K
-    return K.with_fleet(state, data, fleet, 'requested', ceiling)
+    K.apply_availability(state, data, 'measured' if availability in ('observed', 'measured') else 'plan')
+    return K.with_fleet(state, data, fleet, 'requested', ceiling, state['availability'])
 
 
 def current_wspw(data, site, program, quarter, case='baseline', basis='run_rate'):
@@ -167,7 +165,8 @@ def _score(weekly, base_weekly, weeks, sites, limit, ceiling):
 
 
 # ------------------------------------------------------------------ main analysis
-def analyze(data, request, case='baseline', limit=.85, ceiling=.95, availability='plan', basis='run_rate', fleet='current'):
+def analyze(data, request, case='baseline', limit=.85, ceiling=.95, availability='plan', basis='run_rate', fleet='current', recovery=None):
+    """recovery: optional (tool_group, points) availability recovery at the request's fab in this quarter."""
     errors = validate(data, request, case)
     if errors:
         raise ValueError(' '.join(errors))
@@ -177,6 +176,9 @@ def analyze(data, request, case='baseline', limit=.85, ceiling=.95, availability
     protected = list(request.get('protected') or [])
     plan = programs(data)
     state = base_state(data, case, availability, basis, fleet, limit)
+    if recovery and recovery[0]:
+        g, pts = recovery
+        state['avail'][site][g][qi] = min(.98, state['avail'][site][g][qi] + pts / 100)
     current = float(state['wspw'][site][program][qi])
     target = float(request['requested_wspw'])
     delta = target - current
@@ -315,6 +317,21 @@ def analyze(data, request, case='baseline', limit=.85, ceiling=.95, availability
                                     changes=[], weekly=None, peak_site=other, peak_group=bottleneck, peak_load=np.nan,
                                     status='Not possible', groups_above_limit=None, how=reason))
 
+    # Every tool group at both fabs: groups already above the ceiling before this request, whatever it touches.
+    pre = base_weekly[base_weekly.week_start.isin(weeks)]
+    pre = pre.assign(load=pre.loading_pct.fillna(np.inf)).groupby(['site', 'tool_group']).load.max().reset_index()
+    existing = [dict(site=r.site, tool_group=r.tool_group, loading_pct=None if np.isinf(r.load) else round(float(r.load), 1))
+                for r in pre[pre.load > ceiling * 100].sort_values('load', ascending=False).itertuples()]
+    for o in options:
+        if o.get('weekly') is not None and existing:
+            hit = o['weekly'].merge(base_weekly, on=['site', 'tool_group', 'week_start'], suffixes=('', '_base'))
+            hit = hit[hit.week_start.isin(weeks) & (hit.required_h_period > hit.required_h_period_base + 1e-6)]
+            worse = {(e['site'], e['tool_group']) for e in existing} & set(zip(hit.site, hit.tool_group))
+            if worse:  # adds hours to a group that is already over the ceiling
+                o['status'] = 'Not accepted'
+                o['how'] += ' Adds load to ' + ', '.join(f'{rm.SITE_LABELS[a]} {rm.GROUP_LABELS[b]}' for a, b in sorted(worse)) + \
+                            ', already above the ceiling before this request.'
+
     ranked = rank(options)
     best = next((o for o in ranked if o['status'] in ('Within limit', 'Needs exception')), None)
 
@@ -354,7 +371,8 @@ def analyze(data, request, case='baseline', limit=.85, ceiling=.95, availability
                   weeks=weeks, critical_week=wk, critical_week_label=week_label, bottleneck=bottleneck,
                   binding=binding, fits_under_ceiling=fit, fits_under_limit=fit_limit, accepted_now=accepted_now,
                   deficit_h_wk=max(0., float(crit.deficit_h) * scale), comparison=comparison,
-                  options=ranked, recommended=best, affected=affected, room_by_quarter=rooms,
+                  options=ranked, recommended=best, affected=affected, room_by_quarter=rooms, existing_overloads=existing,
+                  recovery=recovery,
                   base_weekly=base_weekly, request_weekly=full_weekly)
     result['decision'] = decision_text(result)
     return result
@@ -386,7 +404,7 @@ def decision_text(r):
         return f'This request lowers {name} starts; it frees capacity and needs no exception.'
     if best is None:
         return (f'None of the tested responses keeps {site} under the {r["ceiling"]*100:.0f}% acceptance ceiling. '
-                f'The binding tool group is {rm.GROUP_LABELS[r["bottleneck"]]}; capacity must be added or the request declined.')
+                f'The binding tool group is {rm.GROUP_LABELS[r["bottleneck"]]}; capacity must be added or the request declined.' + existing_text(r))
     text = f'Accept <b>+{best["started_now"]:,.0f}</b> of the requested +{delta:,.0f} {name} wafers/week in {req["quarter"]}'
     if best['option'] != 'Accept full request':
         text += f' — <b>{best["phrase"]}</b>'
@@ -400,4 +418,15 @@ def decision_text(r):
     if len(prot):
         names = ', '.join(f'{p.name} ({p.milestone_date})' for p in prot.itertuples())
         text += f' Protected programs sharing these tools keep their starts: {names}.'
-    return text
+    return text + existing_text(r)
+
+
+def existing_text(r):
+    ex = r.get('existing_overloads') or []
+    if not ex:
+        return ''
+    def load(e):
+        return 'no tools' if e['loading_pct'] is None else f"{e['loading_pct']:.0f}%"
+    items = ', '.join(f'{rm.SITE_LABELS[e["site"]]} {rm.GROUP_LABELS[e["tool_group"]]} {load(e)}' for e in ex[:4])
+    return (f' <br><span class="sub">Already above the {r["ceiling"]*100:.0f}% ceiling before this request '
+            f'(not caused by it): {items}{" and more" if len(ex) > 4 else ""}.</span>')

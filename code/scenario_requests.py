@@ -12,7 +12,7 @@ FLEETS={'planned':'Planned fleet (after 2027 buys)','current':'Current fleet (in
 
 def run(data,operation,site,program='DRAM_B',pct=10.,group='EUV',unavailable=1,to_site='FAB_B',
         first='2027Q2',last='2027Q2',timing='quarters',ceiling=.85,recovery_group=None,recovery_points=0.,target_wspw=None,pilot_case='baseline',
-        fleet='current',to_program=None,wafers=0.):
+        fleet='current',to_program=None,wafers=0.,availability='plan'):
     if operation not in OPERATIONS or site not in C.SITES:raise ValueError('Choose a supported operation and fab.')
     if timing=='weeks':
         calendar=W.calendar().set_index('week_start')
@@ -23,7 +23,7 @@ def run(data,operation,site,program='DRAM_B',pct=10.,group='EUV',unavailable=1,t
         first_q,last_q=first,last
     if not math.isfinite(pct) or not -100<=pct<=100:raise ValueError('Choose a finite percentage from -100 to 100.')
     import capital_model as K
-    base=K.with_fleet(L.planning_state(data,pilot_case),data,fleet,'requested',ceiling)
+    base=K.with_fleet(K.apply_availability(L.planning_state(data,pilot_case),data,availability),data,fleet,'requested',ceiling,availability)
     if operation=='Product mix shift':
         if program not in C.QUALIFIED[site] or to_program not in C.QUALIFIED[site] or to_program==program:
             raise ValueError('Choose two different programs that are both qualified at this fab.')
@@ -61,7 +61,7 @@ def run(data,operation,site,program='DRAM_B',pct=10.,group='EUV',unavailable=1,t
                 changed['tools_base'][site][group][i]-=unavailable
         applied=[f'{site}: {unavailable} {group} tools unavailable in the selected window'];changes=[]
     b=L.loading_state(base,ceiling);s=L.loading_state(changed,ceiling)
-    review=dict(base_state=base,scenario_state=changed,baseline=b,scenario=s,comparison=rm.compare_tables(b,s,ceiling),fleet=fleet,
+    review=dict(base_state=base,scenario_state=changed,baseline=b,scenario=s,comparison=rm.compare_tables(b,s,ceiling),fleet=fleet,availability=availability,
         applied=applied,changes=changes,site=site,program=program,pct=pct,first_quarter=first_q,last_quarter=last_q,
         ceiling=ceiling,target_wspw=target_wspw,timing_mode=timing,operation=operation,pilot_case=pilot_case,to_site=to_site if operation=='Qualified load transfer' else None)
     if timing=='weeks':

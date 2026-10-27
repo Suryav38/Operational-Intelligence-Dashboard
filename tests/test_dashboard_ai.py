@@ -78,3 +78,16 @@ def test_uncited_draft_gets_one_repair_turn(data):
     out=agent.answer('Which tool group binds?','mock',client=client)
     assert out['answer'].endswith('[S1].')
     assert any('rejected' in t['step'] for t in out['trace'])
+
+
+def test_ai_calculations_use_the_screen_fleet_and_availability():
+    data=fd.load()
+    args={'operation':'Tool unavailability','site':'FAB_A','timing':'quarters','first':'2027Q3','last':'2027Q3','group':'EUV','unavailable':1}
+    peaks={}
+    for fleet in ['planned','current']:
+        agent=DA.ViewCopilot(data,rag.DocumentIndex(fd.DOCS),{'site':'FAB_A','quarter':'2027Q3','planning_limit':.85,'fleet':fleet,'availability':'plan'})
+        out=agent.execute('calculate_capacity_request',dict(args,fleet='current' if fleet=='planned' else 'planned'))  # model cannot override
+        assert out['data']['fleet']==fleet
+        euv=[r for r in out['data']['selected_start_period'] if r['tool_group']=='EUV'][0]
+        peaks[fleet]=euv['loading_pct_scenario']
+    assert peaks['planned']<100 and (peaks['current'] is None or peaks['current']>100)

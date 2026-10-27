@@ -54,3 +54,24 @@ def test_invalid_requests_are_rejected(data):
 
 def test_october_plan_is_july_times_submitted_changes():
     assert C.RUN_RATE_WSPW_2027['FAB_A']['DRAM_B'][1] == round(830 * C.OCTOBER_CHANGE['DRAM_B'][1] / 5) * 5
+
+
+def test_existing_overloads_are_reported_and_block_options_that_add_to_them(data):
+    cur = A.current_wspw(data, 'FAB_A', 'SHORT', '2027Q1', basis='requested')
+    w = A.quarter_weeks('2027Q1')
+    r = A.analyze(data, dict(site='FAB_A', program='SHORT', quarter='2027Q1', requested_wspw=cur + 25, first_week=w[0], last_week=w[-1],
+                             protected=['HBM_TV']), 'baseline', .85, .95, 'plan', 'requested', 'current')
+    groups = {(e['site'], e['tool_group']) for e in r['existing_overloads']}
+    assert ('FAB_A', 'EUV') in groups                      # already over before the request, not touched by short loops
+    assert 'Already above the 95% ceiling before this request' in r['decision']
+    full = next(o for o in r['options'] if o['option'] == 'Accept full request')
+    assert full['status'] == 'Not accepted'                # it adds hours to groups that were already over
+
+
+def test_recovery_is_applied_to_the_ranked_request(data):
+    cur = A.current_wspw(data, 'FAB_B', 'DRAM_A', '2027Q1', basis='requested')
+    w = A.quarter_weeks('2027Q1')
+    req = dict(site='FAB_B', program='DRAM_A', quarter='2027Q1', requested_wspw=cur + 50, first_week=w[0], last_week=w[-1], protected=['HBM_TV'])
+    plain = A.analyze(data, req, 'baseline', .85, .95, 'plan', 'requested', 'current')
+    helped = A.analyze(data, req, 'baseline', .85, .95, 'plan', 'requested', 'current', recovery=(plain['bottleneck'], 5.))
+    assert helped['fits_under_ceiling'] > plain['fits_under_ceiling']

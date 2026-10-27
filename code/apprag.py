@@ -55,8 +55,8 @@ FP = fd.fingerprint()
 
 # ------------------------------------------------------------------ cached models
 @st.cache_data(show_spinner=False)
-def cached_buy(fingerprint, case, basis, ceiling):
-    return K.buy_list(load_data(fingerprint), case, basis, ceiling)
+def cached_buy(fingerprint, case, basis, ceiling, availability='plan'):
+    return K.buy_list(load_data(fingerprint), case, basis, ceiling, availability=availability)
 
 
 @st.cache_data(show_spinner=False)
@@ -77,7 +77,8 @@ def esc(text):
 
 
 def page_head(kicker, title, headline=None):
-    st.markdown(f'<div class="kicker">{esc(kicker)}</div>', unsafe_allow_html=True)
+    if kicker:
+        st.markdown(f'<div class="kicker">{esc(kicker)}</div>', unsafe_allow_html=True)
     st.title(title)
     if headline:
         st.markdown(f'<p class="headline">{headline}</p>', unsafe_allow_html=True)
@@ -188,9 +189,53 @@ def ai_panel(key, context, examples, title='Ask the planning assistant', expande
 
 # ------------------------------------------------------------------ header + assumptions
 g = ui.render_header()
-page, site, pilot_case, ceiling = g['page'], g['site'], g['pilot_case'], g['ceiling']
+page, site, pilot_case, ceiling, avail = g['page'], g['site'], g['pilot_case'], g['ceiling'], g['availability']
 BOTH = site == 'Both'
 CASE_NOTE = ui.CASES[pilot_case]
+
+
+@st.cache_data(show_spinner=False)
+def cached_furnace(fingerprint, basis, ceiling_, availability):
+    return K.furnace_sensitivity(load_data(fingerprint), basis, ceiling_, availability)
+
+
+def capacity_checks(basis, frame):
+    """How sensitive the buy is to the two assumptions the review flagged: availability source and furnace batch fill."""
+    other = 'measured' if avail == 'plan' else 'plan'
+    alt = K.totals(K.scope(cached_buy(FP, pilot_case, basis, ceiling, other), site))
+    now = K.totals(K.scope(frame, site))
+    a = K.scope(frame, site).set_index(['site', 'tool_group']).net_new
+    b = K.scope(cached_buy(FP, pilot_case, basis, ceiling, other), site).set_index(['site', 'tool_group']).net_new
+    diff = (b - a).reindex(a.index.union(b.index)).fillna(0)
+    moved = ', '.join(f'{group_label(s_, g_, BOTH)} {int(v):+d}' for (s_, g_), v in diff[diff != 0].items()) or 'no tool group changes'
+    left, right = st.columns([1, 1.25], gap='large')
+    with left:
+        short = {'plan': 'planning-assumption availability', 'measured': 'measured 2026Q4 availability'}
+        section('Buy vs. availability source', f'{K.AVAILABILITY[avail]} is selected in the bar above')
+        st.markdown(f'<p class="note"><b>{now["net_new"]:,}</b> tools at {short[avail]} · '
+                    f'<b>{alt["net_new"]:,}</b> at {short[other]} ({moved}).</p>', unsafe_allow_html=True)
+        meas = K.measured_availability(data)
+        gaps = sorted(((100 * (meas[(s_, g_)] - C.production_availability(g_)), s_, g_) for (s_, g_) in meas
+                       if BOTH or s_ == site), key=lambda x: x[0])[:3]
+        st.caption('Largest shortfalls of measured vs. planned availability: ' +
+                   '; '.join(f'{group_label(s_, g_, True)} {d:+.1f} pts' for d, s_, g_ in gaps) + '.')
+    with right:
+        f = cached_furnace(FP, basis, ceiling, avail)
+        f = f if BOTH else f[f.site == site]
+        section('Furnace buy vs. effective lots per run', 'Peak 2027 need · a run holds up to 4 lots · calibrated value marked')
+        cols = sorted(f.lots_per_run.unique())
+        head = ''.join(f'<th>{c:g}</th>' for c in cols)
+        body = ''
+        for s_, g in f.groupby('site'):
+            cal = C.FURNACE_LOTS_PER_RUN[s_]
+            near = min(cols, key=lambda c: abs(c - cal))
+            cells = ''.join(f'<td class="num{" qa" if c == near else ""}">{int(r.needed_peak)}<div class="sub">buy {int(r.net_new)}</div></td>'
+                            for c, r in zip(cols, g.sort_values('lots_per_run').itertuples()))
+            body += f'<tr><td class="l">{rm.SITE_LABELS[s_]} <span class="sub">calibrated {cal:g}</span></td>{cells}</tr>'
+        st.markdown(f'<div class="cap-wrap"><table class="cap"><thead><tr><th class="l">Lots / run →</th>{head}</tr></thead>'
+                    f'<tbody>{body}</tbody></table></div>', unsafe_allow_html=True)
+        st.caption('The plan uses the lots per run the 2026Q3 lot simulation achieved (partial batches still take a full 6-hour run), '
+                   'not the 3-lot design assumption.')
 
 
 # ================================================================== 1 · CAPITAL PLAN
@@ -250,9 +295,10 @@ def outlook_view():
     top, side = st.columns([3, 1.1], vertical_alignment='bottom')
     with side:
         basis = st.radio('Size the plan to', ['requested', 'expected'], horizontal=True, key='capital_basis',
-                         format_func={'requested': 'Requested starts', 'expected': 'Expected starts'}.get,
-                         help='Expected = request × the share each program has historically run (Demand page).')
-    frame = cached_buy(FP, pilot_case, basis, ceiling)
+                         format_func={'requested': 'Requested starts', 'expected': 'Realization-adjusted starts'}.get,
+                         help='Realization-adjusted = request × the share each program has historically run (Demand page). '
+                              'It is not checked against capacity: it is the demand the fleet has to carry.')
+    frame = cached_buy(FP, pilot_case, basis, ceiling, avail)
     view = K.scope(frame, site)
     with top:
         section('2027 tool requirement vs. installed + on-order fleet', '2027 plan · by fab and tool group')
@@ -285,7 +331,7 @@ def outlook_view():
         section('Required vs. available tool-hours by program', 'Weekly · 2027 by quarter')
         s, grp = st.selectbox('Tool group', options, key='driver_group', format_func=lambda k: group_label(*k, True),
                               label_visibility='collapsed')
-        state = K.plan_state(data, pilot_case, basis)
+        state = K.plan_state(data, pilot_case, basis, avail)
         chart(PC.drivers(state, s, grp, ceiling), 'capital_drivers')
     row = view[(view.site == s) & (view.tool_group == grp)].iloc[0]
     qi = int(pd.Series([row[f'load_{q}'] for q in K.Q]).fillna(1e9).values.argmax())
@@ -310,9 +356,11 @@ def outlook_view():
     labels = {'site': 'Fab', 'tool_group': 'Tool group', 'installed': 'Installed', 'on_order': 'On order',
               'on_order_label': 'Arrivals', 'needed_peak': 'Peak need', 'net_new': 'Buy 2027', 'pull_in': 'Pull in',
               'pull_in_by': 'Pull in to', **{f'add_{q}': f'Add {q}' for q in K.Q}, **{f'load_{q}': f'Load {q} (%)' for q in K.Q}}
-    export = view[list(labels)].assign(planning_limit_pct=ceiling * 100, basis=basis, plan_case=pilot_case)
+    export = view[list(labels)].assign(planning_limit_pct=ceiling * 100, basis=basis, plan_case=pilot_case, availability=avail)
     st.download_button('Download tool requirement (CSV)', csv(export, labels), 'td_2027_tool_requirement.csv', 'text/csv')
+    capacity_checks(basis, frame)
     ai_panel('ai_capital', dict(view='2027 capacity outlook', site=site, pilot_case=pilot_case, planning_limit=ceiling, demand_basis=basis,
+                                fleet='current', availability=avail,
                                 totals=t, headline=K.headline(view, ceiling, basis).replace('<b>', '').replace('</b>', ''),
                                 tool_requirement=export.round(1).to_dict('records')), [
         'Which tool groups drive the 2027 buy, and which programs create that load?',
@@ -332,30 +380,43 @@ def demand_page():
     short = PCX.VERSION_SHORT
     cur, today = PCX.CURRENT_VERSION, PCX.TODAY_VERSION
     tot = vf.groupby(['version', 'quarter'])[['requested_wspw', 'expected_wspw']].sum()
-    q3 = history.iloc[-1]
-    req4, exp4 = tot.loc[cur].requested_wspw.iloc[-1], tot.loc[cur].expected_wspw.iloc[-1]
-    page_head(f'{ui.SITES[site].upper()} · HISTORY 2024Q1–2026Q3 · 2026Q4 FORECAST · 2027 PLAN', 'Demand outlook')
+    req = tot.loc[cur].requested_wspw
+    base = q4['requested_wspw']
+    # program change in requested starts vs. 2026Q4: largest increase by 2027Q4, deepest dip in any 2027 quarter
+    now = bridge.groupby('program').requested_wspw.sum()
+    plan = vf[vf.version == cur].pivot_table(index='program', columns='quarter', values='requested_wspw', aggfunc='sum').reindex(columns=C.PLAN_QUARTERS)
+    plan = plan[plan.index.isin(now[now > 0].index)]
+    change = plan.sub(now.reindex(plan.index), axis=0)
+    pct = 100 * change.div(now.reindex(plan.index), axis=0)
+    up = pct[C.PLAN_QUARTERS[-1]].idxmax()
+    low = pct.stack().idxmin()
+
+    def signed(v):
+        v = round(float(v))
+        return f'{v:+d}%' if v else '0%'
+    up_tile = (signed(pct.loc[up, C.PLAN_QUARTERS[-1]]), f'Largest increase by 2027Q4 · {D.NAMES[up]} ({change.loc[up, C.PLAN_QUARTERS[-1]]:+,.0f} / week)', '')
+    if pct.loc[low] < 0:
+        down_tile = (signed(pct.loc[low]), f'Largest drop · {D.NAMES[low[0]]}, {low[1]} ({change.loc[low]:+,.0f} / week)', 'bad')
+    else:
+        down_tile = ('none', 'Largest drop · no program falls below 2026Q4', '')
+    page_head('', 'Demand outlook for 2027')
     stats([
-        (number(q3.actual_wspw), '2026Q3 actual starts / week', ''),
-        (number(q4['forecast_wspw']), '2026Q4 forecast starts / week', ''),
-        (number(req4), '2027Q4 requested starts / week', ''),
-        (number(exp4), '2027Q4 expected starts / week', ''),
-        (number(100 * (req4 / q4['requested_wspw'] - 1), 0, '%'), 'Request growth · 2026Q4 → 2027Q4', ''),
-        (f"{number(metrics['raw_mape'],0,'%')} → {number(metrics['expected_mape'],0,'%')}", 'Backtest error · raw → adjusted', ''),
+        (number(base), '2026Q4 requested starts / week', ''),
+        (number(req.iloc[-1]), '2027Q4 requested starts / week', ''),
+        (signed(100 * (req.iloc[0] / base - 1)), 'Request growth · 2026Q4 → 2027Q1', ''),
+        (signed(100 * (req.iloc[-1] / base - 1)), 'Request growth · 2026Q4 → 2027Q4', ''),
+        up_tile,
+        down_tile,
     ])
     with st.container(key='demand_controls'):
         a, b, _ = st.columns([1, 1.25, 2.4], vertical_alignment='bottom')
-        measure = a.radio('Measure', ['Requested', 'Expected'], horizontal=True, key='demand_measure')
+        measure = a.radio('Measure', ['Requested', 'Realization-adjusted'], horizontal=True, key='demand_measure',
+                          help='Request × each program\'s historical share actually started. Before capacity limits.')
         group = b.radio('Group by', ['Program', 'Family', 'Fab'], horizontal=True, key='demand_split')
     col = 'requested_wspw' if measure == 'Requested' else 'expected_wspw'
 
-    left, right = st.columns([1.45, 1], gap='large')
-    with left:
-        section('Requested vs. actual wafer starts · 2024Q1–2027Q4', 'Quarterly average per week · starts: actual to 2026Q3, forecast from 2026Q4')
-        chart(PC.version_trend(history[['requested_wspw', 'actual_wspw']], q4, vf, col, [cur]), 'dm_trend')
-    with right:
-        section('Demand bridge · 2026Q4 → 2027 average', f'{measure} starts / week by program')
-        chart(PC.version_bridge(vf, today, cur, col), 'dm_bridge')
+    section('Requested vs. actual wafer starts · 2024Q1–2027Q4', 'Quarterly average per week · starts: actual to 2026Q3, forecast from 2026Q4')
+    chart(PC.version_trend(history[['requested_wspw', 'actual_wspw']], q4, vf, col, [cur]), 'dm_trend')
 
     section('Wafer starts by program and quarter · 2027 plan vs. 2026Q4', f'{measure} starts / week · value and change vs. 2026Q4')
     st.markdown(demand_matrix(vf, today, cur, col, group), unsafe_allow_html=True)
@@ -393,7 +454,7 @@ def demand_page():
         st.markdown(
             f'<p class="note"><b>Realization factor</b> = least-squares slope of actual on requested starts, through the origin, per program. '
             f'On quarters the fit never saw (2026Q1–Q3) the raw request missed actual starts by {number(metrics["raw_mape"],1,"%")}; '
-            f'request × factor missed by {number(metrics["expected_mape"],1,"%")} across {metrics["rows"]} fab-program-quarters. Expected = request × factor.</p>'
+            f'request × factor missed by {number(metrics["expected_mape"],1,"%")} across {metrics["rows"]} fab-program-quarters. Realization-adjusted = request × factor (before capacity limits).</p>'
             '<p class="note"><b>2026Q4</b> is in progress, so it has no actuals: each fab/program continues its own last-four-quarter trend, '
             'for requests and for starts. It is the comparison base for 2027 and never enters the fit.</p>'
             '<p class="note"><b>2027 plan.</b> Requests are on the same basis as historical requests (planned run rate ÷ realization factor), '
@@ -401,7 +462,7 @@ def demand_page():
             unsafe_allow_html=True)
         out = vf[vf.version == cur].assign(Fab=lambda f: f.site.map(rm.SITE_LABELS), Program=lambda f: f.program.map(D.NAMES))
         cols = {'quarter': 'Quarter', 'Fab': 'Fab', 'Program': 'Program', 'requested_wspw': 'Requested WSPW',
-                'expected_wspw': 'Expected WSPW', 'realization_rate': 'Realization factor'}
+                'expected_wspw': 'Realization-adjusted WSPW', 'realization_rate': 'Realization factor'}
         st.dataframe(out[list(cols)].rename(columns=cols).round(1), hide_index=True, width='stretch')
         st.download_button('Download 2027 plan (CSV)', csv(out[list(cols)], cols), 'td_2027_plan.csv', 'text/csv')
 
@@ -437,17 +498,17 @@ def demand_matrix(vf, base, target, col, group):
 
 # ================================================================== RESPONSE PLAN
 @st.cache_data(show_spinner=False)
-def cached_response(fingerprint, case, basis, ceiling_, max_share):
-    return K.response_plan(load_data(fingerprint), case, basis, ceiling_, max_share)
+def cached_response(fingerprint, case, basis, ceiling_, max_share, availability='plan'):
+    return K.response_plan(load_data(fingerprint), case, basis, ceiling_, max_share, availability)
 
 
 def response_view():
     case = pilot_case
     a, b, _ = st.columns([1.1, 1.1, 2])
     basis = a.selectbox('Size to', ['requested', 'expected'], key='resp_basis',
-                        format_func={'requested': 'Requested starts', 'expected': 'Expected starts'}.get)
+                        format_func={'requested': 'Requested starts', 'expected': 'Realization-adjusted starts'}.get)
     max_share = b.selectbox('Most of a program that may move fabs', [25, 50, 100], index=1, key='resp_share', format_func=lambda v: f'{v}%')
-    r = cached_response(FP, case, basis, ceiling, max_share)
+    r = cached_response(FP, case, basis, ceiling, max_share, avail)
     steps = r['steps']
     cols = [c for c in steps.columns if '|' in c and (BOTH or c.startswith(site + '|'))]
     steps = steps.assign(net_new=steps[cols].sum(axis=1),
@@ -471,7 +532,7 @@ def response_view():
         chart(PC.waterfall(wf, final='Tools to buy'), 'response_waterfall')
     with right:
         section('Tool-hours added vs. freed · 2026Q4 rate → 2027 plan', '2027Q3 · hours / week')
-        fv = K.freed_vs_added(data, case, basis, '2027Q3')
+        fv = K.freed_vs_added(data, case, basis, '2027Q3', avail)
         fv = fv if BOTH else fv[fv.site == site]
         chart(PC.freed_added(fv, BOTH), 'freed_added')
     moves = r['transfer']['moves']
@@ -518,15 +579,13 @@ def fab_performance_page():
     with right:
         section('Tool availability: measured vs. planning assumption', 'Q4 to date · % of calendar time')
         chart(PC.availability(tl, BOTH), 'month_availability')
-    left, right = st.columns([1, 1.15], gap='large')
-    with left:
-        section('Starts by program: actual vs. 2026Q4 request', 'Wafers / week')
-        chart(PC.program_vs_plan(s['programs']), 'month_programs')
-    with right:
-        section('Capacity model vs. lot simulation', '2026Q3 · production loading by tool group')
-        check = K.model_check(data)
-        check = check if BOTH else check[check.site == site]
-        chart(PC.model_check(check), 'model_check')
+    section('Capacity model vs. lot simulation', '2026Q3 · production loading by tool group')
+    check = K.model_check(data)
+    check = check if BOTH else check[check.site == site]
+    chart(PC.model_check(check), 'model_check')
+    st.caption('Model = the capacity formula with the 3-lot furnace assumption. Fab B furnace is the one gap: partial batches still take a '
+               'full 6-hour run. The capacity plan therefore uses calibrated lots per run (Fab A '
+               f'{C.FURNACE_LOTS_PER_RUN["FAB_A"]:g}, Fab B {C.FURNACE_LOTS_PER_RUN["FAB_B"]:g}); sensitivity is on the 2027 capacity tab.')
     st.caption('2026Q4 to date is a simulated continuation of the same fab model (seed 42): rerunning it reproduces the stored 52-week history exactly, '
                'then adds 28 Sep – 25 Oct 2026. Request = 2026Q4 requested starts.')
     fab_assistant(s, tl)
@@ -539,7 +598,7 @@ def fab_assistant(s, tl):
                 .reset_index().sort_values('down_hours', ascending=False))
     by_cause = (ev.groupby(['site', 'tool_group', 'cause']).down_hours.sum().round(1).reset_index()
                 .sort_values('down_hours', ascending=False).head(12))
-    context = dict(view='Fab performance · 2026Q4 to date (simulated)', site=site, planning_limit=ceiling,
+    context = dict(view='Fab performance · 2026Q4 to date (simulated)', site=site, planning_limit=ceiling, fleet='current', availability='measured',
                    period=f'{s["start"]:%d %b} – {s["end"]:%d %b %Y}', weeks_done=s['weeks_done'],
                    line=dict(starts_per_week=round(s['starts_wspw']), completions_per_week=round(s['outs_wspw']), wip=round(s['wip']),
                              cycle_time_days=round(s['cycle_days'], 1), cycle_time_p90_days=round(s['cycle_p90'], 1), line_yield_pct=round(s['yield_pct'], 1)),
@@ -561,9 +620,11 @@ def fab_assistant(s, tl):
 
 
 # ================================================================== CAPACITY SCENARIO PLANNING · SCENARIOS
-@st.cache_data(show_spinner=False, max_entries=24)
-def cached_analysis(fingerprint, request_json, limit, ceiling_, fleet):
-    return WA.analyze(load_data(fingerprint), json.loads(request_json), 'baseline', limit, ceiling_, 'plan', 'requested', fleet)
+@st.cache_data(show_spinner=False, max_entries=48)
+def cached_analysis(fingerprint, request_json, limit, ceiling_, fleet, availability, recovery_json):
+    recovery = json.loads(recovery_json)
+    return WA.analyze(load_data(fingerprint), json.loads(request_json), 'baseline', limit, ceiling_, availability, 'requested', fleet,
+                      tuple(recovery) if recovery else None)
 
 
 def pill(status):
@@ -571,22 +632,43 @@ def pill(status):
     return f'<span class="pill {cls}">{esc(status)}</span>'
 
 
-def demand_responses(review, program, quarter, target, pct, fleet):
-    """Demand growth only: rank the responses (accept, partial, cut lower priority, other fab) for the first quarter."""
+def demand_responses(review, program, target, pct, fleet, availability, recovery, first_week=None, last_week=None):
+    """Demand growth: rank responses for exactly the scenario that was run — every quarter in its window,
+    the selected weeks, availability source and any availability recovery. Shows the most constrained quarter."""
     s = review['site']
-    current = WA.current_wspw(data, s, program, quarter, basis='requested')
-    requested = float(target) if target is not None else current * (1 + pct / 100)
-    if requested <= current:
-        return
-    w = WA.quarter_weeks(quarter)
+    quarters = [q for q in C.PLAN_QUARTERS if review['first_quarter'] <= q <= review['last_quarter']]
     protected = [x['program'] for x in PCX.PROGRAMS if x['protected'] and x['program'] != program]
-    request = dict(site=s, program=program, quarter=quarter, requested_wspw=requested, first_week=w[0], last_week=w[-1], protected=protected)
-    try:
-        r = cached_analysis(FP, json.dumps(request), ceiling, .95, fleet)
-    except ValueError as exc:
-        st.caption(str(exc))
+    results = []
+    for q in quarters:
+        weeks = WA.quarter_weeks(q)
+        if first_week is not None:
+            weeks = [w for w in weeks if first_week <= w <= last_week]
+        if not weeks:
+            continue
+        current = WA.current_wspw(data, s, program, q, basis='requested')
+        requested = float(target) if target is not None else current * (1 + pct / 100)
+        if requested <= current:
+            continue
+        request = dict(site=s, program=program, quarter=q, requested_wspw=requested, first_week=weeks[0], last_week=weeks[-1], protected=protected)
+        try:
+            results.append(cached_analysis(FP, json.dumps(request), ceiling, .95, fleet, availability, json.dumps(list(recovery) if recovery else None)))
+        except ValueError as exc:
+            st.caption(f'{q}: {exc}')
+    if not results:
         return
-    section(f'Responses tested · {quarter}', 'Ranked: feasible under 95% → protected untouched → most wafers now → least taken from others')
+    share = lambda r: (r['recommended']['started_now'] if r['recommended'] else 0.) / max(r['request']['delta_wspw'], 1e-9)
+    r = min(results, key=share)  # the quarter where the least of the increase can be started
+    scope = f'{quarters[0]}–{quarters[-1]}' if len(quarters) > 1 else quarters[0]
+    if first_week is not None:
+        scope = f'weeks {first_week} – {last_week}'
+    section(f'Responses tested · {r["request"]["quarter"]}', f'Exact scenario: {scope}'
+            + (f' · recovery {rm.GROUP_LABELS[recovery[0]]} +{recovery[1]:g} pts' if recovery else '')
+            + ' · ranked: feasible under 95% → protected untouched → most wafers now')
+    if len(results) > 1:
+        cells = ''.join(f'<span><i>{x["request"]["quarter"]}</i>+{(x["recommended"]["started_now"] if x["recommended"] else 0):,.0f}'
+                        f' of +{x["request"]["delta_wspw"]:,.0f}</span>' for x in results)
+        st.markdown('<div class="chips">' + cells + '</div>', unsafe_allow_html=True)
+        st.caption('Wafers/week that can be started by quarter; the table below is the most constrained quarter.')
     st.markdown(f'<div class="decision">{r["decision"]}</div>', unsafe_allow_html=True)
     rows = []
     for k, o in enumerate(r['options']):
@@ -596,7 +678,7 @@ def demand_responses(review, program, quarter, target, pct, fleet):
         rows.append(f'<tr><td class="num">{k+1}</td><td class="l"><b>{esc(o["option"])}</b><div class="sub">{esc(o["how"])}</div></td>'
                     f'<td class="l">{pill(o["status"])}</td><td class="num">{started}</td><td class="num">{taken}</td><td class="num">{esc(worst)}</td></tr>')
     st.markdown('<div class="cap-wrap"><table class="cap opts"><thead><tr><th>#</th><th class="l">Response</th><th class="l">Status</th>'
-                '<th>Started now</th><th>Taken from others</th><th>Worst load</th></tr></thead><tbody>' + ''.join(rows) + '</tbody></table></div>',
+                '<th>Started now</th><th>Taken from others</th><th>Worst added load</th></tr></thead><tbody>' + ''.join(rows) + '</tbody></table></div>',
                 unsafe_allow_html=True)
     return r
 
@@ -687,12 +769,12 @@ def scenario_test():
         recovery_group = a.selectbox('Equipment to recover', [g_ for g_ in C.TOOL_GROUP_ORDER if C.INSTALLED_TOOLS[request_site][g_] > 0], format_func=rm.GROUP_LABELS.get, key='recovery_group_' + request_site)
         points = b.number_input('Recovery (percentage points)', min_value=.5, max_value=15., value=5., step=.5, key='recovery_points')
     signature = (site, pilot_case, operation, request_site, program, pct, target, timing, first_period, last_period, ceiling, recovery_group, points,
-                 request_priority, milestone, outage_group, unavailable, fleet, to_program, wafers)
+                 request_priority, milestone, outage_group, unavailable, fleet, to_program, wafers, avail)
     if st.button('Run scenario', type='primary'):
         try:
             review = request_model.run(data, operation, request_site, program, pct, outage_group, unavailable, to_site, first_period, last_period,
                                        'weeks' if timing == 'Week range' else 'quarters', ceiling, recovery_group, points, target, pilot_case,
-                                       fleet=fleet, to_program=to_program, wafers=wafers)
+                                       fleet=fleet, to_program=to_program, wafers=wafers, availability=avail)
             review.update(request_priority=request_priority, milestone=milestone)
             ss['review'] = review
             ss['review_signature'] = signature
@@ -735,7 +817,8 @@ def scenario_test():
         (str(after['over_capacity']), 'Groups over 100%', 'bad' if after['over_capacity'] else ''),
     ])
     if operation == 'Demand growth':
-        demand_responses(review, program, first_q, target, pct, fleet)
+        demand_responses(review, program, target, pct, fleet, avail, (recovery_group, points) if recovery_group else None,
+                         first_week if timing == 'Week range' else None, last_week if timing == 'Week range' else None)
     if operation != 'Tool unavailability' and request_priority == 'HOT':
         st.caption('HOT · ' + (milestone or 'no milestone given') + '. Priority changes dispatch order, not tool hours, so capacity results are the same as NORMAL.')
     a, b = st.columns([1.3, 1], gap='large')
@@ -755,7 +838,13 @@ def scenario_test():
                                                                 timing_mode=review['timing_mode'], requested_window=period_label, plan_case=pilot_case, operation=operation)
     st.download_button('Download scenario (CSV)', csv(exported), f'{result_scope}_scenario.csv', 'text/csv')
     ai_panel('ai_scenario', dict(view='Live capacity scenario', site=result_scope, pilot_case=pilot_case, planning_limit=ceiling,
-                                 request=dict(operation=operation, site=request_site, program=program, priority=request_priority, period=period_label),
+                                 fleet=fleet, availability=avail, demand_basis='requested',
+                                 request=dict(operation=operation, site=request_site, program=program, priority=request_priority, period=period_label,
+                                              timing='weeks' if timing == 'Week range' else 'quarters', first=str(first_period), last=str(last_period),
+                                              pct=pct, target_wspw=target, recovery_group=recovery_group, recovery_points=points,
+                                              tool_group=outage_group if operation == 'Tool unavailability' else None,
+                                              tools_unavailable=unavailable if operation == 'Tool unavailability' else None,
+                                              to_program=to_program, wafers=wafers),
                                  before=before, after=after, equipment=current.round(3).to_dict('records')), [
         'Which named equipment constrains this request, and which documented response should we examine?',
         'Can we consolidate qualified work into the other fab without simply moving the constraint?',
@@ -767,9 +856,9 @@ def scenarios_view():
 
 
 def capacity_page():
-    frame = cached_buy(FP, pilot_case, 'requested', ceiling)
+    frame = cached_buy(FP, pilot_case, 'requested', ceiling, avail)
     t = K.totals(K.scope(frame, site))
-    exp = K.totals(K.scope(cached_buy(FP, pilot_case, 'expected', ceiling), site))
+    exp = K.totals(K.scope(cached_buy(FP, pilot_case, 'expected', ceiling, avail), site))
     page_head(f'{ui.SITES[site].upper()} · 2027 PLAN · {ceiling*100:.0f}% LIMIT', 'Capacity scenario planning')
     view = st.radio('View', ['2027 capacity', 'Response plan', 'Scenarios'], horizontal=True, key='cap_view', label_visibility='collapsed')
     if view == '2027 capacity':

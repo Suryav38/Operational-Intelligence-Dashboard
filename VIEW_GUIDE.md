@@ -10,7 +10,7 @@ There are three pages, and they form one planning workflow:
 
 All data is synthetic. The model is a two-fab development network: Fab A has EUV, Fab B is DUV only. It runs five established programs.
 
-The grey bar at the top holds two settings: **Fab** (Both, Fab A or Fab B) and **Planning limit** (default 85% loading). The pages have no headline sentences. Each chart heading states what is being compared and over what period.
+The grey bar at the top holds three settings: **Fab** (Both, Fab A or Fab B), **Planning limit** (default 85% loading) and **Tool availability**. Tool availability is either the *planning assumption* (1 − PM − unscheduled down − engineering) or the value *measured 2026Q4 to date*. It drives the buy list, the response plan, the planned fleet and every scenario, including the AI's own calculations. The pages have no headline sentences. Each chart heading states what is being compared and over what period.
 
 ---
 
@@ -20,14 +20,13 @@ The 2027 plan is compared against **today**: the 2026Q4 rate (the quarter in pro
 
 | Element | How it is calculated |
 |---|---|
-| KPI tiles | 2026Q3 actual starts; the 2026Q4 forecast; 2027Q4 requested and expected starts; request growth from 2026Q4 to 2027Q4; and the backtest error for the raw request vs. the adjusted request. |
-| Requested vs. actual wafer starts | Quarterly *average weekly* starts. **Requested** (grey) runs through 2026Q4, then continues as the 2027 plan request (blue). **Starts** (black) are actuals to 2026Q3, then the 2026Q4 forecast, then 2027 expected starts (request × realization factor, hollow markers). |
+| KPI tiles | 2026Q4 and 2027Q4 requested starts per week; request growth from 2026Q4 to 2027Q1 and to 2027Q4; the program with the largest increase by 2027Q4 (vs. its 2026Q4 request); and the largest drop, which is the deepest dip any program takes below its 2026Q4 request in any 2027 quarter. |
+| Requested vs. actual wafer starts | Quarterly *average weekly* starts. **Requested** (grey) runs through 2026Q4, then continues as the 2027 plan request (blue). **Starts** (black) are actuals to 2026Q3, then the 2026Q4 forecast, then 2027 realization-adjusted starts (request × realization factor, hollow markers). These are *before capacity limits*: the demand the fleet must carry, not a check of whether it can. |
 | 2026Q4 forecast | Q4 is in progress. For each fab and program, Q4 = the Q3 value × (1 + the average quarter-on-quarter change over the last four quarters), done separately for requests and for starts. It never enters the fit. |
-| Demand bridge | The 2026Q4 rate, plus each program's change, gives the 2027 average. |
 | Wafer starts by program and quarter | Each cell shows the 2027 value and its change against 2026Q4. Shading: blue for increases and red for decreases, darker for bigger changes (±3%, 10% and 25% bands). |
 | Requested vs. actual by program | One chart per program, covering 2024–2027. |
 | 2027 mix | Stacked by program, family or fab. |
-| Actual vs. requested (realization factor) | `b = Σ(requested × actual) ÷ Σ(requested²)` for each program, fitted on 2024Q1–2026Q3. **Expected = requested × b.** The backtest refits on data up to 2025Q4 and measures MAPE on 2026Q1–Q3: about 10% for the raw request against about 2% for request × b. |
+| Actual vs. requested (realization factor) | `b = Σ(requested × actual) ÷ Σ(requested²)` for each program, fitted on 2024Q1–2026Q3. **Realization-adjusted = requested × b** (before capacity limits). The backtest refits on data up to 2025Q4 and measures MAPE on 2026Q1–Q3: about 10% for the raw request against about 2% for request × b. |
 | Priorities and milestones | Each program's priority, milestone, date and protected flag, with its 2026Q4 rate, 2027 average and change. |
 
 The 2027 requests are stored on the same basis as historical requests (run rate ÷ b). That's why there is no artificial step at the year boundary: requests go 2,942 → 2,994 → 3,130 from 2026Q3 to 2027Q1.
@@ -44,7 +43,6 @@ The four weeks after the stored history come from rerunning the same fab simulat
 | Cycle time (p90), line yield | Full-flow lots completed in the window; yield = wafers out ÷ wafers in |
 | Tool loading vs. planning limit | Productive hours ÷ (calendar − downtime − engineering). The label shows queue hours per visit. |
 | Availability: measured vs. assumed | Measured (productive + standby) ÷ calendar, against the planning value of 1 − PM − unscheduled downtime − engineering |
-| Starts by program vs. Q4 plan | Average weekly starts ÷ Q4 requested starts |
 | Capacity model vs. lot simulation | 2026Q3 starts run through the capacity formula, compared with the simulated loading. 18 of 19 tool groups agree within ±3 points. Fab B furnace is the exception, because partially filled batches still take a full 6-hour run. |
 
 **Fab assistant: tool logbook and events.** At the bottom of the page you ask in plain English, for example:

@@ -2,9 +2,9 @@
 
 1. **Demand outlook.**
    - The trend chart: requested and actual starts run into the Q4 forecast, then continue through the 2027 plan.
-   - The bridge: from today's 2026Q4 rate to the 2027 average. Node B and HBM drive the growth; NAND gives a little back.
+   - The tiles: requests grow +5% into 2027Q1 and +48% by 2027Q4. HBM has the largest increase (+120%), and NAND dips 17% in 2027Q2.
    - The program × quarter table shows each cell's change against 2026Q4 (blue = up, red = down).
-   - The realization factor explains the gap between requested and expected starts.
+   - The realization factor explains the gap between requested and realization-adjusted starts (before capacity limits).
 2. **Fab performance, Q4 to date.** Four of 13 weeks are done. Starts are running at 94% of the requested weekly rate. EUV is 89% loaded with about 15 hours of queue per visit. Measured availability is compared with the planning assumption, and the model check shows the capacity formula is trustworthy.
    - Ask the fab assistant: "What problems did the deposition tools at Fab A have in Q4 so far?" It pulls the weekly equipment reviews and the event table, and answers with tool IDs, causes and hours, each cited.
 3. **Capacity scenario planning → Scenarios.**

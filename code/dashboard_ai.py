@@ -6,6 +6,7 @@ import fab_data as fd
 import fab_config as C
 import fab_demo as D
 import launch_model as L
+import capital_model as K
 import scenario_requests as requests
 import weekly_scenarios as W
 import review_model as rm
@@ -45,13 +46,17 @@ def specs(data):
             {'operation':{'type':'string','enum':requests.OPERATIONS},'site':{'type':'string','enum':list(C.SITES)},
              'program':{'type':'string','enum':C.PROGRAM_ORDER},'pct':{'type':'number'},'group':{'type':'string','enum':C.TOOL_GROUP_ORDER},
              'unavailable':{'type':'integer','minimum':1},'to_site':{'type':'string','enum':list(C.SITES)},
-             'timing':{'type':'string','enum':['quarters','weeks']},'first':{'type':'string'},'last':{'type':'string'}},['operation','site','timing','first','last'])]
+             'timing':{'type':'string','enum':['quarters','weeks']},'first':{'type':'string'},'last':{'type':'string'},
+             'target_wspw':{'type':'number'},'to_program':{'type':'string','enum':C.PROGRAM_ORDER},'wafers':{'type':'number'},
+             'recovery_group':{'type':'string','enum':C.TOOL_GROUP_ORDER},'recovery_points':{'type':'number'}},['operation','site','timing','first','last'])]
 
 
 class ViewCopilot(rag.Copilot):
     def __init__(self,data,index,context,database=fd.DB_PATH):
         super().__init__(data,index,context.get('site','Both'),context.get('quarter','2027Q2'),context.get('planning_limit',.85),database=database)
         self.context=context
+        self.fleet=context.get('fleet','current')
+        self.availability=context.get('availability','plan')
 
     def execute(self,name,args):
         if name=='search_notes':return self.retrieve(args['query'],args.get('k',4))
@@ -68,13 +73,17 @@ class ViewCopilot(rag.Copilot):
         elif name=='read_capacity':
             site=args.get('site',self.site);quarter=args.get('quarter',self.quarter);case=args.get('case',self.context.get('pilot_case','baseline'))
             if site not in ['Both',*C.SITES] or quarter not in C.PLAN_QUARTERS or case not in D.CASES:raise ValueError('Invalid capacity scope.')
-            state,table=L.capacity(self.data,case,self.ceiling)
-            payload=dict(site=site,quarter=quarter,case=case,summary=rm.capacity_summary(table,state,site,quarter,self.ceiling),equipment=rm.select_scope(table,site,quarter).to_dict('records'))
+            state=K.with_fleet(K.apply_availability(L.planning_state(self.data,case),self.data,self.availability),self.data,self.fleet,'requested',self.ceiling,self.availability)
+            table=L.loading_state(state,self.ceiling)
+            payload=dict(site=site,quarter=quarter,case=case,fleet=self.fleet,availability=self.availability,summary=rm.capacity_summary(table,state,site,quarter,self.ceiling),equipment=rm.select_scope(table,site,quarter).to_dict('records'))
             title='Computed route-aware capacity';sql=None
         elif name=='calculate_capacity_request':
             required={'operation','site','timing','first','last'}
             if not required.issubset(args):raise ValueError('Supply operation, site, timing and start/end.')
-            review=requests.run(self.data,ceiling=self.ceiling,pilot_case=self.context.get('pilot_case','baseline'),**args)
+            # Same fleet and availability as the screen the question came from; the model cannot override them.
+            args={k:v for k,v in args.items() if k not in ('fleet','availability','ceiling','pilot_case')}
+            review=requests.run(self.data,ceiling=self.ceiling,pilot_case=self.context.get('pilot_case','baseline'),
+                                fleet=self.fleet,availability=self.availability,**args)
             scope='Both' if args['operation']=='Qualified load transfer' else args['site']
             if args['timing']=='weeks':
                 first=args['first'];frame=rm.select_scope(review['weekly_comparison'],scope)
@@ -85,7 +94,7 @@ class ViewCopilot(rag.Copilot):
                 selected=frame[frame.quarter==first]
                 before=rm.capacity_summary(review['baseline'],review['base_state'],scope,first,self.ceiling)
                 after=rm.capacity_summary(review['scenario'],review['scenario_state'],scope,first,self.ceiling)
-            payload=dict(is_hypothetical=True,basis='requested plan with '+self.context.get('pilot_case','baseline')+' pilot overlay',request=args,before=before,after=after,
+            payload=dict(is_hypothetical=True,basis='requested plan with '+self.context.get('pilot_case','baseline')+' pilot overlay',fleet=self.fleet,availability=self.availability,request=args,before=before,after=after,
                 selected_start_period=selected.round(3).to_dict('records'),
                 changed_rows=frame[(frame.change_pp.abs()>.05)|frame.loading_pct_scenario.isna()].head(60).round(3).to_dict('records'),
                 limit='Capacity screen only; does not rerun DES, change active UI inputs or predict queues/completion dates.')

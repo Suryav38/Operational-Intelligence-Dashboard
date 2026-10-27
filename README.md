@@ -6,7 +6,7 @@ The dashboard has three pages that form one planning workflow:
 
 | Page | What it shows |
 |---|---|
-| **Demand outlook** (the opener) | Requested vs. actual starts from 2024 through the 2026Q4 forecast to the 2027 plan; the demand bridge from 2026Q4; the program × quarter change table; per-program trends; the mix; the realization factor; priorities and milestones |
+| **Demand outlook** (the opener) | Requested vs. actual starts from 2024 through the 2026Q4 forecast to the 2027 plan; the program × quarter change table; per-program trends; the mix; the realization factor; priorities and milestones |
 | **Fab performance** | 2026Q4 to date (28 Sep – 25 Oct 2026, simulated): starts vs. plan, completions, WIP, cycle time, yield, tool loading and queues, measured vs. planned availability, and the model check |
 | **Capacity scenario planning** | **AI wafer loading analyst** (request → editable inputs → model → ranked responses → cited explanation), 2027 capacity, the **Response plan** (2026Q4 rate → 2027 plan → cost-optimal response) and other scenarios |
 

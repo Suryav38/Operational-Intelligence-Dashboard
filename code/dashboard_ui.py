@@ -12,9 +12,10 @@ LIMITS = [75, 80, 85, 90, 95]
 USES = {
     'Demand outlook': {'site'},
     'Fab performance': {'site', 'limit'},
-    'Capacity scenario planning': {'site', 'case', 'limit'},
+    'Capacity scenario planning': {'site', 'case', 'limit', 'availability'},
 }
-DEFAULTS = {'page': PAGES[0], 'site': 'Both', 'limit_pct': 85}
+AVAILABILITY = {'plan': 'Planning assumption', 'measured': 'Measured 2026Q4 to date'}
+DEFAULTS = {'page': PAGES[0], 'site': 'Both', 'limit_pct': 85, 'availability': 'plan'}
 
 
 def reset():
@@ -35,10 +36,15 @@ def render_header():
     page = st.radio('Page', PAGES, horizontal=True, key='page', label_visibility='collapsed')
     uses = USES[page]
     with st.container(key='assumptions'):
-        a, c, d = st.columns([1.5, 1.1, 2.4], vertical_alignment='bottom')
+        a, c, e, d = st.columns([1.5, 1.1, 1.5, .9], vertical_alignment='bottom')
         site = a.radio('Fab', list(SITES), format_func=SITES.get, horizontal=True, key='site')
         limit = c.selectbox('Planning limit', LIMITS, format_func=lambda v: f'{v}% loading', key='limit_pct',
                             disabled='limit' not in uses,
                             help='Highest loading a tool group is planned to run at. Policy, not physics.')
+        availability = e.selectbox('Tool availability', list(AVAILABILITY), format_func=AVAILABILITY.get, key='availability',
+                                   disabled='availability' not in uses,
+                                   help='Planning assumption = 1 − PM − unscheduled down − engineering (E10 targets). '
+                                        'Measured = productive + standby share of calendar time, 2026Q4 to date. '
+                                        'Furnaces also carry their calibrated batch efficiency in both.')
         d.button('Reset', on_click=reset, key='reset_assumptions')
-    return dict(page=page, site=site, pilot_case='baseline', ceiling=limit / 100)
+    return dict(page=page, site=site, pilot_case='baseline', ceiling=limit / 100, availability=availability)

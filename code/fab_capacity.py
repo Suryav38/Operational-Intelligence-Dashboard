@@ -68,7 +68,7 @@ def base_state(data, basis="requested"):
     passes = {p: {tg: [float(n)] * len(Q) for tg, n in C.PROGRAMS[p]["passes"].items()} for p in C.PROGRAM_ORDER}
     arrivals = [list(a) for a in C.TOOL_ARRIVALS]
     tools = {s: {tg: [float(n)] * len(Q) for tg, n in C.INSTALLED_TOOLS[s].items()} for s in C.SITES}
-    avail = {s: {tg: [C.production_availability(tg)] * len(Q) for tg in C.TOOL_GROUP_ORDER} for s in C.SITES}
+    avail = {s: {tg: [C.planning_availability(s, tg)] * len(Q) for tg in C.TOOL_GROUP_ORDER} for s in C.SITES}
     return {"basis": basis, "wspw": wspw, "passes": passes, "arrivals": arrivals, "tools_base": tools, "avail": avail,
             "extra_tools": []}
 

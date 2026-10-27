@@ -15,7 +15,7 @@ import review_model as rm
 import fab_demo as D
 
 BREAKDOWNS={'Technology family':'technology_family','Program family':'family','Program name':'program','Route technology':'route_technology'}
-MEASURES={'Requested plan':'requested_wspw','Expected starts':'expected_wspw'}
+MEASURES={'Requested plan':'requested_wspw','Realization-adjusted starts':'expected_wspw'}
 COMPARISON_QUARTERS=[f'{year}Q{q}' for year in (2026,2027) for q in range(1,5)]
 
 
@@ -201,7 +201,7 @@ def ramp_chart(frame,measure,quarter):
 
 def plan_comparison(frame):
     totals=quarterly(frame);fig=go.Figure()
-    for col,name,color in [('requested_wspw','Requested plan',ec.BLUE),('expected_wspw','Expected starts',ec.TEAL)]:
+    for col,name,color in [('requested_wspw','Requested plan',ec.BLUE),('expected_wspw','Realization-adjusted starts',ec.TEAL)]:
         fig.add_scatter(x=totals.index,y=totals[col],name=name,mode='lines+markers',line=dict(color=color,width=2),
             hovertemplate='%{x}<br>%{y:,.0f} wafers/week<extra>'+name+'</extra>')
     ec.style(fig,335);fig.update_yaxes(title='Wafer starts / week',rangemode='tozero');return fig

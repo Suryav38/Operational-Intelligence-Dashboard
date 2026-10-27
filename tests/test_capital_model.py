@@ -1,3 +1,5 @@
+import pytest
+import fab_data as fd
 import numpy as np
 import capital_model as K
 import fab_config as C
@@ -86,3 +88,15 @@ def test_mix_shift_conserves_starts_and_planned_fleet_shows_real_delta(data):
     assert sum(v[1] for v in base.values()) == sum(v[1] for v in new.values())
     euv = r['comparison'].query("site=='FAB_A' and tool_group=='EUV' and quarter=='2027Q2'").iloc[0]
     assert euv.loading_pct_base < 85 and euv.loading_pct_scenario > euv.loading_pct_base
+
+
+def test_furnace_batch_efficiency_and_availability_source():
+    import fab_config as C
+    d = fd.load()
+    assert C.batch_efficiency('FAB_B', 'FURN') < C.batch_efficiency('FAB_A', 'FURN') <= 1 and C.batch_efficiency('FAB_A', 'EUV') == 1
+    f = K.furnace_sensitivity(d)
+    for s, g in f.groupby('site'):
+        assert g.sort_values('lots_per_run').needed_peak.is_monotonic_decreasing   # fuller batches -> fewer furnaces
+    plan, meas = K.plan_state(d), K.plan_state(d, availability='measured')
+    assert plan['avail']['FAB_A']['EUV'][0] == pytest.approx(C.production_availability('EUV'))
+    assert meas['avail']['FAB_A']['EUV'][0] == pytest.approx(K.measured_availability(d)[('FAB_A', 'EUV')])
